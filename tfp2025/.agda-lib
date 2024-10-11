@@ -1,0 +1,6 @@
+name: parsing-ddgs
+include:
+        ./
+        ../lib/agda-stdlib/src
+        src/
+        src/sections/

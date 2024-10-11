@@ -1,0 +1,187 @@
+\documentclass[runningheads]{llncs}
+
+\usepackage[utf8]{inputenc}
+\usepackage{graphicx}
+\usepackage{stmaryrd}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{multicol}
+\usepackage{xparse}
+\usepackage[capitalise,noabbrev]{cleveref}
+\usepackage{listings}
+\usepackage{mathpartir}
+\usepackage{xcolor}
+\usepackage{mathtools}
+\usepackage{wasysym}
+\usepackage{agda}
+\usepackage{src/agdadimmed}
+% \usepackage{src/agdatheme}
+\usepackage{newunicodechar}
+\usepackage{mdframed}
+\usepackage{wrapfig}
+\usepackage{boxedminipage}
+\usepackage{dsfont}
+\usepackage{etoolbox}
+\usepackage{scalerel}
+\usepackage{graphicx}
+\usepackage{mathbbol}
+\usepackage{lineno}
+
+
+% adjust outrageous indent on itemized lists
+\usepackage{enumitem}
+\setlist[itemize,1]{leftmargin=\dimexpr 2em}
+
+\makeatletter
+\newcommand{\crefnames}[3]{%
+  \@for\next:=#1\do{%
+    \expandafter\crefname\expandafter{\next}{#2}{#3}%
+  }%
+}
+\patchcmd{\upbracefill}{\m@th}{\scriptstyle\m@th}{}{}
+\patchcmd{\upbracefill}{$\braceld$}{$\scriptstyle\braceld$}{}{}
+\patchcmd{\upbracefill}{\bracelu}{\bracelu\mkern-1mu}{}{}
+\patchcmd{\upbracefill}{\hfill\braceru}{\hfill\mkern-1mu\braceru}{}{}
+\makeatother
+
+\crefnames{section}{\S}{\S\S}
+
+\usepackage{tikz}
+\usetikzlibrary{positioning,fit,calc}
+\tikzset{block/.style={draw, thick, text width=3cm, minimum height=1.5cm, align=center}, line/.style={-latex}}
+\usepackage{pgfplots} 
+
+\newtoggle{draft}
+\toggletrue{draft} % enables notes
+
+\iftoggle{draft}{
+\linenumbers
+}
+
+\input{src/macros/todo.tex}
+
+%%
+%% Agda typesetting commands shorthands, for
+%% manual typesetting of inline code
+%%
+
+\newcommand{\af}{\AgdaFunction}
+\newcommand{\un}{\AgdaUnderscore}
+\newcommand{\ad}{\AgdaDatatype}
+\newcommand{\ab}{\AgdaBound}
+\newcommand{\ac}{\AgdaInductiveConstructor}
+\newcommand{\aF}{\AgdaField}
+\newcommand{\as}{\AgdaSymbol}
+\newcommand{\aS}{\AgdaString}
+\newcommand{\ak}{\AgdaKeyword}
+\newcommand{\ap}{\AgdaPrimitiveType}
+\newcommand{\an}{\AgdaNumber}
+\newcommand{\aC}{\AgdaComment}
+\newcommand{\am}{\AgdaModule}
+
+
+%%
+%% Unicode for typesetting Agda code
+\input{src/unicode.tex}
+
+%%
+% Multi-column code
+\NewDocumentCommand{\vcodesep}{}{{\color{lightgray}\vrule}}
+
+% displays put some stuff like code in a paragraph, without interrupting it.
+\setlength{\parskip}{0em} 
+\setlength\mathindent{0.2cm}
+%\setlength\abovedisplayskip{0em}
+%\setlength\belowdisplayskip{em}
+\usepackage{float}
+\newcommand{\displayskip}[1]{%
+  {\parskip=0pt\parindent=0pt\par\vskip #1\noindent}}
+\NewDocumentCommand{\display}{m}
+  {{\ifhmode%
+    \parskip=0pt\parindent=0pt\par\vskip 5pt\noindent
+    %\displayskip{\abovedisplayskip}%
+    %\displayskip{0pt}%
+       #1%
+    %\displayskip{\belowdisplayskip}%
+    \parskip=0pt\parindent=0pt\par\noindent
+    \displayskip{0pt}%
+   \else
+     #1
+   \fi}}
+
+\NewDocumentCommand{\twocodes}{O{0.49\textwidth} O{0.49\textwidth} m m}
+  {\display{\vskip -10pt
+    \begin{minipage}[t]{#1}
+    #3
+    \end{minipage}
+    \hfill\vcodesep
+    \begin{minipage}[t]{#2}
+    #4
+    \end{minipage}
+  }}
+
+\pagestyle{plain}
+
+% If you use the hyperref package, please uncomment the following two lines
+% to display URLs in blue roman font according to Springer's eBook style:
+% \usepackage{color}
+% \renewcommand\UrlFont{\color{blue}\rmfamily}
+% \urlstyle{rm}
+
+%%
+%% end of the preamble, start of the body of the document source.
+\begin{document}
+
+%%
+%% The "title" command has an optional parameter,
+%% allowing the author to define a "short title" to be used in page headers.
+\title{Effects with Variable Binding}
+
+\author{Anonymous}
+
+\maketitle
+
+\begin{abstract}
+Algebraic effects let programmers declare the syntax of operations which can be used to write and compose effectful programs.
+Such programs can be run by applying effect handlers that give programmers control over when and how many times to call continuations of operations.
+Embedding algebraic effects and handlers in an existing language provides a lightweight and powerful approach to programming with effects.
+Such embeddings typically use host language functions to represent continuations of programs.
+While host language functions offer an ergonomic interface for programming with and handling effects, they also hinder programmers wishing to define custom optimizations for effectful programs.
+Specifically, optimizations that statically analyze and transform variable bindings cannot be defined, as that would require meta-programming facilities for host language functions.
+
+This paper presents a solution to this problem by embedding algebraic effects as intrinsically typed, De Bruijn-indexed syntax.
+Working in Agda, we demonstrate how this provides a safe-by-construction approach to programming with effects that is almost as ergonomic as the traditional embedding, but which additionally supports optimizations that inspect and transform variable binding.
+
+\keywords{Algebraic Effects \and Variable Binding \and Program Transformation.}
+\end{abstract}
+
+\input{src/sections/1-introduction.tex}
+\input{src/sections/2-overview.tex}
+\input{src/sections/3-syntax.tex}
+\input{src/sections/4-sharing.tex}
+\input{src/sections/6-case.tex}
+\input{src/sections/7-related.tex}
+\input{src/sections/8-conclusion.tex}
+
+\begin{credits}
+\subsubsection{\ackname} A bold run-in heading in small font size at the end of the paper is
+used for general acknowledgments, for example: This study was funded
+by X (grant number Y).
+
+\subsubsection{\discintname}
+It is now necessary to declare any competing interests or to specifically
+state that the authors have no competing interests. Please place the
+statement with a bold run-in heading in small font size beneath the
+(optional) acknowledgments\footnote{If EquinOCS, our proceedings submission
+system, is used, then the disclaimer can be provided directly in the system.},
+for example: The authors have no competing interests to declare that are
+relevant to the content of this article. Or: Author A has received research
+grants from Company W. Author B has received a speaker honorarium from
+Company X and owns stock in Company Y. Author C is a member of committee Z.
+\end{credits}
+
+\bibliographystyle{splncs04}
+\bibliography{src/references}
+
+\end{document}
+\endinput

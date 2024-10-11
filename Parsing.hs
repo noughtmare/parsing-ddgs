@@ -12,10 +12,10 @@ data CFG ctx a where
   Done :: a -> CFG ctx a
   Seq  :: CFG ctx a -> (a -> CFG ctx b) -> CFG ctx b
   Char :: Char -> CFG ctx ()
-  Var  :: Var ctx a -> CFG ctx a
-  Fix  :: CFG (a : ctx) a -> CFG ctx a
+  Var  :: Var ctx [a] -> CFG ctx a
+  Fix  :: CFG ([a] : ctx) a -> CFG ctx a
 
-nullable :: (forall x. Var ctx x -> [x]) -> CFG ctx a -> [a]
+nullable :: (forall x. Var ctx x -> x) -> CFG ctx a -> [a]
 nullable _ Fail = []
 nullable ev (Or p q) = nullable ev p ++ nullable ev q
 nullable _ (Done x) = [x]
@@ -25,7 +25,7 @@ nullable _ (Char _) = []
 nullable ev (Var v) = ev v
 nullable ev (Fix p) = nullable (\case Here -> []; There v -> ev v) p
 
-subst :: (forall x. Var ctx x -> CFG ctx' x) -> CFG ctx a -> CFG ctx' a
+subst :: (forall x. Var ctx [x] -> CFG ctx' x) -> CFG ctx a -> CFG ctx' a
 subst _ Fail = Fail
 subst f (Or x y) = Or (subst f x) (subst f y)
 subst _ (Done x) = Done x
@@ -37,7 +37,10 @@ subst f (Fix x) = Fix (subst (\case Here -> Var Here; There v -> wk There (f v))
 wk :: (forall x. Var ctx x -> Var ctx' x) -> CFG ctx a -> CFG ctx' a
 wk f = subst (Var . f)
 
-derivative :: CFG ctx a -> (forall x. Var ctx x -> ([x], Var ctx x)) -> Char -> CFG ctx a
+ap :: CFG ([x] : ctx) a -> CFG ctx x -> CFG ctx a
+ap x y = subst (\case Here -> y ; There v -> Var v) x
+
+derivative :: CFG ctx a -> (forall x. Var ctx x -> (x, Var ctx x)) -> Char -> CFG ctx a
 derivative Fail _ _ = Fail
 derivative (Or p q) ev c = Or (derivative p ev c) (derivative q ev c)
 derivative (Done _) _ _ = Fail
@@ -45,11 +48,8 @@ derivative (Seq p q) ev c = Or (Seq (derivative p ev c) q)
   (foldr Or Fail [derivative (q x) ev c | x <- nullable (fst . ev) p])
 derivative (Char c') _ c = if c == c' then Done () else Fail
 derivative (Var v) ev _ = Var (snd (ev v))
-derivative cfg@(Fix p) ev c =
-  subst
-    (\case
-      Here -> cfg
-      There v -> Var v)
+derivative (Fix p) ev c =
+  ap
     (Fix
       (derivative
         (wk There p)
@@ -58,6 +58,7 @@ derivative cfg@(Fix p) ev c =
           There Here -> (nullable (fst . ev) (Fix p), Here)
           There (There v) -> fmap (There . There) (ev v))
         c))
+    (Fix p)
 
 parse :: CFG '[] a -> String -> [a]
 parse s [] = nullable (\case) s

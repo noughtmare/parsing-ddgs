@@ -50,7 +50,7 @@ derivative (Seq p q) ev c = Or (Seq (derivative p ev c) q)
   (foldr Or Fail [derivative (q x) ev c | x <- nullable (fst . ev) p])
 derivative (Char c') _ c = if c == c' then Done () else Fail
 derivative (Var v x) ev _ = Var (snd (ev v)) x
-derivative cfg@(Fix p x) ev c =
+derivative (Fix p x) ev c =
   subst
     (\case
       Here -> Fix p
@@ -78,3 +78,29 @@ ndots = Seq digit (Fix (\i -> Or
   (Seq (guard (i > 0)) (\() -> Seq (Char '.') (\() -> Var Here (i - 1))))
   (guard (i == 0))
   ))
+
+-- >>> parse ndots "5....."
+-- [()]
+
+ndotsl :: Int -> CFG ctx ()
+ndotsl = Fix (\i -> Or 
+  (Seq (guard (i > 0)) (\() -> Seq (Var Here (i - 1)) (\() -> Char '.')))
+  (guard (i == 0))
+  )
+
+ndotsl' :: Int -> CFG ctx ()
+ndotsl' = Fix (\i -> Seq (guard (i > 0)) (\() -> Or 
+  (Seq (Var Here (i - 1)) (\() -> Char '.'))
+  (guard (i == 1))
+  ))
+
+data X = A Int | Add X X deriving Show
+
+ex = Fix 
+  (\i -> Or 
+    (Seq digit (Done . A))
+    (Seq (guard i) (\() -> Seq (Var Here False) (\x -> Seq (Char '+') (\() -> Seq (Var Here True) (Done . Add x))))))
+  True
+
+-- >>> parse ex "1+2+3"
+-- [Add (A 1) (Add (A 2) (A 3))]
