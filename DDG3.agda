@@ -2,7 +2,7 @@
 
 module DDG3 where
 
-open import Cubical.Foundations.Prelude hiding (_[_↦_])
+open import Cubical.Foundations.Prelude
 open import Cubical.Foundations.Transport
 open import Cubical.Data.Nat
 open import Cubical.Data.Maybe
@@ -15,7 +15,6 @@ open import Agda.Builtin.Unit
 open import Cubical.Relation.Nullary.Base
 open import Cubical.Foundations.Function
 open import Cubical.Relation.Nullary
-open import Cubical.Relation.Nullary.HLevels
 
 --------------------------------------------------------------------------------
 -- Vendored Guarded Prelude (trusted code, best skipped on first read):
@@ -102,17 +101,21 @@ discreteTok (Tℕ x) (Tℕ y) with discreteℕ x y
 Lang : Set₁
 Lang = List Tok → Set
 
+-- normal fixed point of languages
 fix₀ : (Lang → Lang) → Lang
 fix₀ f = fix′ λ x → f λ w → ▸ λ t → x t w
 
+-- data-dependent fixed point of languages
 fix : ∀ {A : Set} → ((A → Lang) → A → Lang) → A → Lang
 fix f = fix′ λ x → f λ y w → ▸ λ t → x t y w
 
+-- useful for proving that a string is in a fixed point language.
 then : ∀{l} {A : Set l} {f : ▹ (A → Lang) → A → Lang} {x w} → f (dfix f) x w → ▸ (λ t → dfix f t x w)
 then {f = f} x _ = transport (sym (cong (λ x → x _ _) (pfix′ f))) x
 
-ere : ∀{l} {A : Set l} {f : ▹ (A → Lang) → A → Lang} {x w} → ▸ (λ t → dfix f t x w) → ▸ (λ t → f (dfix f) x w)
-ere {f = f} x t = transport (cong (λ x → x _ _) (pfix′ f)) (x t)
+-- perhaps not useful
+-- ere : ∀{l} {A : Set l} {f : ▹ (A → Lang) → A → Lang} {x w} → ▸ (λ t → dfix f t x w) → ▸ (λ t → f (dfix f) x w)
+-- ere {f = f} x t = transport (cong (λ x → x _ _) (pfix′ f)) (x t)
 
 _∈_ : List Tok → Lang → Set
 w ∈ P = P w
@@ -164,6 +167,7 @@ guard : Bool → Lang
 guard false = ⊘
 guard true = ε
 
+-- language of expressions with associativity disambiguation
 expr : Lang
 expr = fix (λ f b →
       guard b ⋆ f false ⋆ tok T+ ⋆ f true
@@ -183,13 +187,14 @@ x+x+x =
       then (inr refl) ,
       _ , refl , refl ,
       then (inr refl))
+-- This should be the only proof that 'x+x+x' is in 'expr'
 
 liar : Lang
 liar = fix₀ _ᶜ
 
-anyLiar : ∀{x} → x ∈ liar
--- I thought 'ere' might be useful here, but it seems like this is not provable.
-anyLiar = λ x → {!!}
+-- anyLiar : ∀{x} → x ∈ liar
+-- -- I thought 'ere' might be useful here, but it seems like this is not provable.
+-- anyLiar = λ x → {!!}
 
 -- We can prove interesting things about our languages, for example that they are unambiguous:
 
@@ -205,27 +210,60 @@ unambiguous𝒰 tt tt = refl
 unambiguousε : unambiguous ε
 unambiguousε = isPropXs≡[]
 
+unambiguousGuard : ∀{b} → unambiguous (guard b)
+unambiguousGuard {false} {w} = unambiguous⊘ {w}
+unambiguousGuard {true} = unambiguousε
+
 unambiguousTok : ∀{t} → unambiguous (tok t)
 unambiguousTok {t} {w} = Discrete→isSet (discreteList discreteTok) w (t ∷ [])
 
 -- unambiguous∩ : ∀{P Q : [ Lang ]} → unambiguous P → unambiguous Q → unambiguous (P ∩ Q)
 -- unambiguous∩ uaP uaQ (n , x₁ , y₁) (m , x₂ , y₂) refl with uaP (n , x₁) (n , x₂) refl | uaQ (n , y₁) (n , y₂) refl
 -- ... | refl | refl = refl
--- 
--- -- Not true:
--- -- unambiguous* : ∀{P : [ Lang ]} {f : ∀ {n} .{pf} {w} → P {n} pf w → Lang n} → unambiguous P → (∀ {w} (x : ∀{n} .{pf′} → P {n} pf′ w) → unambiguous (λ {n} → f {n} {mkProxy} {w} x)) → unambiguous (P * f) 
--- -- unambiguous* uaP uaQ (n , (u₁ , v₁) , refl , Pu₁ , fv₁) (n , (u₂ , v₂) , fst , Pu₂ , fv₂) refl with uaP (n , Pu₁) (n , {!Pu₂!}) refl
--- -- ... | a = {!!}
--- -- counterexample: natLang * λ _ → natLang matches "123" with both "12","3" and "1","23"
--- 
--- postulate ℕshowInjective : ∀ x y → toList (Data.Nat.Show.show x) ≡ toList (Data.Nat.Show.show y) → x ≡ y
 
--- foo : (p₁ : w ≡ Tℕ n ∷ []) → (p₂ : w ≡ Tℕ m ∷ []) → p₁ ≡ p₂
+rightRadicals : Lang → Lang
+rightRadicals P w = Σ[ pre ∈ List Tok ] P pre × P (pre ++ w)
+
+leftRadicals : Lang → Lang
+leftRadicals P w = Σ[ post ∈ List Tok ] P post × P (w ++ post)
+
+findSuffix : (u v : List Tok) → Σ[ s ∈ _ ] (Σ[ b ∈ _ ] u ≡ b ++ s) × (Σ[ b ∈ _ ] v ≡ b ++ s)
+findSuffix [] v = [] , ([] , refl) , (v , sym (++-unit-r v))
+findSuffix u@(_ ∷ _) [] = [] , (u , sym (++-unit-r u)) , ([] , refl)
+findSuffix (x ∷ u) (y ∷ v) with findSuffix u v | discreteTok x y
+... | s , ([] , u≡s) , [] , v≡s | yes x≡y = x ∷ s , ([] , cong (x ∷_) u≡s) , [] , (subst (λ x → _ ≡ _ ∷ x) v≡s (subst (λ x → x ∷ _ ≡ _ ∷ _) x≡y refl))
+--  Note: here we drop the proof that the elements before the suffix are different, thus we forget we found the largest suffix.
+... | s , ([] , u≡s) , [] , v≡s | no _ = s , ((x ∷ []) , cong (x ∷_) u≡s) , (y ∷ []) , cong (y ∷_) v≡s
+... | s , ([] , u≡s) , (b₂@(_ ∷ _) , v≡s) | _ = s , ((x ∷ []) , (cong (x ∷_) u≡s)) , (y ∷ b₂ , cong (y ∷_) v≡s)
+... | s , (b₁@(_ ∷ _) , p₁) , (b₂ , p₂) | _ = s , ((x ∷ b₁) , (cong (x ∷_) p₁)) , ((y ∷ b₂) , (cong (y ∷_) p₂)) 
+
+findRadical : ∀{w u₁ v₁ u₂ v₂ : List Tok} → (w ≡ u₁ ++ v₁) → (w ≡ u₂ ++ v₂) → Σ _ λ r → ((u₁ ≡ u₂ ++ r) × (r ++ v₁ ≡ v₂)) ⊎ ((u₁ ++ r ≡ u₂) × (v₁ ≡ r ++ v₂))
+findRadical p₁ p₂ = {!!}
+
+unambiguous⋆ : ∀{P Q} → (∀{w} → rightRadicals P w → leftRadicals Q w → ε w) → unambiguous P → unambiguous Q → unambiguous (P ⋆ Q) 
+unambiguous⋆ pf uaP uaQ ((u₁ , v₁) , p₁ , x) ((u₂ , v₂) , p₂ , y) = {!!}
+
+unambiguous* : ∀{P} {f : ∀ {w} → P w → Lang} → unambiguous P → (∀ {w} x → unambiguous (f {w} x)) → unambiguous (P * f) 
+unambiguous* uaP uaQ ((u₁ , v₁) , x) ((u₂ , v₂) , y) = {!!}
+-- unambiguous* uaP uaQ (n , (u₁ , v₁) , refl , Pu₁ , fv₁) (n , (u₂ , v₂) , fst , Pu₂ , fv₂) refl with uaP (n , Pu₁) (n , {!Pu₂!}) refl
+-- ... | a = {!!}
+-- counterexample: natLang * λ _ → natLang matches "123" with both "12","3" and "1","23"
 
 unambiguousNatLang : unambiguous natLang
-unambiguousNatLang {w = w} (n , p₁) (m , p₂) =
-  let n≡m = Tℕ-inj (cons-inj₁ (subst (\w → w ≡ _) p₁ p₂))
+unambiguousNatLang (n , p₁) (m , p₂) =
+  let n≡m : n ≡ m
+      n≡m = Tℕ-inj (cons-inj₁ (subst (λ w → w ≡ _) p₁ p₂))
   in Σ≡Prop (λ _ → Discrete→isSet (discreteList discreteTok) _ _) n≡m
+
+unambiguousExpr : unambiguous expr
+unambiguousExpr (inl x) (inl y) = cong inl (unambiguous⋆ (
+  λ where
+    {[]} _ _ → refl
+    {_ ∷ _} (_ , pre≡[] , pre++w≡[]) _ → ⊥.rec (¬cons≡nil (subst (λ x → x ++ _ ≡ _) pre≡[] pre++w≡[]))
+  ) unambiguousε (unambiguous⋆ {!!} {!!} (unambiguous⋆ {!!} unambiguousTok {!!})) x y)
+unambiguousExpr (inl x) (inr y) = {!!}
+unambiguousExpr (inr x) (inl y) = {!!}
+unambiguousExpr (inr x) (inr y) = cong inr (unambiguousTok x y)
 
 -- unambiguousExpr : unambiguous expr
 -- unambiguousExpr (suc (suc n) , inj₁ ((.[] , .(('x' ∷ []) ++ [])) , refl , refl , (.('x' ∷ []) , .[]) , refl , inj₂ refl , (.('+' ∷ []) , v) , () , refl , snd)) (.(suc (suc n)) , inj₂ refl) refl
