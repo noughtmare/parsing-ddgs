@@ -83,6 +83,9 @@ data Tok : Set where
 ¬Tℕ≡T+ : ∀{n} → ¬(Tℕ n ≡ T+)
 ¬Tℕ≡T+ {n} p = subst (λ where TX → ⊥ ; T+ → ⊥ ; (Tℕ _) → Tok) p (Tℕ n)
 
+Tℕ-inj : ∀{n m} → Tℕ n ≡ Tℕ m → n ≡ m
+Tℕ-inj {n} = cong (λ where (Tℕ n) → n ; _ → n)
+
 discreteTok : Discrete Tok
 discreteTok TX TX = yes refl
 discreteTok TX T+ = no ¬TX≡T+
@@ -94,7 +97,7 @@ discreteTok (Tℕ x) TX = no ¬Tℕ≡TX
 discreteTok (Tℕ x) T+ = no ¬Tℕ≡T+
 discreteTok (Tℕ x) (Tℕ y) with discreteℕ x y
 ... | yes x≡y = yes (cong Tℕ x≡y)
-... | no ¬x≡y = no λ Tℕx≡Tℕy → ¬x≡y (cong (λ where (Tℕ x) → x ; _ → x) Tℕx≡Tℕy)
+... | no ¬x≡y = no λ Tℕx≡Tℕy → ¬x≡y (Tℕ-inj Tℕx≡Tℕy)
 
 Lang : Set₁
 Lang = List Tok → Set
@@ -217,11 +220,12 @@ unambiguousTok {t} {w} = Discrete→isSet (discreteList discreteTok) w (t ∷ []
 -- 
 -- postulate ℕshowInjective : ∀ x y → toList (Data.Nat.Show.show x) ≡ toList (Data.Nat.Show.show y) → x ≡ y
 
+-- foo : (p₁ : w ≡ Tℕ n ∷ []) → (p₂ : w ≡ Tℕ m ∷ []) → p₁ ≡ p₂
+
 unambiguousNatLang : unambiguous natLang
-unambiguousNatLang (n , p₁) (m , p₂) with discreteℕ n m | Discrete→isSet (discreteList discreteTok) _ _ p₁ {! p₂ !}
-... | yes n≡m | x {- yes p₁≡p₂ -} = {!!}
-... | yes n≡m | _ {- no ¬p₁≡p₂ -} = {!!}
-... | no ¬n≡m | _ = {!!}
+unambiguousNatLang {w = w} (n , p₁) (m , p₂) =
+  let n≡m = Tℕ-inj (cons-inj₁ (subst (\w → w ≡ _) p₁ p₂))
+  in Σ≡Prop (λ _ → Discrete→isSet (discreteList discreteTok) _ _) n≡m
 
 -- unambiguousExpr : unambiguous expr
 -- unambiguousExpr (suc (suc n) , inj₁ ((.[] , .(('x' ∷ []) ++ [])) , refl , refl , (.('x' ∷ []) , .[]) , refl , inj₂ refl , (.('+' ∷ []) , v) , () , refl , snd)) (.(suc (suc n)) , inj₂ refl) refl
