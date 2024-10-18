@@ -23,14 +23,32 @@
 \usepackage{stmaryrd}
 \usepackage{amsmath}
 \usepackage{amssymb}
-\usepackage{amsfonts}
-\usepackage{bbold}
-\usepackage{lineno}
+\usepackage{multicol}
+\usepackage{xparse}
+\usepackage{hyperref}
+\usepackage[capitalise,noabbrev]{cleveref}
+\usepackage{listings}
+\usepackage{mathpartir}
+\usepackage{xcolor}
+\usepackage{mathtools}
+\usepackage{wasysym}
 \usepackage{agda}
 \usepackage{src/agdadimmed}
-\usepackage{src/agdatheme}
+% \usepackage{src/agdatheme}
 \usepackage{newunicodechar}
-\usepackage{setspace}
+\usepackage{mdframed}
+\usepackage{wrapfig}
+\usepackage{boxedminipage}
+\usepackage{dsfont}
+\usepackage{etoolbox}
+\usepackage{scalerel}
+\usepackage{graphicx}
+\usepackage{mathbbol}
+\usepackage{lineno}
+\usepackage{setspace} % for GS course
+\usepackage{ifthen}
+\usepackage{tikz-cd} 
+\usepackage{fontspec} 
 %
 \newtoggle{draft}
 \toggletrue{draft} % enables notes
@@ -90,18 +108,22 @@ Springer Heidelberg, Tiergartenstr. 17, 69121 Heidelberg, Germany
 \url{http://www.springer.com/gp/computer-science/lncs} \and
 ABC Institute, Rupert-Karls-University Heidelberg, Heidelberg, Germany\\
 \email{\{abc,lncs\}@uni-heidelberg.de}}
-%
-% TODO:
-%
-% \maketitle              % typeset the header of the contribution
-%
-% \begin{abstract}
-% The abstract should briefly summarize the contents of the paper in
-% 150--250 words.
-% 
-% \keywords{First keyword  \and Second keyword \and Another keyword.}
-% \end{abstract}
-%
+
+\maketitle              % typeset the header of the contribution
+
+\begin{abstract}
+Parsing is the process of recovering structure from strings, an essential part of implementing programming languages.
+Ambiguity, being able to parse a string in multiple different ways, has been a long-standing problem in parsing.
+Recently, data-dependent grammars have emerged as a general, declarative, and efficient solution to this problem.
+However, their current formalization in terms of automatons makes it difficult to reason about their behavior.
+
+In this paper, we specify data-dependent grammars in type theory as predicates over strings.
+Based on this specification, we derive a parser and formally prove properties about our specification which were previously only assumed.
+In the future, our specification can guide the implementation of provably correct efficient parsers for data-dependent grammars.
+
+\keywords{First keyword  \and Second keyword \and Another keyword.}
+\end{abstract}
+
 %
 % the environments 'definition', 'lemma', 'proposition', 'corollary',
 % 'remark', and 'example' are defined in the LLNCS documentclass as well.

@@ -5,3 +5,4 @@
 tfp2025/src/sections/*.tex
 tfp2025/build
 tfp2025/document.pdf
+.DS_Store

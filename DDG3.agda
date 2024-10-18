@@ -103,7 +103,7 @@ Lang = List Tok → Set
 
 -- normal fixed point of languages
 fix₀ : (Lang → Lang) → Lang
-fix₀ f = fix′ λ x → f λ w → ▸ λ t → x t w
+fix₀ f = f (λ w → ▸ λ t → dfix (λ x → f λ w → ▸ λ t → x t w) t w)
 
 -- data-dependent fixed point of languages
 fix : ∀ {A : Set} → ((A → Lang) → A → Lang) → A → Lang
@@ -243,11 +243,12 @@ findRadical p₁ p₂ = {!!}
 unambiguous⋆ : ∀{P Q} → (∀{w} → rightRadicals P w → leftRadicals Q w → ε w) → unambiguous P → unambiguous Q → unambiguous (P ⋆ Q) 
 unambiguous⋆ pf uaP uaQ ((u₁ , v₁) , p₁ , x) ((u₂ , v₂) , p₂ , y) = {!!}
 
-unambiguous* : ∀{P} {f : ∀ {w} → P w → Lang} → unambiguous P → (∀ {w} x → unambiguous (f {w} x)) → unambiguous (P * f) 
-unambiguous* uaP uaQ ((u₁ , v₁) , x) ((u₂ , v₂) , y) = {!!}
+-- TODO: figure out suitable precondition
+-- unambiguous* : ∀{P} {f : ∀ {w} → P w → Lang} → unambiguous P → (∀ {w} x → unambiguous (f {w} x)) → unambiguous (P * f) 
+-- unambiguous* uaP uaQ ((u₁ , v₁) , x) ((u₂ , v₂) , y) = {!!}
 -- unambiguous* uaP uaQ (n , (u₁ , v₁) , refl , Pu₁ , fv₁) (n , (u₂ , v₂) , fst , Pu₂ , fv₂) refl with uaP (n , Pu₁) (n , {!Pu₂!}) refl
 -- ... | a = {!!}
--- counterexample: natLang * λ _ → natLang matches "123" with both "12","3" and "1","23"
+-- Without precondition counter example: natLang * λ _ → natLang matches "123" with both "12","3" and "1","23"
 
 unambiguousNatLang : unambiguous natLang
 unambiguousNatLang (n , p₁) (m , p₂) =
@@ -264,10 +265,3 @@ unambiguousExpr (inl x) (inl y) = cong inl (unambiguous⋆ (
 unambiguousExpr (inl x) (inr y) = {!!}
 unambiguousExpr (inr x) (inl y) = {!!}
 unambiguousExpr (inr x) (inr y) = cong inr (unambiguousTok x y)
-
--- unambiguousExpr : unambiguous expr
--- unambiguousExpr (suc (suc n) , inj₁ ((.[] , .(('x' ∷ []) ++ [])) , refl , refl , (.('x' ∷ []) , .[]) , refl , inj₂ refl , (.('+' ∷ []) , v) , () , refl , snd)) (.(suc (suc n)) , inj₂ refl) refl
--- unambiguousExpr (suc (suc n) , inj₁ ((.[] , .(('x' ∷ []) ++ ('+' ∷ []) ++ snd₂)) , refl , refl , (.('x' ∷ []) , .(('+' ∷ []) ++ snd₂)) , refl , inj₂ refl , (.('+' ∷ []) , snd₂) , refl , refl , snd)) (.(suc (suc n)) , inj₁ ((.[] , .([] ++ ('x' ∷ []) ++ ('+' ∷ []) ++ snd₂)) , refl , refl , (.('x' ∷ []) , .([] ++ ('+' ∷ []) ++ snd₂)) , refl , inj₂ refl , (.('+' ∷ []) , .([] ++ snd₂)) , refl , refl , snd₁)) refl = {!snd₁!}
--- unambiguousExpr (suc (suc n) , inj₂ refl) (.(suc (suc n)) , inj₁ ((.[] , .(('x' ∷ []) ++ ('+' ∷ []) ++ v″)) , () , refl , (.('x' ∷ []) , .(('+' ∷ []) ++ v″)) , refl , inj₂ refl , (.('+' ∷ []) , v″) , refl , refl , snd)) refl
--- unambiguousExpr (suc zero , inj₂ refl) (.1 , inj₂ refl) refl = refl
--- unambiguousExpr (suc (suc n) , inj₂ refl) (.(suc (suc n)) , inj₂ refl) refl = refl

@@ -1,4 +1,5 @@
 \begin{code}[hide]
+{-# OPTIONS --cubical --guarded #-}
 module 1-introduction where
 
 \end{code}
