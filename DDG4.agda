@@ -14,7 +14,8 @@ module DDG4 where
 -- open import Cubical.Foundations.Function
 -- open import Cubical.Relation.Nullary
 
-open import Data.Nat using (ℕ ; suc)
+open import Data.Nat using (ℕ ; suc ; _≤_ ; _⊔_)
+open import Data.Nat.Properties
 open import Data.Bool using (Bool ; true ; false)
 open import Relation.Binary.PropositionalEquality
 open import Data.Empty
@@ -42,31 +43,32 @@ Lang = List Tok → Set
 _∈_ : List Tok → Lang → Set
 w ∈ P = P w
 
+nest : (Lang → Lang) → ℕ → Lang
+nest f 0 = ⊘ -- ran out of fuel
+nest f (suc n) = f (nest f n)
+
 -- bare fixed point of languages
 fix₀ : (Lang → Lang) → Lang
-fix₀ f w = Σ[ n ∈ ℕ ] go n w where
-  go : ℕ → Lang
-  go 0 = ⊘ -- ran out of fuel
-  go (suc n) = f (go n)
+fix₀ f w = Σ[ n ∈ ℕ ] nest f n w
 
 -- ffix₀ : ∀{f x} → (∀{y z : Lang} → (∀{w} → y w → z w) → ∀{w} → f y w → f z w) → x ∈ fix₀ f → x ∈ f (fix₀ f)
 -- ffix₀ fmap (suc n , p) = fmap (n ,_) p
 
 module _ (F : Lang → Lang) where
 
-    record Applicative (I : Set) (M : (I → Set) → Set) : Set₁ where
+    record Applicative (M : (ℕ → Set) → Set) : Set₁ where
       field
-        return : ∀{A} → A → M (λ _ → A)
-        ap : ∀{A B} → M (λ i → A i → B i) → M A → M B
+        pure : ∀{A} → A → M (λ _ → A)
+        ap : ∀{A B} → (∀{i j} → i ≤ j → A i → A j) → M (λ i → ∀{j} → i ≤ j → A j → B j) → M A → M B
 
-    postulate traverse : ∀{I M L w} {L′ : I → Lang} → Applicative I M → (∀{w} → L w → M (λ i → L′ i w)) → F L w → M (λ i → F (L′ i) w)
+    postulate traverse : ∀{M L w} {L′ : ℕ → Lang} → Applicative M → (∀{w} → L w → M (λ i → L′ i w)) → F L w → M (λ i → F (L′ i) w)
 
     fmap : ∀{L L′ w} → (∀{w} → L w → L′ w) → F L w → F L′ w
-    fmap = traverse {M = λ x → x tt} (record { return = λ x → x ; ap = λ f x → f x })
+    fmap {L′ = L′} = traverse {M = λ x → x 0} {L′ = const L′} (record { pure = λ x → x ; ap = λ _ f x → f ≤-refl x })
 
     ffix₀ : (∀{w} → fix₀ F w → F (fix₀ F) w) × (∀{w} → F (fix₀ F) w → fix₀ F w)
     ffix₀ = (λ { (suc n , x) → fmap (n ,_) x })
-          , (λ x → {!traverse {I = ℕ} {M = Σ ℕ} ? ? ?!})
+          , (λ x → case (traverse {M = Σ ℕ} {L′ = nest F} (record { pure = 0 ,_ ; ap = λ { fmap (n , f) (m , x) → n ⊔ m , f (m≤m⊔n n m) (fmap (m≤n⊔m n m) x) } }) id x) of λ { (n , y) → suc n , y })
 
 -- data-dependent fixed point of languages
 fix : ∀ {A : Set} → ((A → Lang) → A → Lang) → A → Lang
