@@ -101,9 +101,34 @@ discreteTok (Tℕ x) (Tℕ y) with discreteℕ x y
 Lang : Set₁
 Lang = List Tok → Set
 
+delay : ▹ Lang → Lang
+delay x w = ▸ λ t → x t w
+
 -- normal fixed point of languages
 fix₀ : (Lang → Lang) → Lang
-fix₀ f = f (λ w → ▸ λ t → dfix (λ x → f λ w → ▸ λ t → x t w) t w)
+fix₀ f =
+  let f′ : ▹ Lang → Lang
+      f′ = f ∘ delay
+  in f′ (dfix f′)
+
+module _ (F : Lang → Lang) where
+
+    record Applicative (M : (Tick → Set) → Set) : Set₁ where
+      field
+        return : ∀{A} → A → M (λ _ → A)
+        ap : ∀{A B} → M (λ i → A i → B i) → M A → M B
+
+    postulate traverse : ∀{M L w} {L′ : Tick → Lang} → Applicative M → (∀{w} → L w → M (λ i → L′ i w)) → F L w → M (λ i → F (L′ i) w)
+    postulate fmap : ∀{L L′ w} → (∀{w} → L w → L′ w) → F L w → F L′ w
+
+    -- fmap : ∀{L L′ w} → (∀{w} → L w → L′ w) → F L w → F L′ w
+    -- fmap = traverse {M = λ x → x tt} (record { return = λ x → x ; ap = λ f x → f x })
+
+    ffix₀ : (∀{w} → fix₀ F w → F (fix₀ F) w) × (∀{w} → F (fix₀ F) w → fix₀ F w)
+    ffix₀ = (λ x → fmap (λ y → {!!}) x) , (λ x → fmap (λ {w} y → λ _ → transport (cong (λ f → f w) (sym (pfix′ (F ∘ delay)))) y) x)
+    -- {!traverse {I = Tick} {M = λ f → (@tick x : Tick) → f x} ? ? x!})
+--            (λ { (suc n , x) → fmap (n ,_) x })
+--          , (λ x → {!traverse {I = ℕ} {M = Σ ℕ} ? ? ?!})
 
 -- data-dependent fixed point of languages
 fix : ∀ {A : Set} → ((A → Lang) → A → Lang) → A → Lang

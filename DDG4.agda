@@ -22,6 +22,7 @@ open import Data.Unit
 open import Data.List
 open import Data.Product
 open import Data.Sum
+open import Function
 
 -- Cubical Agda does not like String and Char
 data Tok : Set where
@@ -29,39 +30,8 @@ data Tok : Set where
   T+ : Tok
   Tℕ : ℕ → Tok
 
--- ¬TX≡T+ : ¬(TX ≡ T+)
--- ¬TX≡T+ p = subst (λ where TX → Tok ; T+ → ⊥ ; (Tℕ _) → ⊥) p TX
--- 
--- ¬TX≡Tℕ : ∀{n} → ¬(TX ≡ Tℕ n)
--- ¬TX≡Tℕ p = subst (λ where TX → Tok ; T+ → ⊥ ; (Tℕ _) → ⊥) p TX
--- 
--- ¬T+≡TX : ¬(T+ ≡ TX)
--- ¬T+≡TX p = subst (λ where TX → ⊥ ; T+ → Tok ; (Tℕ _) → ⊥) p T+
--- 
--- ¬T+≡Tℕ : ∀{n} → ¬(T+ ≡ Tℕ n)
--- ¬T+≡Tℕ p = subst (λ where TX → ⊥ ; T+ → Tok ; (Tℕ _) → ⊥) p T+
--- 
--- ¬Tℕ≡TX : ∀{n} → ¬(Tℕ n ≡ TX)
--- ¬Tℕ≡TX {n} p = subst (λ where TX → ⊥ ; T+ → ⊥ ; (Tℕ _) → Tok) p (Tℕ n)
--- 
--- ¬Tℕ≡T+ : ∀{n} → ¬(Tℕ n ≡ T+)
--- ¬Tℕ≡T+ {n} p = subst (λ where TX → ⊥ ; T+ → ⊥ ; (Tℕ _) → Tok) p (Tℕ n)
-
 Tℕ-inj : ∀{n m} → Tℕ n ≡ Tℕ m → n ≡ m
 Tℕ-inj {n} = cong (λ where (Tℕ n) → n ; _ → n)
-
--- discreteTok : Discrete Tok
--- discreteTok TX TX = yes refl
--- discreteTok TX T+ = no ¬TX≡T+
--- discreteTok TX (Tℕ _) = no ¬TX≡Tℕ
--- discreteTok T+ TX = no ¬T+≡TX
--- discreteTok T+ T+ = yes refl
--- discreteTok T+ (Tℕ x) = no ¬T+≡Tℕ
--- discreteTok (Tℕ x) TX = no ¬Tℕ≡TX
--- discreteTok (Tℕ x) T+ = no ¬Tℕ≡T+
--- discreteTok (Tℕ x) (Tℕ y) with discreteℕ x y
--- ... | yes x≡y = yes (cong Tℕ x≡y)
--- ... | no ¬x≡y = no λ Tℕx≡Tℕy → ¬x≡y (Tℕ-inj Tℕx≡Tℕy)
 
 Lang : Set₁
 Lang = List Tok → Set
@@ -69,27 +39,41 @@ Lang = List Tok → Set
 ⊘ : Lang
 ⊘ _ = ⊥
 
--- normal fixed point of languages
+_∈_ : List Tok → Lang → Set
+w ∈ P = P w
+
+-- bare fixed point of languages
 fix₀ : (Lang → Lang) → Lang
 fix₀ f w = Σ[ n ∈ ℕ ] go n w where
   go : ℕ → Lang
   go 0 = ⊘ -- ran out of fuel
   go (suc n) = f (go n)
 
--- -- data-dependent fixed point of languages
--- fix : ∀ {A : Set} → ((A → Lang) → A → Lang) → A → Lang
--- fix f = fix′ λ x → f λ y w → ▸ λ t → x t y w
--- 
--- -- useful for proving that a string is in a fixed point language.
--- then : ∀{l} {A : Set l} {f : ▹ (A → Lang) → A → Lang} {x w} → f (dfix f) x w → ▸ (λ t → dfix f t x w)
--- then {f = f} x _ = transport (sym (cong (λ x → x _ _) (pfix′ f))) x
--- 
--- -- perhaps not useful
--- -- ere : ∀{l} {A : Set l} {f : ▹ (A → Lang) → A → Lang} {x w} → ▸ (λ t → dfix f t x w) → ▸ (λ t → f (dfix f) x w)
--- -- ere {f = f} x t = transport (cong (λ x → x _ _) (pfix′ f)) (x t)
+-- ffix₀ : ∀{f x} → (∀{y z : Lang} → (∀{w} → y w → z w) → ∀{w} → f y w → f z w) → x ∈ fix₀ f → x ∈ f (fix₀ f)
+-- ffix₀ fmap (suc n , p) = fmap (n ,_) p
 
-_∈_ : List Tok → Lang → Set
-w ∈ P = P w
+module _ (F : Lang → Lang) where
+
+    record Applicative (I : Set) (M : (I → Set) → Set) : Set₁ where
+      field
+        return : ∀{A} → A → M (λ _ → A)
+        ap : ∀{A B} → M (λ i → A i → B i) → M A → M B
+
+    postulate traverse : ∀{I M L w} {L′ : I → Lang} → Applicative I M → (∀{w} → L w → M (λ i → L′ i w)) → F L w → M (λ i → F (L′ i) w)
+
+    fmap : ∀{L L′ w} → (∀{w} → L w → L′ w) → F L w → F L′ w
+    fmap = traverse {M = λ x → x tt} (record { return = λ x → x ; ap = λ f x → f x })
+
+    ffix₀ : (∀{w} → fix₀ F w → F (fix₀ F) w) × (∀{w} → F (fix₀ F) w → fix₀ F w)
+    ffix₀ = (λ { (suc n , x) → fmap (n ,_) x })
+          , (λ x → {!traverse {I = ℕ} {M = Σ ℕ} ? ? ?!})
+
+-- data-dependent fixed point of languages
+fix : ∀ {A : Set} → ((A → Lang) → A → Lang) → A → Lang
+fix {A} f x w = Σ[ n ∈ ℕ ] go n x w where
+  go : ℕ → A → Lang
+  go 0 = λ _ → ⊘ -- ran out of fuel
+  go (suc n) = f (go n)
 
 
 𝒰 : Lang
@@ -120,7 +104,7 @@ infixr 22 _*_
 
 -- dependent sequencing
 _*_ : (P : Lang) → (∀ {w} → P w → Lang) → Lang
-(P * f) w = Σ (_ × _) λ (u , v) → (w ≡ u ++ v) × (Σ (P u) λ x → f x v)
+(P * f) w = Σ[ (u , v) ∈ _ × _ ] (w ≡ u ++ v) × (Σ[ x ∈ P u ] f x v)
 
 infixr 22 _⋆_
 infixr 20 _∪_
@@ -130,43 +114,43 @@ _⋆_ : Lang → Lang → Lang
 P ⋆ Q = P * λ _ → Q 
 
 natLang : Lang
-natLang w = Σ ℕ λ n → w ≡ Tℕ n ∷ []
+natLang w = Σ[ n ∈ ℕ ] w ≡ Tℕ n ∷ []
 
 guard : Bool → Lang
 guard false = ⊘
 guard true = ε
 
-expr : Lang
-expr = fix₀ (λ x → x ⋆ tok T+ ⋆ x ∪ tok TX)
+expr₀ : Lang
+expr₀ = fix₀ (λ x → x ⋆ tok T+ ⋆ x ∪ tok TX)
 
-x+x+x₁ : (TX ∷ T+ ∷ TX ∷ T+ ∷ TX ∷ []) ∈ expr
+x+x+x₁ : (TX ∷ T+ ∷ TX ∷ T+ ∷ TX ∷ []) ∈ expr₀
 x+x+x₁ = 3 , inj₁ (_ , refl , inj₂ refl , _ , refl , refl , inj₁ (_ , refl , inj₂ refl , _ , refl , refl , inj₂ refl))
 
-x+x+x₂ : (TX ∷ T+ ∷ TX ∷ T+ ∷ TX ∷ []) ∈ expr
+x+x+x₂ : (TX ∷ T+ ∷ TX ∷ T+ ∷ TX ∷ []) ∈ expr₀
 x+x+x₂ = 3 , inj₁ (_ , refl , inj₁ (_ , refl , inj₂ refl , _ , refl , refl , inj₂ refl) , _ , refl , refl , inj₂ refl)
 
--- -- language of expressions with associativity disambiguation
--- expr : Lang
--- expr = fix (λ f b →
---       guard b ⋆ f false ⋆ tok T+ ⋆ f true
---     ∪ tok TX
---   ) true
--- 
--- x+x+x : (TX ∷ T+ ∷ TX ∷ T+ ∷ TX ∷ []) ∈ expr
--- x+x+x =
---   inl $
---     _ , refl , refl ,
---     _ , refl ,
---     then (inr refl) ,
---     _ , refl , refl ,
---     then (inl $
---       _ , refl , refl ,
---       _ , refl ,
---       then (inr refl) ,
---       _ , refl , refl ,
---       then (inr refl))
--- -- This should be the only proof that 'x+x+x' is in 'expr'
--- 
+-- language of expressions with associativity disambiguation
+expr : Lang
+expr = fix (λ f b →
+      guard b ⋆ f false ⋆ tok T+ ⋆ f true
+    ∪ tok TX
+  ) true
+
+x+x+x : (TX ∷ T+ ∷ TX ∷ T+ ∷ TX ∷ []) ∈ expr
+x+x+x = 3 ,
+  inj₁ (
+    _ , refl , refl ,
+    _ , refl ,
+    inj₂ refl ,
+    _ , refl , refl ,
+    inj₁ (
+      _ , refl , refl ,
+      _ , refl ,
+      inj₂ refl ,
+      _ , refl , refl ,
+      inj₂ refl))
+-- This should be the only proof that 'x+x+x' is in 'expr'
+
 -- liar : Lang
 -- liar = fix₀ _ᶜ
 -- 
