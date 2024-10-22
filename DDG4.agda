@@ -18,6 +18,7 @@ open import Data.Nat using (ℕ ; suc ; _≤_ ; _⊔_)
 open import Data.Nat.Properties
 open import Data.Bool using (Bool ; true ; false)
 open import Relation.Binary.PropositionalEquality
+open ≡-Reasoning
 open import Data.Empty
 open import Data.Unit
 open import Data.List
@@ -43,32 +44,52 @@ Lang = List Tok → Set
 _∈_ : List Tok → Lang → Set
 w ∈ P = P w
 
-nest : (Lang → Lang) → ℕ → Lang
-nest f 0 = ⊘ -- ran out of fuel
-nest f (suc n) = f (nest f n)
+fueled : (Lang → Lang) → ℕ → Lang
+fueled f 0 = ⊘ -- ran out of fuel
+fueled f (suc n) = f (fueled f n)
 
 -- bare fixed point of languages
 fix₀ : (Lang → Lang) → Lang
-fix₀ f w = Σ[ n ∈ ℕ ] nest f n w
-
--- ffix₀ : ∀{f x} → (∀{y z : Lang} → (∀{w} → y w → z w) → ∀{w} → f y w → f z w) → x ∈ fix₀ f → x ∈ f (fix₀ f)
--- ffix₀ fmap (suc n , p) = fmap (n ,_) p
+fix₀ f w = Σ[ n ∈ ℕ ] fueled f n w
 
 module _ (F : Lang → Lang) where
 
     record Applicative (M : (ℕ → Set) → Set) : Set₁ where
       field
-        pure : ∀{A} → A → M (λ _ → A)
+        pure : ∀{A} → (∀{i j} → i ≤ j → A i → A j) → A 0 → M A
         ap : ∀{A B} → (∀{i j} → i ≤ j → A i → A j) → M (λ i → ∀{j} → i ≤ j → A j → B j) → M A → M B
+    open Applicative
 
     postulate traverse : ∀{M L w} {L′ : ℕ → Lang} → Applicative M → (∀{w} → L w → M (λ i → L′ i w)) → F L w → M (λ i → F (L′ i) w)
 
-    fmap : ∀{L L′ w} → (∀{w} → L w → L′ w) → F L w → F L′ w
-    fmap {L′ = L′} = traverse {M = λ x → x 0} {L′ = const L′} (record { pure = λ x → x ; ap = λ _ f x → f ≤-refl x })
+    idApplicative : Applicative λ x → x 0
+    pure idApplicative _ x = x
+    ap idApplicative _ f x = f ≤-refl x
 
-    ffix₀ : (∀{w} → fix₀ F w → F (fix₀ F) w) × (∀{w} → F (fix₀ F) w → fix₀ F w)
+    ΣApplicative : Applicative (Σ ℕ)
+    pure ΣApplicative _ x = 0 , x
+    ap ΣApplicative wk (n , f) (m , x) = n ⊔ m , f (m≤m⊔n n m) (wk (m≤n⊔m n m) x)
+
+    fmap : ∀{L L′ w} → (∀{w} → L w → L′ w) → F L w → F L′ w
+    fmap {L′ = L′} = traverse {L′ = const _} idApplicative
+
+    sequence : ∀{M w} {L : ℕ → Lang} → Applicative M → F (λ w → M (λ i → L i w)) w → M (λ i → F (L i) w)
+    sequence a = traverse a id
+
+    ffix₀ : Σ[ f ∈ (∀{w} → fix₀ F w → F (fix₀ F) w) ] Σ[ g ∈ (∀{w} → F (fix₀ F) w → fix₀ F w) ] (∀{w x} → f {w} (g x) ≡ x) × (∀{w x} → g {w} (f x) ≡ x)
     ffix₀ = (λ { (suc n , x) → fmap (n ,_) x })
-          , (λ x → case (traverse {M = Σ ℕ} {L′ = nest F} (record { pure = 0 ,_ ; ap = λ { fmap (n , f) (m , x) → n ⊔ m , f (m≤m⊔n n m) (fmap (m≤n⊔m n m) x) } }) id x) of λ { (n , y) → suc n , y })
+          , (λ x → let n , y = sequence {M = Σ ℕ} {L = fueled F} ΣApplicative x in suc n , y)
+          , (λ {w} {x} → begin (let n , y = sequence ΣApplicative x in fmap (n ,_) y)
+                         ≡⟨ {!!} ⟩ -- in this case the fuel of all the branches is weakened to the maximum fuel.
+                                   -- That means it is not exactly equal, but it should be equivalent according to some sensible relation.
+                                x
+                         ∎)
+          , λ { {w} {suc n , x} → begin (let n′ , y = sequence ΣApplicative (fmap (n ,_) x) in suc n′ , y)
+                                  ≡⟨ {!!} ⟩ -- I think this is some kind of naturality
+                                         suc n , sequence {L = const _} idApplicative x 
+                                  ≡⟨ {!!} ⟩ -- This is essentially 'fmap id ≡ id'
+                                         suc n , x
+                                  ∎ }
 
 -- data-dependent fixed point of languages
 fix : ∀ {A : Set} → ((A → Lang) → A → Lang) → A → Lang
