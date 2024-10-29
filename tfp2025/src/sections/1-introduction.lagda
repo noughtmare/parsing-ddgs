@@ -30,6 +30,8 @@ Parser combinators lack properties that we have come to expect from traditional 
 
 Recent work has proposed data dependent grammars~\cite{one-parser-to-rule-them-all,general-parser-combinators} as an answer to that question. However, implementations of data dependent grammars are complicated and implementation details intended only for improving performance, such as mutable memoization tables, obscure their semantics. Furthermore, the general parser combinators~\cite{general-parser-combinators} only provide a rigid, applicative interface, rather than give full access to the underlying data-dependent grammars. So, there currently is no reliable, simple, and flexible implementation of data-dependent parser combinators.
 
+% TODO: show the basic definitions from Conal Elliot's paper
+
 In this paper, we simplify data dependent grammars to a succinct specification and we derive an implementation from it. To achieve this goal we use the Brzozowski derivatives~\cite{brzozowski}. Though they are a proven technique that simplifies parsing~\cite{parsing-with-derivatives,conal-languages,fix-ing-regular-expressions}, they have not been applied to data-dependent grammars. Concretely, we make the following contributions:
 
 \begin{itemize}
