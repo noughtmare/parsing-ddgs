@@ -4,3 +4,7 @@
 [submodule "lib/cubical"]
 	path = lib/cubical
 	url = https://github.com/agda/cubical.git
+[submodule "paper-2021-language-derivatives"]
+	path = paper-2021-language-derivatives
+	url = https://github.com/noughtmare/paper-2021-language-derivatives
+  branch = fix
