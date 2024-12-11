@@ -49,13 +49,14 @@
 \usepackage{ifthen}
 \usepackage{tikz-cd} 
 \usepackage{fontspec} 
+\usepackage{unicode-math} 
 %
 \newtoggle{draft}
-\toggletrue{draft} % enables notes
+% \toggletrue{draft} % enables notes
 
 \iftoggle{draft}{
 \linenumbers
-\doublespacing
+% \doublespacing
 }
 
 \input{src/macros/todo.tex}
@@ -88,40 +89,41 @@
 %
 \begin{document}
 %
-\title{Parsing Data-Dependent Grammars using Derivatives}
+\title{Context-free Languages, Type Theoretically}
 %
 %\titlerunning{Abbreviated paper title}
 % If the paper title is too long for the running head, you can set
 % an abbreviated paper title here
 %
-\author{First Author\inst{1}\orcidID{0000-1111-2222-3333} \and
-Second Author\inst{2,3}\orcidID{1111-2222-3333-4444} \and
-Third Author\inst{3}\orcidID{2222--3333-4444-5555}}
+\author{Anonymous}
+% \author{First Author\inst{1}\orcidID{0000-1111-2222-3333} \and
+% Second Author\inst{2,3}\orcidID{1111-2222-3333-4444} \and
+% Third Author\inst{3}\orcidID{2222--3333-4444-5555}}
 %
-\authorrunning{F. Author et al.}
+% \authorrunning{F. Author et al.}
 % First names are abbreviated in the running head.
 % If there are more than two authors, 'et al.' is used.
 %
-\institute{Princeton University, Princeton NJ 08544, USA \and
-Springer Heidelberg, Tiergartenstr. 17, 69121 Heidelberg, Germany
-\email{lncs@springer.com}\\
-\url{http://www.springer.com/gp/computer-science/lncs} \and
-ABC Institute, Rupert-Karls-University Heidelberg, Heidelberg, Germany\\
-\email{\{abc,lncs\}@uni-heidelberg.de}}
+% \institute{Princeton University, Princeton NJ 08544, USA \and
+% Springer Heidelberg, Tiergartenstr. 17, 69121 Heidelberg, Germany
+% \email{lncs@springer.com}\\
+% \url{http://www.springer.com/gp/computer-science/lncs} \and
+% ABC Institute, Rupert-Karls-University Heidelberg, Heidelberg, Germany\\
+% \email{\{abc,lncs\}@uni-heidelberg.de}}
 
 \maketitle              % typeset the header of the contribution
 
 \begin{abstract}
 Parsing is the process of recovering structure from strings, an essential part of implementing programming languages.
-Ambiguity, being able to parse a string in multiple different ways, has been a long-standing problem in parsing.
-Recently, data-dependent grammars have emerged as a general, declarative, and efficient solution to this problem.
-However, their current formalization in terms of automatons makes it difficult to reason about their behavior.
+% Ambiguity, being able to parse a string in multiple different ways, has been a long-standing problem in parsing.
+% Recently, data-dependent grammars have emerged as a general, declarative, and efficient solution to this problem.
+% However, their current formalization in terms of automatons makes it difficult to reason about their behavior.
+% 
+% In this paper, we specify data-dependent grammars in type theory as predicates over strings.
+% Based on this specification, we derive a parser and formally prove properties about our specification which were previously only assumed.
+% In the future, our specification can guide the implementation of provably correct efficient parsers for data-dependent grammars.
 
-In this paper, we specify data-dependent grammars in type theory as predicates over strings.
-Based on this specification, we derive a parser and formally prove properties about our specification which were previously only assumed.
-In the future, our specification can guide the implementation of provably correct efficient parsers for data-dependent grammars.
-
-\keywords{First keyword  \and Second keyword \and Another keyword.}
+\keywords{Language  \and Parsing \and Type Theory}
 \end{abstract}
 
 %
@@ -130,11 +132,8 @@ In the future, our specification can guide the implementation of provably correc
 %
 \input{src/sections/1-introduction.tex}
 \input{src/sections/2-overview.tex}
-% \input{src/sections/3-syntax.tex}
-% \input{src/sections/4-sharing.tex}
-% \input{src/sections/6-case.tex}
-\input{src/sections/7-related.tex}
-% \input{src/sections/8-conclusion.tex}
+\input{src/sections/3-cfg.tex}
+\input{src/sections/4-discussion.tex}
 %
 % TODO:
 %
