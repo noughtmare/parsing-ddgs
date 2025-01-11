@@ -253,8 +253,6 @@ fixG′ G₀ (□ G) = □ (λ { .! → fixG′ G₀ (! G) })
 
 fixG {n = n} G = fixG′ G G
 
--- mapFix : ∀ G {G′} → (∀{Γ w} → ⟦ Γ ⊢ G ⟧ w → ⟦ Γ ⊢ G′ ⟧ w) → ⟦ Γ ⊢ fixG G ⟧ w → ⟦ Γ ⊢ fixG G′ ⟧ w
-
 map×r : (B → C) → A × B → A × C
 map×r f (x , y) = x , f y
 
@@ -341,7 +339,8 @@ consrn f zero = zero
 consrn f (suc i) = suc (f i)
 
 renameFixG : ∀{n m} {Γ : Vec Lang m} (G : Gram (suc n)) (f : Fin n → Fin m) → ⟦ Γ ⊢ renameG f (fixG G) ⟧ w ↔ ⟦ Γ ⊢ fixG (renameG (consrn f) G) ⟧ w
-renameFixG = {!!}
+to (renameFixG G f) x = ?
+from (renameFixG G f) = {!!}
 -- to (renameFixG ε f) x = x
 -- to (renameFixG (‵ x₁) f) x = x
 -- to (renameFixG (x₁ · G) f) (pl , pr) = pl , {!to (renameFixG G f) pr!}
@@ -490,6 +489,10 @@ variable Γδ : Vec (Gram n) n
 δG-complete Γν Γδ (var i) x = from (Γδ i) x
 δG-complete Γν Γδ (□ G) (□ x) = □ (δG-complete Γν Γδ (! G) x)
 
+δG-correct : Γν-correct Γ Γν → Γδ-correct Γ c Γδ → (G : Gram n) → ⟦ Γ ⊢ (δ⟦ Γν , Γδ ⊢ G ⟧ c) ⟧ w ↔ δ c ⟦ Γ ⊢ G ⟧ w
+to (δG-correct Γν Γδ G) = δG-sound Γν Γδ G
+from (δG-correct Γν Γδ G) = δG-complete Γν Γδ G
+
 ↔lookupG : ∀{n m Γ} (f : A → Gram m) (xs : Vec A n) (i : Fin n) → ⟦ Γ ⊢ lookup (mapVec f xs) i ⟧ w ↔ ⟦ Γ ⊢ f (lookup xs i) ⟧ w
 ↔lookupG f (x ∷ xs) zero = ↔refl
 ↔lookupG f (x ∷ xs) (suc i) = ↔lookupG f xs i
@@ -521,8 +524,8 @@ variable Γδ : Vec (Gram n) n
 δfix-to {c = c} (‵ c′)  with c′ ≟ c
 ... | yes _ = λ x → x
 ... | no _ = λ ()
-δfix-to {Γ = Γ} {Γν = Γν} {Γδ = Γδ} {c = c} {w = w} {G₀ = G₀} (A · G) (x , y) =
-  {!mapFix _ _×_.pr y!}
+-- δfix-to {Γ = Γ} {Γν = Γν} {Γδ = Γδ} {c = c} {w = w} {G₀ = G₀} (A · G) (x , y) =
+--   {!mapFix _ _×_.pr y!}
 δfix-to = {!!}
 --    outside₁ {G′ = fixG (A · G)} (fixG G) (outside₂ {G = G} ∘ x ,_) (δfix-to {_} {Γ} {Γν} {Γδ} {c} {w} {G₀} G
 --       (inside {_} {Γ} {_} {δ⟦ ν⟦ Γν ⊢ fixG G₀ ⟧ ∷ Γν , var zero ∷ mapVec (renameG suc) Γδ ⊢ G ⟧ c} {w} (x , y)))
@@ -598,3 +601,6 @@ from (δfix-bi {G = G}) x = δfix-from G x
 
 δ?₀ G c = δ? (λ ()) (λ ()) G c
 
+parse : DecGram zero G → (w : List Tok) → Dec (⟦ G ⟧ w)
+parse G [] = ν?₀ G
+parse {G = G′} G (c ∷ w) = mapDec (δG-correct (λ ()) (λ ()) G′) (parse (δ?₀ G c) w)
