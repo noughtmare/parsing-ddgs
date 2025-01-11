@@ -339,8 +339,8 @@ consrn f zero = zero
 consrn f (suc i) = suc (f i)
 
 renameFixG : ∀{n m} {Γ : Vec Lang m} (G : Gram (suc n)) (f : Fin n → Fin m) → ⟦ Γ ⊢ renameG f (fixG G) ⟧ w ↔ ⟦ Γ ⊢ fixG (renameG (consrn f) G) ⟧ w
-to (renameFixG G f) x = ?
-from (renameFixG G f) = {!!}
+to (renameFixG G f) x = {!!}
+from (renameFixG G f) x = {!unroll (renameG (consrn f) G) x!}
 -- to (renameFixG ε f) x = x
 -- to (renameFixG (‵ x₁) f) x = x
 -- to (renameFixG (x₁ · G) f) (pl , pr) = pl , {!to (renameFixG G f) pr!}
