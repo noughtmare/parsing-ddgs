@@ -1,4 +1,4 @@
-{-# OPTIONS --guardedness #-}
+{-# OPTIONS --guardedness --safe #-}
 
 open import Agda.Primitive using (Level)
 
@@ -470,8 +470,6 @@ lookup-map f (x ∷ v) (suc i) = lookup-map f v i
 
 subst : {A : Set ℓ₁} {x y : A} (P : A → Set ℓ₂) → (x ≡ y) → P x → P y
 subst _ refl x = x
-
-postulate !-ext : {□G □G′ : □Gram n} → □G .! ≡ □G′ .! → □G ≡ □G′
 
 fixGsuc-to : (G : Gram n) {G₀ : Gram _} → ⟦ Γ ⊢ fixG′ G₀ (renameG suc G) ⟧ w → ⟦ Γ ⊢ G ⟧ w
 fixGsuc-to ∅ x = x
