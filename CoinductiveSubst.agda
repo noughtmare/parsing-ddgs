@@ -1,9 +1,9 @@
-{-# OPTIONS --guardedness --safe #-}
+{-# OPTIONS --guardedness #-}
 
 open import Agda.Primitive using (Level)
 
 variable
-  ℓ : Level
+  ℓ ℓ₁ ℓ₂ : Level
   A B C : Set ℓ
 
 data List (A : Set ℓ) : Set ℓ where
@@ -361,8 +361,8 @@ data DecGram (n : ℕ) : Gram n → Set₁ where
     var : (i : Fin n) → DecGram n (var i)
     μ : DecGram (suc n) G → DecGram n (fixG G)
 
--- this needs to be made a constructor
-_◃_ : (∀ Γ w → ⟦ Γ ⊢ G₁ ⟧ w ↔ ⟦ Γ ⊢ G₂ ⟧ w) → DecGram n G₁ → DecGram n G₂
+-- this needs to be made a constructor, that shouldn't cause problems but is some work
+_◃_ : (∀ {Γ} {w} → ⟦ Γ ⊢ G₁ ⟧ w ↔ ⟦ Γ ⊢ G₂ ⟧ w) → DecGram n G₁ → DecGram n G₂
 _◃_ = {!!}
 
 consrn : ∀{n m} → (Fin n → Fin m) → Fin (suc n) → Fin (suc m)
@@ -458,7 +458,84 @@ renameDG f (x · DG) = x · renameDG f DG
 renameDG f (DG ∪ DG₁) = renameDG f DG ∪ renameDG f DG₁
 renameDG f (DG ∙ DG₁) = renameDG f DG ∙ renameDG f DG₁
 renameDG f (var i) = var (f i)
-renameDG f (μ {G = G} DG) = (λ _ _ → ↔sym (renameFixG G f)) ◃ μ (renameDG (consrn f) DG)
+renameDG f (μ {G = G} DG) = (↔sym (renameFixG G f)) ◃ μ (renameDG (consrn f) DG)
+
+mapVec : (A → B) → Vec A n → Vec B n
+mapVec f [] = []
+mapVec f (x ∷ xs) = f x ∷ mapVec f xs
+
+lookup-map : (f : A → B) (v : Vec A n) (i : Fin n) → lookup (mapVec f v) i ≡ f (lookup v i)
+lookup-map f (x ∷ v) zero = refl
+lookup-map f (x ∷ v) (suc i) = lookup-map f v i
+
+subst : {A : Set ℓ₁} {x y : A} (P : A → Set ℓ₂) → (x ≡ y) → P x → P y
+subst _ refl x = x
+
+postulate !-ext : {□G □G′ : □Gram n} → □G .! ≡ □G′ .! → □G ≡ □G′
+
+fixGsuc-to : (G : Gram n) {G₀ : Gram _} → ⟦ Γ ⊢ fixG′ G₀ (renameG suc G) ⟧ w → ⟦ Γ ⊢ G ⟧ w
+fixGsuc-to ∅ x = x
+fixGsuc-to ε x = x
+fixGsuc-to (‵ c) x = x
+fixGsuc-to (A · G) (x , y) = x , fixGsuc-to G y
+fixGsuc-to (G ∪ G₁) (inl x) = inl (fixGsuc-to G x)
+fixGsuc-to (G ∪ G₁) (inr x) = inr (fixGsuc-to G₁ x)
+fixGsuc-to (G ∙ G₁) (u , v , refl , x , y) = u , v , refl , fixGsuc-to G x , fixGsuc-to G₁ y
+fixGsuc-to (var i) x = x
+fixGsuc-to (□ □G) (□ x) = □ (fixGsuc-to (□G .!) x)
+
+fixGsuc-from : (G : Gram n) {G₀ : Gram _} → ⟦ Γ ⊢ G ⟧ w → ⟦ Γ ⊢ fixG′ G₀ (renameG suc G) ⟧ w
+fixGsuc-from ∅ x = x
+fixGsuc-from ε x = x
+fixGsuc-from (‵ c) x = x
+fixGsuc-from (A · G) (x , y) = x , fixGsuc-from G y
+fixGsuc-from (G ∪ G₁) (inl x) = inl (fixGsuc-from G x)
+fixGsuc-from (G ∪ G₁) (inr x) = inr (fixGsuc-from G₁ x)
+fixGsuc-from (G ∙ G₁) (u , v , refl , x , y) = u , v , refl , fixGsuc-from G x , fixGsuc-from G₁ y
+fixGsuc-from (var i) x = x
+fixGsuc-from (□ □G) (□ x) = □ (fixGsuc-from (□G .!) x)
+
+variable σ : Vec (Gram m) n
+
+substDGμ : (G : Gram _) → ⟦ Γ ⊢ fixG (substG G (lookup (var zero ∷ mapVec (renameG suc) σ))) ⟧ w ↔ ⟦ Γ ⊢ substG (fixG G) (lookup σ) ⟧ w
+
+substDGμ-to : (G : Gram _) {G₀ : Gram _} → ⟦ Γ ⊢ fixG′ (substG G₀ (lookup (var zero ∷ mapVec (renameG suc) σ))) (substG G (lookup (var zero ∷ mapVec (renameG suc) σ))) ⟧ w → ⟦ Γ ⊢ substG (fixG′ G₀ G) (lookup σ) ⟧ w
+substDGμ-to ε x = x
+substDGμ-to (‵ c) x = x
+substDGμ-to (A · G) (x , y) = x , substDGμ-to G y 
+substDGμ-to (G ∪ G₁) (inl x) = inl (substDGμ-to G x)
+substDGμ-to (G ∪ G₁) (inr x) = inr (substDGμ-to G₁ x)
+substDGμ-to (G ∙ G₁) (u , v , refl , x , y) = u , v , refl , substDGμ-to G x , substDGμ-to G₁ y
+substDGμ-to (var zero) {G₀} (□ x) = □ (substDGμ-to G₀ x)
+substDGμ-to {σ = σ} (var (suc i)) {G₀} x = fixGsuc-to (lookup σ i) (subst (λ X → ⟦ _ ⊢ fixG′ _ X ⟧ _) (lookup-map (renameG suc) σ i) x)
+substDGμ-to (□ □G) (□ x) = □ (substDGμ-to (□G .!) x)
+
+sym : {x y : A} → x ≡ y → y ≡ x
+sym refl = refl
+
+substDGμ-from : (G : Gram _) {G₀ : Gram _} → ⟦ Γ ⊢ substG (fixG′ G₀ G) (lookup σ) ⟧ w → ⟦ Γ ⊢ fixG′ (substG G₀ (lookup (var zero ∷ mapVec (renameG suc) σ))) (substG G (lookup (var zero ∷ mapVec (renameG suc) σ))) ⟧ w
+substDGμ-from ε x = x
+substDGμ-from (‵ c) x = x
+substDGμ-from (A · G) (x , y) = x , substDGμ-from G y 
+substDGμ-from (G ∪ G₁) (inl x) = inl (substDGμ-from G x)
+substDGμ-from (G ∪ G₁) (inr x) = inr (substDGμ-from G₁ x)
+substDGμ-from (G ∙ G₁) (u , v , refl , x , y) = u , v , refl , substDGμ-from G x , substDGμ-from G₁ y
+substDGμ-from (var zero) {G₀} (□ x) = □ (substDGμ-from G₀ x)
+substDGμ-from {σ = σ} (var (suc i)) {G₀} x = subst (λ X → ⟦ _ ⊢ fixG′ _ X ⟧ _) (sym (lookup-map (renameG suc) σ i)) (fixGsuc-from (lookup σ i) x)
+substDGμ-from (□ □G) (□ x) = □ (substDGμ-from (□G .!) x)
+
+substDGμ G .to x = substDGμ-to G x
+substDGμ G .from x = substDGμ-from G x
+
+substDG : (σ : Vec (Gram m) n) → DecGram n G → ((i : Fin n) → DecGram m (lookup σ i)) → DecGram m (substG G (lookup σ))
+substDG σ ∅ k = ∅
+substDG σ ε k = ε
+substDG σ (‵ c) k = ‵ c
+substDG σ (x · G) k = x · substDG σ G k
+substDG σ (G ∪ G₁) k = substDG σ G k ∪ substDG σ G₁ k
+substDG σ (G ∙ G₁) k = substDG σ G k ∙ substDG σ G₁ k
+substDG σ (var i) k = k i
+substDG σ (μ {G = G′} G) k = substDGμ G′ ◃ μ (substDG (var zero ∷ mapVec (renameG suc) σ) G λ { zero → var zero ; (suc i) → subst (λ X → DecGram (suc _) X) (sym (lookup-map (renameG suc) σ i)) (renameDG suc (k i)) })
 
 -- example
 
@@ -523,10 +600,6 @@ from (νfix G) x = ⊎collapse (νfix-from G x)
 ν?′ (var i) Γ = Γ i
 ν?′ (μ {G = G′} G) Γ = mapDec (νfix G′) (ν?′ G (λ { zero → no λ () ; (suc i) → Γ i })) 
 
-mapVec : (A → B) → Vec A n → Vec B n
-mapVec f [] = []
-mapVec f (x ∷ xs) = f x ∷ mapVec f xs
-
 ↔lookup : (f : A → Set) (xs : Vec A n) (i : Fin n) → lookup (mapVec f xs) i ↔ f (lookup xs i)
 ↔lookup f (x ∷ xs) zero = ↔refl
 ↔lookup f (x ∷ xs) (suc i) = ↔lookup f xs i
@@ -542,7 +615,7 @@ mapVec f (x ∷ xs) = f x ∷ mapVec f xs
 
 δ⟦_⟧₀ : Gram zero → Tok → Gram zero
 
-δ⟦_,_,_⊢_⟧ : Vec Set n → Vec (Gram m) n → Vec (Fin m) n → Gram n → Tok → Gram m
+δ⟦_,_,_⊢_⟧ : Vec Set n → Vec (Gram m) n → Vec (Gram m) n → Gram n → Tok → Gram m
 δ⟦ Γν , Γδ , σ ⊢ ∅ ⟧ _ = ∅
 δ⟦ Γν , Γδ , σ ⊢ ε ⟧ _ = ∅
 δ⟦ Γν , Γδ , σ ⊢ ‵ c′ ⟧ c with c′ ≟ c
@@ -550,22 +623,21 @@ mapVec f (x ∷ xs) = f x ∷ mapVec f xs
 ... | no _ = ∅
 δ⟦ Γν , Γδ , σ ⊢ A · G ⟧ c = A · δ⟦ Γν , Γδ , σ ⊢ G ⟧ c
 δ⟦ Γν , Γδ , σ ⊢ G₁ ∪ G₂ ⟧ c = δ⟦ Γν , Γδ , σ ⊢ G₁ ⟧ c ∪ δ⟦ Γν , Γδ , σ ⊢ G₂ ⟧ c
-δ⟦ Γν , Γδ , σ ⊢ G₁ ∙ G₂ ⟧ c = δ⟦ Γν , Γδ , σ ⊢ G₁ ⟧ c ∙ renameG (lookup σ) G₂ ∪ (ν⟦ Γν ⊢ G₁ ⟧ · δ⟦ Γν , Γδ , σ ⊢ G₂ ⟧ c)
+δ⟦ Γν , Γδ , σ ⊢ G₁ ∙ G₂ ⟧ c = δ⟦ Γν , Γδ , σ ⊢ G₁ ⟧ c ∙ substG G₂ (lookup σ) ∪ (ν⟦ Γν ⊢ G₁ ⟧ · δ⟦ Γν , Γδ , σ ⊢ G₂ ⟧ c)
 δ⟦ Γν , Γδ , σ ⊢ var i ⟧ c = lookup Γδ i
 δ⟦ Γν , Γδ , σ ⊢ □ G ⟧ c = □ (λ { .! → δ⟦ Γν , Γδ , σ ⊢ ! G ⟧ c })
 
 δ⟦ G ⟧₀ = δ⟦ [] , [] , [] ⊢ G ⟧
 
 variable Γδ : Vec (Gram m) n
-         σ : Vec (Fin m) n
 
 Γδ-correct : Vec Lang n → Vec Lang m → Tok → Vec (Gram m) n → Set
 Γδ-correct Γ Γ′ c Γδ = ∀ {w} i → ⟦ Γ′ ⊢ lookup Γδ i ⟧ w ↔ δ c (lookup Γ i) w
 
 -- σ-correct : Vec (Gram m) n → Tok
 
-σ-correct : Vec Lang n → Vec Lang m → Vec (Fin m) n → Set₁
-σ-correct Γ Γ′ σ = ∀ {w} G → ⟦ Γ′ ⊢ renameG (lookup σ) G ⟧ w ↔ ⟦ Γ ⊢ G ⟧ w
+σ-correct : Vec Lang n → Vec Lang m → Vec (Gram m) n → Set
+σ-correct Γ Γ′ σ = ∀ {w} i → ⟦ Γ′ ⊢ lookup σ i ⟧ w ↔ ⟦ Γ ⊢ var i ⟧ w
 
 δG-sound : Γν-correct Γ Γν → Γδ-correct Γ Γ′ c Γδ → σ-correct Γ Γ′ σ → (G : Gram n) → ⟦ Γ′ ⊢ δ⟦ Γν , Γδ , σ ⊢ G ⟧ c ⟧ w → δ c ⟦ Γ ⊢ G ⟧ w
 δG-sound {c = c} Γν Γδ σ (‵ c′) x with c′ ≟ c
@@ -574,7 +646,7 @@ variable Γδ : Vec (Gram m) n
 δG-sound Γν Γδ σ (A · G) (pl , pr) = pl , δG-sound Γν Γδ σ G pr
 δG-sound Γν Γδ σ (G ∪ G₁) (inl x) = inl (δG-sound Γν Γδ σ G x)
 δG-sound Γν Γδ σ (G ∪ G₁) (inr x) = inr (δG-sound Γν Γδ σ G₁ x)
-δG-sound Γν Γδ σ (G ∙ G₁) (inl (u , v , refl , x , y)) = (_ ∷ u) , v , refl , δG-sound Γν Γδ σ G x , to (σ G₁) y
+δG-sound Γν Γδ σ (G ∙ G₁) (inl (u , v , refl , x , y)) = (_ ∷ u) , v , refl , δG-sound Γν Γδ σ G x , {!y!} -- needs some work, but not difficult
 δG-sound Γν Γδ σ (G ∙ G₁) (inr (x , y)) = [] , (_ ∷ _) , refl , νG-sound G Γν x , δG-sound Γν Γδ σ G₁ y
 δG-sound Γν Γδ σ (var i) x = to (Γδ i) x
 δG-sound Γν Γδ σ (□ G) (□ x) = □ (δG-sound Γν Γδ σ (G .!) x)
@@ -586,7 +658,7 @@ variable Γδ : Vec (Gram m) n
 δG-complete Γν Γδ σ (A · G) (pl , pr) = pl , δG-complete Γν Γδ σ G pr
 δG-complete Γν Γδ σ (G ∪ G₁) (inl x) = inl (δG-complete Γν Γδ σ G x)
 δG-complete Γν Γδ σ (G ∪ G₁) (inr x) = inr (δG-complete Γν Γδ σ G₁ x)
-δG-complete Γν Γδ σ (G ∙ G₁) ((c ∷ u) , v , refl , x , y) = inl (u , v , refl , δG-complete Γν Γδ σ G x , from (σ G₁) y)
+δG-complete Γν Γδ σ (G ∙ G₁) ((c ∷ u) , v , refl , x , y) = inl (u , v , refl , δG-complete Γν Γδ σ G x , {!y!})
 δG-complete Γν Γδ σ (G ∙ G₁) ([] , (c ∷ v) , refl , x , y) = inr (νG-complete G Γν x , δG-complete Γν Γδ σ G₁ y)
 δG-complete Γν Γδ σ (var i) x = from (Γδ i) x
 δG-complete Γν Γδ σ (□ G) (□ x) = □ (δG-complete Γν Γδ σ (! G) x)
@@ -609,80 +681,41 @@ substG₀ν (var zero) f x = f x
 substG₀ν (var (suc i)) f x = x
 substG₀ν (□ □G) f (□ x) = □ (substG₀ν (□G .!) f x)
 
--- foo : {Γ : Vec Lang (suc n)} {Γν : Vec Set (suc n)} {Γδ : Vec (Gram n) n} {G : Gram (suc n)} {G′ : Gram (suc n)}
---     → ⟦ Γ ⊢ substG₀ (δ⟦ Γν , var zero ∷ mapVec (renameG suc) Γδ ⊢ G ⟧ c) G′ ⟧ w
---     → ⟦ Γ ⊢ δ⟦ Γν , G′ ∷ mapVec (renameG suc) Γδ ⊢ G ⟧ c ⟧ w
--- foo = {!!}
+δfix : {Γ : Vec Lang m} {w : List Tok} (G : Gram (suc n)) → ⟦ Γ ⊢ fixG (δ⟦ ν⟦ Γν ⊢ fixG G ⟧ ∷ Γν , var zero ∷ mapVec (renameG suc) Γδ , renameG suc (substG (fixG G) (lookup σ)) ∷ mapVec (renameG suc) σ ⊢ G ⟧ c) ⟧ w ↔ ⟦ Γ ⊢ δ⟦ Γν , Γδ , σ ⊢ fixG G ⟧ c ⟧ w
 
+δfix-to : {Γ : Vec Lang m} (G : Gram (suc n)) {G₀ : Gram (suc n)} → ⟦ Γ ⊢ fixG′ (δ⟦ ν⟦ Γν ⊢ fixG G₀ ⟧ ∷ Γν , var zero ∷ mapVec (renameG suc) Γδ , renameG suc (substG (fixG G₀) (lookup σ)) ∷ mapVec (renameG suc) σ ⊢ G₀ ⟧ c) (δ⟦ ν⟦ Γν ⊢ fixG G₀ ⟧ ∷ Γν , var zero ∷ mapVec (renameG suc) Γδ , renameG suc (substG (fixG G₀) (lookup σ)) ∷ mapVec (renameG suc) σ ⊢ G ⟧ c) ⟧ w → ⟦ Γ ⊢ δ⟦ Γν , Γδ , σ ⊢ fixG′ G₀ G ⟧ c ⟧ w
+δfix-to {c = c′} (‵ c) x with c ≟ c′
+... | yes _ = x
+... | no _ = x
+δfix-to (A · G) (x , y) = x , δfix-to G y
+δfix-to (G ∪ G₁) (inl x) = inl (δfix-to G x)
+δfix-to (G ∪ G₁) (inr x) = inr (δfix-to G₁ x)
+δfix-to (G ∙ G₁) (inl (u , v , refl , x , y)) = inl (u , v , refl , δfix-to G x , {!y!}) -- do something with σ
+δfix-to (G ∙ G₁) (inr (x , y)) = inr ({!x!} , δfix-to G₁ y) -- do something with Γν
+δfix-to (var zero) {G₀} (□ x) = □ (δfix-to G₀ x)
+δfix-to {Γδ = Γδ} (var (suc i)) x = fixGsuc-to (lookup Γδ i) (subst (λ X → ⟦ _ ⊢ fixG′ _ X ⟧ _) (lookup-map (renameG suc) Γδ i) x)
+δfix-to (□ □G) (□ x) = □ (δfix-to (□G .!) x)
 
--- substG₀δ : ∀{ν₁} (G : Gram _) → ⟦ Γ ⊢ substG₀ (δ⟦ ν₁ ∷ Γν , var zero ∷ mapVec (renameG suc) Γδ ⊢ G , ? ∷ σ ⟧ c) G′ ⟧ w → ⟦ Γ ⊢ δ⟦ Γν , Γδ ⊢ substG₀ G G′ ⟧ c ⟧ w
--- substG₀δ {c = c′} (‵ c) x with c ≟ c′
--- ... | yes _ = x
--- ... | no _ = x
--- substG₀δ (A · G) (pl₁ , pr₁) = pl₁ , substG₀δ G pr₁
--- substG₀δ (G ∪ G₁) (inl x) = inl (substG₀δ G x)
--- substG₀δ (G ∪ G₁) (inr x) = inr (substG₀δ G₁ x)
--- substG₀δ {c = c} (G ∙ G₁) (inl (u , v , refl , x , y)) = inl (u , v , refl , substG₀δ G x , y)
--- substG₀δ (G ∙ G₁) (inr (x , y)) = inr (substG₀ν G {!!} x , substG₀δ G₁ y)
--- substG₀δ (var zero) x = {!!}
--- substG₀δ (var (suc i)) x = {!!}
--- substG₀δ (□ □G) (□ x) = □ (substG₀δ (□G .!) x)
--- 
--- substG₀δ′ : ∀{ν₁} (G : Gram _) → ⟦ Γ ⊢ δ⟦ Γν , Γδ ⊢ substG₀ G G′ ⟧ c ⟧ w → ⟦ Γ ⊢ substG₀ (δ⟦ ν₁ ∷ Γν , var zero ∷ mapVec (renameG suc) Γδ ⊢ G ⟧ c) G′ ⟧ w
--- substG₀δ′ {c = c′} (‵ c) x with c ≟ c′
--- ... | yes _ = x
--- ... | no _ = x
--- substG₀δ′ (A · G) (pl₁ , pr₁) = pl₁ , substG₀δ′ G pr₁
--- substG₀δ′ (G ∪ G₁) (inl x) = inl (substG₀δ′ G x)
--- substG₀δ′ (G ∪ G₁) (inr x) = inr (substG₀δ′ G₁ x)
--- substG₀δ′ {c = c} (G ∙ G₁) (inl (u , v , refl , x , y)) = inl (u , v , refl , substG₀δ′ G x , y)
--- substG₀δ′ (G ∙ G₁) (inr (x , y)) = inr ({!!} , substG₀δ′ G₁ y)
--- substG₀δ′ (var zero) x = {!!}
--- substG₀δ′ (var (suc i)) x = {!!}
--- substG₀δ′ (□ □G) (□ x) = □ (substG₀δ′ (□G .!) x)
+δfix-from : (G : Gram _) {G₀ : Gram _} → ⟦ Γ ⊢ δ⟦ Γν , Γδ , σ ⊢ fixG′ G₀ G ⟧ c ⟧ w → ⟦ Γ ⊢ fixG′ (δ⟦ ν⟦ Γν ⊢ fixG G₀ ⟧ ∷ Γν , var zero ∷ mapVec (renameG suc) Γδ , renameG suc (substG (fixG G₀) (lookup σ)) ∷ mapVec (renameG suc) σ ⊢ G₀ ⟧ c) (δ⟦ ν⟦ Γν ⊢ fixG G₀ ⟧ ∷ Γν , var zero ∷ mapVec (renameG suc) Γδ , renameG suc (substG (fixG G₀) (lookup σ)) ∷ mapVec (renameG suc) σ ⊢ G ⟧ c) ⟧ w
+δfix-from {c = c′} (‵ c) x with c ≟ c′
+... | yes _ = x
+... | no _ = x
+δfix-from (A · G) (x , y) = x , δfix-from G y
+δfix-from (G ∪ G₁) (inl x) = inl (δfix-from G x)
+δfix-from (G ∪ G₁) (inr x) = inr (δfix-from G₁ x)
+δfix-from (G ∙ G₁) (inl (u , v , refl , x , y)) = inl (u , v , refl , δfix-from G x , {!y!}) -- do something with σ
+δfix-from (G ∙ G₁) (inr (x , y)) = inr ({!x!} , δfix-from G₁ y) -- do something with Γν
+δfix-from (var zero) {G₀} (□ x) = □ (δfix-from G₀ x)
+δfix-from {Γδ = Γδ} (var (suc i)) x = subst (λ X → ⟦ _ ⊢ fixG′ _ X ⟧ _) (sym (lookup-map (renameG suc) Γδ i)) (fixGsuc-from (lookup Γδ i) x)
+δfix-from (□ □G) (□ x) = □ (δfix-from (□G .!) x)
 
--- δfix-to : {G₀ : Gram _} (G : Gram _)
---   → ⟦ Γ ⊢ fixG
---       (δ⟦ (ν⟦ Γν ⊢ fixG G₀ ⟧ ∷ Γν)
---         , (var zero ∷ mapVec (renameG suc) Γδ)
---         , (_ ∷ σ)
---         ⊢ G ⟧ c)
---     ⟧ w
---   → ⟦ Γ ⊢ δ⟦ Γν , Γδ , σ ⊢ fixG G ⟧ c ⟧ w
--- δfix-to {_} {_} {Γν} {Γδ} {c} {w} {G₀} G x =
---   let x = unroll′ (δ⟦ ν⟦ Γν ⊢ fixG G₀ ⟧ ∷ Γν , var zero ∷ mapVec (renameG suc) Γδ ⊢ G ⟧ c) x
---       x = ⊢subst₀ {G′ = fixG (δ⟦ ν⟦ Γν ⊢ fixG G₀ ⟧ ∷ Γν , var zero ∷ mapVec (renameG suc) Γδ ⊢ G ⟧ c)} (δ⟦ (ν⟦ Γν ⊢ fixG G₀ ⟧ ∷ Γν) , (var zero ∷ mapVec (renameG suc) Γδ) ⊢ G ⟧ c) x
---   in {!!}
--- 
--- δfix-from : (G : Gram _)
---   → ⟦ Γ ⊢ δ⟦ Γν , Γδ ⊢ fixG G ⟧ c ⟧ w
---   → ⟦ Γ ⊢ fixG
---       (δ⟦ (ν⟦ Γν ⊢ fixG G ⟧ ∷ Γν)
---         , (var zero ∷ mapVec (renameG suc) Γδ)
---         ⊢ G ⟧ c)
---     ⟧ w
--- δfix-from {_} {Γ} {Γν} {Γδ} {c} {w} G x =
---   roll′ (δ⟦ ν⟦ Γν ⊢ fixG G ⟧ ∷ Γν , var zero ∷ mapVec (renameG suc) Γδ ⊢ G ⟧ c)
---     (⊢subst₀′ {G′ = fixG (δ⟦ ν⟦ Γν ⊢ fixG G ⟧ ∷ Γν , var zero ∷ mapVec (renameG suc) Γδ ⊢ G ⟧ c)} (δ⟦ ν⟦ Γν ⊢ fixG G ⟧ ∷ Γν , var zero ∷ mapVec (renameG suc) Γδ ⊢ G ⟧
---       c)
---       {!!} )
--- 
--- -- δfix-from {c = c} (‵ c′) x with c′ ≟ c
--- -- ... | yes _ = x
--- -- ... | no _ = x
--- -- δfix-from (A · G) (x , y) = x , {!δfix-from G ?!}
--- -- δfix-from (G₁ ∪ G₂) x = {!!}
--- -- δfix-from (G₁ ∙ G₂) x = {!!}
--- -- δfix-from (var i) x = {!!}
--- -- δfix-from (□ G) x = {!!}
--- 
--- δfix-bi : ⟦ Γ ⊢ fixG (δ⟦ (ν⟦ Γν ⊢ fixG G ⟧ ∷ Γν) , (var zero ∷ mapVec (renameG suc) Γδ) ⊢ G ⟧ c) ⟧ w ↔ ⟦ Γ ⊢ δ⟦ Γν , Γδ ⊢ fixG G ⟧ c ⟧ w
--- to (δfix-bi {Γ = Γ} {Γν = Γν} {G = G} {Γδ = Γδ} {c = c} {w = w}) x = δfix-to {Γ = Γ} {Γν = Γν} {Γδ = Γδ} {c = c} {w = w} {G₀ = G} G x
--- from (δfix-bi {G = G}) x = δfix-from G x
+δfix G .to x = δfix-to G x
+δfix G .from x = δfix-from G x
+
 
 δ?₀ : DecGram zero G → (c : Tok) → DecGram zero (δ⟦ G ⟧₀ c)
 
-δ? : (∀ i → Dec (lookup Γν i)) → (∀ i → DecGram m (lookup Γδ i)) → (σ : Vec (Fin m) n) → DecGram n G → (c : Tok) → DecGram m (δ⟦ Γν , Γδ , σ ⊢ G ⟧ c)
+δ? : (∀ i → Dec (lookup Γν i)) → (∀ i → DecGram m (lookup Γδ i)) → (∀ i → DecGram m (lookup σ i)) → DecGram n G → (c : Tok) → DecGram m (δ⟦ Γν , Γδ , σ ⊢ G ⟧ c)
 δ? Γν Γδ σ ∅ c = ∅
 δ? Γν Γδ σ ε c = ∅
 δ? Γν Γδ σ (‵ c′) c with c′ ≟ c
@@ -690,12 +723,21 @@ substG₀ν (□ □G) f (□ x) = □ (substG₀ν (□G .!) f x)
 ... | no _ = ∅
 δ? Γν Γδ σ (x · G) c = x · δ? Γν Γδ σ G c
 δ? Γν Γδ σ (G₁ ∪ G₂) c = δ? Γν Γδ σ G₁ c ∪ δ? Γν Γδ σ G₂ c
-δ? Γν Γδ σ (G₁ ∙ G₂) c = δ? Γν Γδ σ G₁ c ∙ renameDG (lookup σ) G₂ ∪ (ν?′ G₁ Γν · δ? Γν Γδ σ G₂ c)
+δ? {σ = σ′} {G = G′} Γν Γδ σ (G₁ ∙ G₂) c = δ? Γν Γδ σ G₁ c ∙ substDG σ′ G₂ σ ∪ (ν?′ G₁ Γν · δ? Γν Γδ σ G₂ c)
 δ? Γν Γδ σ (var i) c = Γδ i
-δ? {Γν = Γν′} {Γδ = Γδ′} {G = G′} Γν Γδ σ (μ {G = G″} G) c = (λ _ _ → {!!}) ◃ μ (δ? {Γν = (ν⟦ Γν′ ⊢ G′ ⟧) ∷ Γν′} {Γδ = var zero ∷ mapVec (renameG suc) Γδ′} (λ { zero → ν?′ (μ G) Γν ; (suc i) → Γν i }) (λ { zero → var zero ; (suc i) → (λ _ _ → ↔sym (↔lookupG (renameG suc) Γδ′ i)) ◃ renameDG suc (Γδ i) }) ({!μ G!} ∷ mapVec suc σ) G c)
+δ? {Γν = Γν′} {m = m} {Γδ = Γδ′} {σ = σ′} {G = G′} Γν Γδ σ (μ {G = G″} G) c =
+  δfix G″ ◃ μ (
+    δ? {Γν = (ν⟦ Γν′ ⊢ G′ ⟧) ∷ Γν′}
+       {Γδ = var zero ∷ mapVec (renameG suc) Γδ′}
+       {σ = mapVec (renameG suc) (substG G′ (lookup σ′) ∷ σ′)}
+       (λ { zero → ν?′ (μ G) Γν ; (suc i) → Γν i })
+       (λ { zero → var zero ; (suc i) → (↔sym (↔lookupG (renameG suc) Γδ′ i)) ◃ renameDG suc (Γδ i) })
+       (λ { zero → renameDG {n = m} {G = substG (fixG G″) (lookup σ′)} suc (substDG σ′ (μ G) σ) ; (suc i) → subst (DecGram _) (sym (lookup-map (renameG suc) σ′ i)) (renameDG suc (σ i))})
+       G
+       c)
 
-δ?₀ G c = δ? (λ ()) (λ ()) [] G c
+δ?₀ G c = δ? (λ ()) (λ ()) (λ ()) G c
 
 parse : DecGram zero G → (w : List Tok) → Dec (⟦ G ⟧ w)
 parse G [] = ν?₀ G
-parse {G = G′} G (c ∷ w) = mapDec (δG-correct (λ ()) (λ ()) {!!} G′) (parse (δ?₀ G c) w)
+parse {G = G′} G (c ∷ w) = mapDec (δG-correct (λ ()) (λ ()) (λ ()) G′) (parse (δ?₀ G c) w)
