@@ -12,6 +12,7 @@ open import Relation.Binary.PropositionalEquality
 open import Function
 open import Data.Fin hiding (_≟_)
 open import Data.Nat hiding (_*_ ; _≟_)
+open import Relation.Nullary.Negation
 
 String : Set
 String = List Char
@@ -218,5 +219,7 @@ expr : Exp
 expr = (‵ 'x') ∪ (I * ((‵ '+') * I))
 
 x+x+x : ⟦ expr ⟧ ('x' ∷ '+' ∷ 'x' ∷ '+' ∷ 'x' ∷ [])
-x+x+x with parse expr ('x' ∷ '+' ∷ 'x' ∷ '+' ∷ 'x' ∷ [])
-... | yes x = x
+x+x+x = toWitness {a? = parse expr _} tt
+
+x+x+ : ¬ (⟦ expr ⟧ ('x' ∷ '+' ∷ 'x' ∷ '+' ∷ []))
+x+x+ = toWitnessFalse {a? = parse expr _} tt
