@@ -1,3 +1,5 @@
+{-# OPTIONS --safe #-}
+
 open import Data.Char
 open import Data.List
 open import Data.Empty
@@ -211,3 +213,10 @@ sub _ (μ e) = μ e
 parse : (e : Exp) (w : String) → Dec (⟦ e ⟧ w)
 parse e [] = ν e
 parse e (c ∷ w) = map′ δ-sound δ-complete (parse (δ c e) w)
+
+expr : Exp
+expr = (‵ 'x') ∪ (I * ((‵ '+') * I))
+
+x+x+x : ⟦ expr ⟧ ('x' ∷ '+' ∷ 'x' ∷ '+' ∷ 'x' ∷ [])
+x+x+x with parse expr ('x' ∷ '+' ∷ 'x' ∷ '+' ∷ 'x' ∷ [])
+... | yes x = x
