@@ -1,9 +1,10 @@
-{-# OPTIONS --safe --no-import-sorts #-}
+{-# OPTIONS --no-import-sorts #-} --safe
 
 open import Agda.Primitive renaming (Set to Type ; Setω to Typeω)
 
 import Function.Properties.Equivalence as ⇔
 import Data.Bool as Bool
+open Bool using (_∧_ ; _∨_)
 open import Data.Bool using (Bool ; true ; false)
 open import Data.Char using (Char ; _≟_)
 open import Data.List as List hiding (foldl)
@@ -12,6 +13,7 @@ open import Data.Product as Prod
 open import Data.Sum as Sum
 open import Data.Unit hiding (_≟_)
 open import Relation.Nullary.Decidable as Dec hiding (from-yes ; from-no)
+open import Relation.Nullary.Reflects
 open import Level hiding (zero ; suc)
 open import Relation.Binary.PropositionalEquality
 open import Function hiding (_⟶_ ; typeOf)
@@ -136,6 +138,8 @@ module ◇ where
     -- Since we can use the full power of the Agda language, proving
     -- language inclusion like this is undecidable.
 
+    str : String → Lang
+    str w′ w = w ≡ w′
 
     -- BNF: <brackets> ::= ε | [ <brackets> ] | <brackets> <brackets>
     data brackets : Lang where
@@ -153,9 +157,75 @@ module ◇ where
     δ : Char → Lang → Lang
     (δ c L) w = L (c ∷ w)
 
+    -- BNF:
+    -- <sentence>  ::= <subject> <verb> <object>
+    -- <subject>   ::= The cat | The dog
+    -- <verb>      ::= played with | ate
+    -- <object>    ::= the <adjective> yarn ball. | my homework
+    -- <adjective> ::= ε | big | red
+
+    adjective subject verb object sentence : Lang
+    adjective = ε ∪ str "big " ∪ str "red "
+    subject = str "The cat " ∪ str "The dog "
+    verb = str "played with " ∪ str "ate "
+    object = str "the " * adjective * str "yarn ball." ∪ str "my homework."
+    sentence = subject * verb * object
+
+    example₁ : sentence "The cat played with the red yarn ball."
+    example₁ = "The cat " , _ , refl , inj₁ refl , "played with " , _ , refl , inj₁ refl , inj₁ ("the " , _ , refl , refl , "red " , "yarn ball." , refl , inj₂ (inj₂ refl) , refl)
+
+
     νfoldlδL≡L : ∀ w → ν (foldl δ L w) ≡ L w
     νfoldlδL≡L [] = refl
     νfoldlδL≡L (_ ∷ w) = νfoldlδL≡L w
+
+    𝒟 : String → Lang → Lang
+    (𝒟 w′ L) w = L (w′ ++ w) 
+
+    example₂ : (𝒟 "The cat " sentence) w ⇔ (verb * object) w
+    example₂ = mk⇔
+      (λ where
+        (_ , _ , refl , inj₁ refl , x) → x
+        (_ , _ , () , inj₂ refl , _))
+      λ x → _ , _ , refl , inj₁ refl , x
+
+    example₃ : (𝒟 "played with " (verb * object)) w ⇔ object w
+    example₃ = mk⇔
+      (λ where
+        (_ , _ , refl , inj₁ refl , x) → x
+        (_ , _ , () , inj₂ refl , _))
+      λ x → _ , _ , refl , inj₁ refl , x
+
+    example₄ : (𝒟 "the " object) w ⇔ (adjective * str "yarn ball.") w
+    example₄ = mk⇔
+      (λ where
+        (inj₁ (_ , _ , refl , refl , x)) → x)
+      λ x → inj₁ (_ , _ , refl , refl , x)
+
+    example₅ : (𝒟 "red " (adjective * str "yarn ball.")) w ⇔ (str "yarn ball.") w
+    example₅ = mk⇔
+      (λ where
+        (_ , _ , refl , inj₂ (inj₂ refl) , x) → x
+        (_ , _ , () , inj₂ (inj₁ refl) , _)
+        (_ , _ , refl , inj₁ refl , ()))
+      λ x → _ , _ , refl , inj₂ (inj₂ refl) , x
+
+    example₆ : (𝒟 "yarn ball." (str "yarn ball.")) w ⇔ ε w
+    example₆ = mk⇔
+      (λ where refl → refl)
+      λ where refl → refl
+
+    example₇ : ν ε
+    example₇ = refl
+
+    νfoldl𝒟L≡L : ∀ ws → ν (foldl 𝒟 L ws) ≡ L (concat ws)
+    νfoldl𝒟L≡L [] = refl
+    νfoldl𝒟L≡L (_ ∷ ws) = νfoldl𝒟L≡L ws
+
+    open Equivalence
+
+    example₈ : sentence "The cat played with the red yarn ball."
+    example₈ = transport (νfoldl𝒟L≡L {L = sentence} ("The cat " ∷ "played with " ∷ "the " ∷ "red " ∷ "yarn ball." ∷ [])) (example₂ .from (example₃ .from (example₄ .from (example₅ .from (example₆ .from example₇)))))
 
     variable P Q R S : Lang
 
@@ -183,8 +253,11 @@ module ◇ where
     *-map₁ : (P ⟶ Q) → P * R ⟶ Q * R 
     *-map₁ f (_ , _ , refl , x , y) = _ , _ , refl , f x , y
 
-    ·-map₂ : (P ⟶ Q) → (A · P) ⟶ (A · Q)
-    ·-map₂ f = Prod.map₂ f
+    *-map : (P ⟶ Q) → (R ⟶ S) → P * R ⟶ Q * S 
+    *-map f g (_ , _ , refl , x , y) = _ , _ , refl , f x , g y
+
+    ·-map : (P ⟶ Q) → (A · P) ⟶ (A · Q)
+    ·-map f = Prod.map₂ f
 
     ⟷refl : P ⟷ P
     ⟷refl = mk⟷ id id
@@ -195,6 +268,14 @@ module ◇ where
 
     ν* : (ν P × ν Q) ⇔ ν (P * Q)
     ν* = mk⇔ (λ x → [] , [] , refl , x) (λ { ([] , [] , refl , x) → x })
+
+    δε : ∅ ⟷ δ c ε
+    δε .to ()
+    δε .from ()
+
+    δ‵ : ∀{c c₁} → ((c ≡ c₁) · ε) ⟷ δ c (‵ c₁)
+    δ‵ .to (refl , refl) = refl
+    δ‵ .from refl = refl , refl
 
     δ* : (δ c P * Q ∪ (ν P · δ c Q)) ⟷ δ c (P * Q)
     δ* = mk⟷
@@ -214,61 +295,183 @@ module ◆ where
 
   -- Definitions
 
-  data Exp : Type₁ where
-    ∅ : Exp
-    ε : Exp
-    ‵_ : (c : Char) → Exp
-    _·_ : {A : Type} → Dec A → Exp → Exp
-    _∪_ : Exp → Exp → Exp
-    _*_ : Exp → Exp → Exp
 
-  ⟦_⟧ : Exp → Lang
-  ⟦ ∅ ⟧ = ◇.∅
-  ⟦ ε ⟧ = ◇.ε
-  ⟦ ‵ c ⟧ = ◇.‵ c
-  ⟦ x · e ⟧ = typeOf x ◇.· ⟦ e ⟧
-  ⟦ e ∪ e₁ ⟧ = ⟦ e ⟧ ◇.∪ ⟦ e₁ ⟧
-  ⟦ e * e₁ ⟧ = ⟦ e ⟧ ◇.* ⟦ e₁ ⟧
+  variable P Q R S : Lang
 
-  -- Goal
+  -- ⟦_⟧₁ : {P : Lang} → Exp○ P Q → Lang
+  -- ⟦_⟧₁ {Q = Q} _ = Q
 
-  -- here we can explain the ν & δ stuff
+  -- data ⟦_⟧ (e : Exp○ P Q) : Lang where
+  --     ∞ : ⟦_⟧₁ {P = ⟦ e ⟧} e w → ⟦ e ⟧ w
 
-  ν : (e : Exp) → Dec (◇.ν ⟦ e ⟧)
-  δ : Char → Exp → Exp
+  variable φ ψ : Lang → Lang
 
-  δ-correct : ∀ e → ⟦ δ c e ⟧ ◇.⟷ ◇.δ c ⟦ e ⟧
-  -- δ-sound : ∀ e → ⟦ δ c e ⟧ w → ◇.δ c ⟦ e ⟧ w
-  -- δ-complete : ∀ e → ◇.δ c ⟦ e ⟧ w → ⟦ δ c e ⟧ w
+  data Exp : (Lang → Lang) → Type₁
 
-  parse : (e : Exp) (w : String) → Dec (⟦ e ⟧ w)
-  parse e [] = ν e
-  parse e (c ∷ w) = Dec.map (◇.⟷→⇔ (δ-correct e)) (parse (δ c e) w)
+  ○⟦_⟧ : Exp φ → Lang → Lang
 
-  -- Nullability
+  data ⟦_⟧ (e : Exp φ) : Lang where
+    ∞′ : ○⟦ e ⟧ ⟦ e ⟧ w → ⟦ e ⟧ w
 
-  ν ∅ = no λ ()
-  ν ε = yes refl
-  ν (‵ c) = no λ ()
-  ν (x · e) = x ×-dec ν e 
-  ν (e ∪ e₁) = ν e ⊎-dec ν e₁
-  ν (e * e₁) = Dec.map ◇.ν* (ν e ×-dec ν e₁)
+  data Exp where
+    ∅   : Exp (const ◇.∅)
+    ε   : Exp (const ◇.ε)
+    ‵_  : (c : Char) → Exp (const (◇.‵ c))
+    _·_ : {A : Type} → Dec A → Exp φ → Exp (λ L → (A ◇.· φ L))
+    _∪_ : Exp φ → Exp ψ → Exp (λ L → φ L ◇.∪ ψ L)
+    _*_ : Exp φ → Exp ψ → Exp (λ L → φ L ◇.* ψ L)
+    I   : Exp id 
+    μ   : (e : Exp φ) → Exp (λ _ → ⟦ e ⟧)
 
-  -- Derivation
+  ○⟦ ∅ ⟧ _ = ◇.∅
+  ○⟦ ε ⟧ _ = ◇.ε
+  ○⟦ (‵ c) ⟧ _ = ◇.‵ c
+  ○⟦ x · e ⟧ L = typeOf x ◇.· ○⟦ e ⟧ L 
+  ○⟦ e ∪ e₁ ⟧ L = ○⟦ e ⟧ L ◇.∪ ○⟦ e₁ ⟧ L
+  ○⟦ e * e₁ ⟧ L = ○⟦ e ⟧ L ◇.* ○⟦ e₁ ⟧ L
+  ○⟦ I ⟧ L = L
+  ○⟦ μ e ⟧ _ = ⟦ e ⟧
 
-  δ c ∅ = ∅
-  δ c ε = ∅
-  δ c (‵ c₁) = (c ≟ c₁) · ε -- a bit interesting
-  δ c (x · e) = x · δ c e
-  δ c (e ∪ e₁) = δ c e ∪ δ c e₁
-  δ c (e * e₁) = (δ c e * e₁) ∪ (ν e · δ c e₁) -- interesting
+  ○-correct : (e : Exp φ) → ○⟦ e ⟧ P ≡ φ P
+  ○-correct ∅ = refl
+  ○-correct ε = refl
+  ○-correct (‵ c) = refl
+  ○-correct (x · e) = cong (typeOf x ◇.·_) (○-correct e)
+  ○-correct (e ∪ e₁) = cong₂ ◇._∪_ (○-correct e) (○-correct e₁)
+  ○-correct (e * e₁) = cong₂ ◇._*_ (○-correct e) (○-correct e₁)
+  ○-correct I = refl
+  ○-correct (μ e) = refl
 
-  δ-correct ∅ = ◇.⟷refl
-  δ-correct ε = ◇.mk⟷ (λ ()) (λ ())
-  δ-correct (‵ c) = ◇.mk⟷ (λ { (refl , refl) → refl }) (λ { refl → refl , refl })
-  δ-correct (x · e) = ◇.⟷cong ◇.·-map₂ (δ-correct e)
-  δ-correct {c = c} (e ∪ e₁) = ◇.⟷cong₂ ◇.∪-map (δ-correct e) (δ-correct e₁)
-  δ-correct (e * e₁) = ◇.⟷trans (◇.⟷cong₂ ◇.∪-map (◇.⟷cong ◇.*-map₁ (δ-correct e)) (◇.⟷cong ◇.·-map₂ (δ-correct e₁))) ◇.δ*
+  ∞ : {e : Exp φ} → φ ⟦ e ⟧ w → ⟦ e ⟧ w
+  ∞ {e = e} = foo (○-correct e) where
+    foo : ∀ {L} → ○⟦ e ⟧ ⟦ e ⟧ ≡ L → L w → ⟦ e ⟧ w
+    foo refl = ∞′
+
+  ! : ∀{e : Exp φ} → ⟦ e ⟧ w → φ ⟦ e ⟧ w
+  ! {e = e} = foo (○-correct e) where
+    foo : ∀ {L} → ○⟦ e ⟧ ⟦ e ⟧ ≡ L → ⟦ e ⟧ w → L w
+    foo refl (∞′ x) = x
+
+  νμ : {e₀ : Exp ψ} (e : Exp φ) → ◇.ν (φ ⟦ e₀ ⟧) ⇔ ◇.ν (φ ◇.∅)
+  νμ ∅ = ⇔.refl
+  νμ ε = ⇔.refl
+  νμ (‵ c) = ⇔.refl
+  νμ (x · e) = ? -- ⇔cong (_ ×_) (νμ e)
+  νμ (e ∪ e₁) = ? -- cong₂ _⊎_ (νμ e) (νμ e₁)
+  νμ (e * e₁) = {!◇.ν*!}
+  νμ I = {!!}
+  νμ (μ e) = ⇔.refl
+
+  ν₁ : Exp φ → Dec (◇.ν (φ ◇.∅))
+  ν₁ ∅ = no λ ()
+  ν₁ ε = yes refl
+  ν₁ (‵ c) = no λ ()
+  ν₁ (x · e) = x ×-dec ν₁ e
+  ν₁ (e ∪ e₁) = ν₁ e ⊎-dec ν₁ e₁
+  ν₁ (e * e₁) = Dec.map ◇.ν* (ν₁ e ×-dec ν₁ e₁)
+  ν₁ I = no λ ()
+  ν₁ (μ e) = Dec.map {!!} (ν₁ e)
+
+  test : Exp _
+  test = (‵ 'x') ∪ I
+
+--   data Exp : Type₁ where
+--     ∅ : Exp
+--     ε : Exp
+--     ‵_ : (c : Char) → Exp
+--     _·_ : {A : Type} → Dec A → Exp → Exp
+--     _∪_ : Exp → Exp → Exp
+--     _*_ : Exp → Exp → Exp
+-- 
+--   ⟦_⟧ : Exp → Lang
+--   ⟦ ∅ ⟧ = ◇.∅
+--   ⟦ ε ⟧ = ◇.ε
+--   ⟦ ‵ c ⟧ = ◇.‵ c
+--   ⟦ x · e ⟧ = typeOf x ◇.· ⟦ e ⟧
+--   ⟦ e ∪ e₁ ⟧ = ⟦ e ⟧ ◇.∪ ⟦ e₁ ⟧
+--   ⟦ e * e₁ ⟧ = ⟦ e ⟧ ◇.* ⟦ e₁ ⟧
+-- 
+--   variable L : Lang
+-- 
+--   record Exp′ (L : Lang) : Type₁ where
+--     constructor _~_
+--     field
+--       e : Exp
+--       φ : ⟦ e ⟧ ◇.⟷ L
+-- 
+--   -- Goal
+-- 
+--   -- here we can explain the ν & δ stuff
+-- 
+--   ν : (e : Exp) → Dec (◇.ν ⟦ e ⟧)
+--   δ : (c : Char) → (e : Exp) → Exp′ (◇.δ c ⟦ e ⟧)
+--   -- δ : (c : Char) → (e : Exp) → Σ[ e′ ∈ Exp ] ⟦ e′ ⟧ ◇.⟷ ◇.δ c ⟦ e ⟧
+-- 
+--   -- δ-correct : ∀ e → ⟦ δ c e ⟧ ◇.⟷ ◇.δ c ⟦ e ⟧
+--   -- δ-sound : ∀ e → ⟦ δ c e ⟧ w → ◇.δ c ⟦ e ⟧ w
+--   -- δ-complete : ∀ e → ◇.δ c ⟦ e ⟧ w → ⟦ δ c e ⟧ w
+-- 
+--   ν′ : Exp′ L → Dec (◇.ν L)
+--   ν′ (e ~ φ) = Dec.map (◇.⟷→⇔ φ) (ν e)
+-- 
+--   variable P Q R S : Lang
+--   open ◇._⟷_
+-- 
+--   mapExp : P ◇.⟷ Q → Exp′ P → Exp′ Q
+--   mapExp f (e ~ φ) = e ~ ◇.⟷trans φ f
+-- 
+--   δ⟷ : P ◇.⟷ Q → ◇.δ c P ◇.⟷ ◇.δ c Q
+--   δ⟷ x .to = x .to
+--   δ⟷ x .from = x .from
+-- 
+--   δ′ : (c : Char) → Exp′ L → Exp′ (◇.δ c L)
+--   δ′ c (e ~ φ) = mapExp (δ⟷ φ) (δ c e)
+-- 
+--   parse : (_ : Exp′ L) (w : String) → Dec (L w)
+--   parse e [] = ν′ e
+--   parse e (c ∷ w) = parse (δ′ c e) w
+-- 
+--   -- Nullability
+-- 
+--   ⊥-dec : Dec ⊥
+--   ⊥-dec = false because ofⁿ λ ()
+-- 
+--   []≡[]-dec : Dec ([] ≡ [])
+--   []≡[]-dec = true because ofʸ refl
+-- 
+--   []≡x∷xs-dec : ∀{x : A} {xs} → Dec ([] ≡ x ∷ xs)
+--   []≡x∷xs-dec = false because ofⁿ λ ()
+-- 
+--   ν ∅         = ⊥-dec
+--   ν ε         = []≡[]-dec
+--   ν (‵ c)     = []≡x∷xs-dec
+--   ν (x · e)   = x ×-dec ν e 
+--   ν (e ∪ e₁)  = ν e ⊎-dec ν e₁
+--   ν (e * e₁)  = Dec.map ◇.ν* (ν e ×-dec ν e₁)
+-- 
+--   -- Derivation
+-- 
+--   ∅′ : Exp′ ◇.∅
+--   ∅′ = ∅ ~ ◇.⟷refl
+-- 
+--   ε′ : Exp′ ◇.ε
+--   ε′ = ε ~ ◇.⟷refl
+-- 
+--   _·′_ : Dec A → Exp′ L → Exp′ (A ◇.· L)
+--   x ·′ (e ~ φ) = (x · e) ~ ◇.⟷cong {f = _ ◇.·_} ◇.·-map φ
+-- 
+--   _∪′_ : Exp′ P → Exp′ Q → Exp′ (P ◇.∪ Q)
+--   (e ~ φ) ∪′ (e₁ ~ φ₁) = (e ∪ e₁) ~ ◇.⟷cong₂ {f = ◇._∪_} ◇.∪-map φ φ₁
+-- 
+--   _*′_ : Exp′ P → Exp′ Q → Exp′ (P ◇.* Q)
+--   (e ~ φ) *′ (e₁ ~ φ₁) = (e * e₁) ~ ◇.⟷cong₂ {f = ◇._*_} ◇.*-map φ φ₁
+-- 
+--   δ c ∅         = ∅′
+--   δ c ε         = mapExp ◇.δε ∅′
+--   δ c (‵ c₁)    = mapExp ◇.δ‵ ((c ≟ c₁) ·′ ε′)
+--   δ c (x · e)   = x ·′ δ c e
+--   δ c (e ∪ e₁)  = δ c e ∪′ δ c e₁
+--   δ c (e * e₁)  = mapExp ◇.δ* ((δ c e *′ (e₁ ~ ◇.⟷refl)) ∪′ (ν e ·′ δ c e₁))
 
 -- Instead we restrict our class of languages
 

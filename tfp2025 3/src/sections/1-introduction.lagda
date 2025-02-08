@@ -2,6 +2,8 @@
 {-# OPTIONS --cubical --guarded #-}
 module 1-introduction where
 
+open import Data.Unit
+
 \end{code}
 
 \section{Introduction}
@@ -10,15 +12,38 @@ Parsing is the conversion of flat, human-readable text into a tree structure
 that is easier for computers to manipulate.  As one of the central
 pillars of compiler tooling since the 1960s, today almost every automated
 transformation of computer programs requires a form of parsing.
-Though it is such a mature research subject, it is still actively studied, for example the question of how to resolve ambiguities in context-free grammars \cite{one-parser-to-rule-them-all}. 
+Though it is a mature research subject, it is still actively studied, for example the question of how to resolve ambiguities in context-free grammars \cite{one-parser-to-rule-them-all}. 
 
+Most parsing works mix the essence of the parsing technique with operational details \jr{such as... state machines, continuations, memoization?}. Our understanding and ability to improve upon these parsing techniques is hindered by the additional complexity of these inessential practical concerns. To address this issue, we are developing natural denotational semantics for traditional parsing techniques.
+
+\jr{Elliot has kicked off this effort...}
 Recent work by Elliot uses interactive theorem provers to state simple specifications of languages and that proofs of desirable properties of these language specifications transfer easily to their parsers \cite{conal-languages}. Unfortunately, this work only considers regular languages which are not powerful enough to describe practical programming languages.
 
-In this paper, we formalize context-free languages and show how to parse them, extending Elliot’s type theoretic approach to language specfication.  One of the main challenges is that the recursive nature of context-free languages does not map directly onto automated theorem provers as they do not support general recursion. We use a fuel-based approach to solve this problem.
+\jr{Make the problem clear through an example: if we have a left-recursive grammar then naively unfolding it gets us into an infinite loop. }
+
+In this paper, we formalize context-free languages and show how to parse them, extending Elliot’s type theoretic approach to language specfication.  One of the main challenges is that the recursive nature of context-free languages does not map directly onto interactive theorem provers as they do not support general recursion (for good reasons). We encode context-free languages as fixed points of functors (initial algebras).
+
+\jr{Say something about the limitation that we only study acyclic grammars: there must be a total order on nonterminals and a nonterminal is not allowed to refer to nonterminals that come before it. We wanted to start by limiting ourselves to grammars with only one nonterminal, but those are not closed under derivatives.}
 
 We make the following concrete contributions:
 \begin{itemize}
 \item We extend Elliot's type theoretic formalization of regular languages to context-free languages.
 \end{itemize}
 
-For this paper we have chosen Agda as our type theory and interactive theorem prover. We believe our definitions should transfer easily to other theories and tools. This paper itself is a literate Agda file; all highlighted Agda code has been accepted by Agda's type checker, giving us a high confidence of correctness. Unfortunately, we are still working out the proof of three postulates in \cref{sec:cfg-parsing}. These are the only postulates that we have yet to prove.
+For this paper we have chosen Agda as our type theory and interactive theorem prover. We believe our definitions should transfer easily to other theories and tools. This paper itself is a literate Agda file; all highlighted Agda code has been accepted by Agda's type checker, giving us a high confidence of correctness.
+
+% The goal is to give a denotational semantics to context-free languages
+% And mechanize this in a proof assistants
+
+% Challenge:
+% Give a simple non-recursive example
+% Expand to a recursive variant
+
+% We could use full blown domain theory, but that is quite a big hammer
+
+% In section 2:
+% * Could: "This is a background section"
+% * We recall Elliot's ...
+% * To make it easier to add fixed points in the next section
+
+% Look for a simple example in Section 2. Can be contrived

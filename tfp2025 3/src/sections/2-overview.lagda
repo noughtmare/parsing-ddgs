@@ -53,6 +53,10 @@ variable
 
 \subsection{Languages}
 
+\begin{code}[hide]
+postulate foo‵ : ⊤
+\end{code}
+
 We define languages as being functions from strings to types.\footnote{We use \af{Type} as a synonym for Agda's \af{Set} to avoid confusion.}
 \begin{code}[hide]
 Lang : Set₁
@@ -83,6 +87,23 @@ aabbcc = 2 , refl
 \end{code}
 \end{example}
 \cref{ex:non-context-free} shows that it is possible to specify languages and prove that certain strings are in those languages, but for practical applications we do not want to be burdened with writing such proofs ourselves. The compiler should be able to decide whether or not your program is valid by itself.
+
+\begin{itemize}
+\item Agda is too powerful: it can specify undecidable languages \jr{do I need to give an example?}
+\item So, we need to define a simpler language which still supports all the features we need.
+\end{itemize}
+
+
+\begin{grammar}
+<permissions>  ::= <read> <write> <execute>
+
+<read>         ::= `-' | `r'
+
+<write>        ::= `-' | `w'
+
+<execute>      ::= `-' | `x'
+\end{grammar}
+
 \begin{code}[hide]
 variable ℒ ℒ₁ ℒ₂ : Lang
 
@@ -117,9 +138,84 @@ module ◇ where
     _·_ : {A : Type} → Dec A → Lang → Lang
     _·_ {A} _ P w = A × P w 
 \end{code}
+\begin{code}[hide]
+    infix 22 `_
+    infixr 21 _*_
+    infixr 20 _∪_
+\end{code}
 \end{minipage}
 \caption{Basic language combinators.}\label{fig:combinators}
 \end{figure}
+
+This grammar uses three important features: sequencing, choice, and matching character literals.
+
+\begin{code}[hide]
+    permissions read write execute : Lang
+\end{code}
+\begin{code}
+    permissions  = read * write * execute
+    read         = ` '-' ∪ ` 'r'
+    write        = ` '-' ∪ ` 'w'
+    execute      = ` '-' ∪ ` 'x'
+\end{code}
+
+We want to write a program which can prove for us that a given string is in the language. What should this program return for strings that are not in the language? We want to make sure our program does find a proof if it exists, so if it does not exist then we want a proof that the string is not in the language. We can capture this using a type called \af{Dec} from the Agda standard library. It can be defined as follows:
+
+\begin{code}
+    data ◂Dec (A : Type) : Type where
+        ◂yes : A → ◂Dec A
+        ◂no : ¬ A → ◂Dec A
+\end{code}
+
+\begin{code}
+    Parser : Lang → Set
+    Parser L = (w : String) → Dec (L w)
+\end{code}
+
+\begin{code}
+    `-parse_ : (c : Char) → Parser (` c)
+    (`-parse _) [] = no λ ()
+    (`-parse c) (x ∷ []) = Dec.map (mk⇔ (λ { refl → refl }) (λ { refl → refl })) (x ≟ c)
+    (`-parse _) (_ ∷ _ ∷ _) = no λ ()
+\end{code}
+
+\begin{code}[hide]
+    variable P Q : Lang
+\end{code}
+\begin{code}
+    _∪-parse_ : Parser P → Parser Q → Parser (P ∪ Q)
+    (φ ∪-parse ψ) w = φ w ⊎-dec ψ w
+\end{code}
+
+\begin{code}
+    parseRead : Parser read
+    parseRead = (`-parse '-') ∪-parse (`-parse 'r')
+    parseWrite : Parser write
+    parseWrite = (`-parse '-') ∪-parse (`-parse 'w')
+    parseExecute : Parser execute
+    parseExecute = (`-parse '-') ∪-parse (`-parse 'x')
+\end{code}
+
+\begin{code}
+    _*-parse_ : Parser P → Parser Q → Parser (P * Q)
+    (φ *-parse ψ) [] = Dec.map (mk⇔ (λ x → [] , [] , refl , x) (λ { ([] , [] , refl , x) → x })) (φ [] ×-dec ψ [])
+    (φ *-parse ψ) (c ∷ w) = Dec.map 
+      (mk⇔ 
+        (λ where 
+          (inj₁ x) → [] , _ , refl , x
+          (inj₂ (u , v , refl , x)) → _ ∷ u , v , refl , x)
+        λ where 
+          ([] , _ , refl , x) → inj₁ x
+          (_ ∷ u , v , refl , x) → inj₂ (u , v , refl , x))
+      (φ [] ×-dec ψ (c ∷ w) ⊎-dec ((φ ∘ (c ∷_)) *-parse ψ) w)
+\end{code}
+
+\begin{code}
+    parsePermissions : Parser permissions
+    parsePermissions = parseRead *-parse (parseWrite *-parse parseExecute) 
+\end{code}
+
+\jr{transition}
 
 For starters, we define some structure on this definition of language in
 \cref{fig:combinators}. First, Languages form a semiring, with union
@@ -130,8 +226,6 @@ $\af{`\un}$ combinator defines a language which contains exactly the string
 consisting of a single given character. Finally, the scalar multiplication
 $\af{\un{}·\un{}}$ combinator injects an Agda type into a language. The purpose
 of this combinator will become clearer in later sections\jr{mention specific sections}.
-
-
 
 % \subsection{Decidability}
 
