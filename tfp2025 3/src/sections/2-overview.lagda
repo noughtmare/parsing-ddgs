@@ -1,4 +1,6 @@
 \begin{code}[hide]
+-- Cannot be safe because we postulate funext
+-- {-# OPTIONS --safe #-}
 module 2-overview where
 
 open import Agda.Primitive renaming (Set to Type ; Setω to Typeω)
@@ -13,11 +15,12 @@ open import Data.Product
 open import Data.Sum as Sum
 open import Data.Unit hiding (_≟_)
 open import Relation.Nullary.Decidable as Dec hiding (from-yes ; from-no)
+open import Relation.Nullary.Reflects using (ofʸ ; ofⁿ)
 open import Level hiding (zero ; suc)
 open import Relation.Binary.PropositionalEquality
 open import Function
 open import Data.Fin hiding (_≟_)
-open import Data.Nat hiding (_*_ ; _≟_)
+open import Data.Nat hiding (_≟_)
 open import Relation.Nullary.Negation
 import Data.String as String
 open import Agda.Builtin.FromString
@@ -47,19 +50,19 @@ foldl k z (c ∷ w) = foldl k (k c z) w
 variable
     ℓ ℓ′ : Level
     A : Type ℓ
-    c : Char
+    c c' : Char
     w : String
 \end{code}
 
-\subsection{Languages}
+\section{Languages and Parsers}
 
-\begin{code}[hide]
-postulate foo‵ : ⊤
-\end{code}
+In this section, we introduce background information, namely how we define languages, basic language combinators, and parsers. Our exposition follows Elliot~\cite{conal-languages}. In \cref{sec:context-free}, we extend these concepts to context free languages.
+
+\subsection{Languages}
 
 We define languages as being functions from strings to types.\footnote{We use \af{Type} as a synonym for Agda's \af{Set} to avoid confusion.}
 \begin{code}[hide]
-Lang : Set₁
+Lang : Type₁
 \end{code}
 \begin{code}
 Lang = String → Type
@@ -93,6 +96,9 @@ aabbcc = 2 , refl
 \item So, we need to define a simpler language which still supports all the features we need.
 \end{itemize}
 
+\subsection{Basic Language Combinators}
+
+Let's start with a simple example: POSIX file system permissions. These are usually summarized using the characters `r', `w', and `x' if the permissions are granted, or `-' in place of the corresponding character if the permission is denied. For example the string ``r-x'' indicates that read and execute permissions are granted, but the write permission is denied. The full language can be expressed using the following BNF grammar:\jr{cite: BNF}
 
 \begin{grammar}
 <permissions>  ::= <read> <write> <execute>
@@ -111,6 +117,20 @@ module ◇ where
 \end{code}
 
 \begin{figure}
+\begin{minipage}{.63\textwidth}
+\begin{code}
+    `_ : Char → Lang
+    (` c) w = w ≡ c ∷ []
+\end{code}
+\begin{code}
+    _∪_ : Lang → Lang → Lang
+    (P ∪ Q) w = P w ⊎ Q w
+\end{code}
+\begin{code}
+    _∗_ : Lang → Lang → Lang
+    (P ∗ Q) w = ∃[ u ] ∃[ v ] w ≡ u ++ v × P u × Q v
+\end{code}
+\end{minipage}
 \begin{minipage}{.36\textwidth}
 \begin{code}
     ∅ : Lang
@@ -121,43 +141,32 @@ module ◇ where
     ε w = w ≡ []
 \end{code}
 \begin{code}
-    _∪_ : Lang → Lang → Lang
-    (P ∪ Q) w = P w ⊎ Q w
-\end{code}
-\end{minipage} \quad
-\begin{minipage}{.63\textwidth}
-\begin{code}
-    _*_ : Lang → Lang → Lang
-    (P * Q) w = ∃[ u ] ∃[ v ] w ≡ u ++ v × P u × Q v
-\end{code}
-\begin{code}
-    `_ : Char → Lang
-    (` c) w = w ≡ c ∷ []
-\end{code}
-\begin{code}
-    _·_ : {A : Type} → Dec A → Lang → Lang
-    _·_ {A} _ P w = A × P w 
-\end{code}
-\begin{code}[hide]
-    infix 22 `_
-    infixr 21 _*_
-    infixr 20 _∪_
+    _·_ : Type → Lang → Lang
+    (A · P) w = A × P w 
 \end{code}
 \end{minipage}
+\begin{code}[hide]
+    infix 22 `_
+    infixr 21 _∗_
+    infix 21 _·_
+    infixr 20 _∪_
+\end{code}
 \caption{Basic language combinators.}\label{fig:combinators}
 \end{figure}
 
-This grammar uses three important features: sequencing, choice, and matching character literals.
+This grammar uses three important features: sequencing, choice, and matching character literals. We can define these features are combinators in Agda as shown in \cref{fig:combinators} and use them to write our permissions grammar as follows:
 
 \begin{code}[hide]
     permissions read write execute : Lang
 \end{code}
 \begin{code}
-    permissions  = read * write * execute
+    permissions  = read ∗ write ∗ execute
     read         = ` '-' ∪ ` 'r'
     write        = ` '-' ∪ ` 'w'
     execute      = ` '-' ∪ ` 'x'
 \end{code}
+
+\subsection{Parsers}
 
 We want to write a program which can prove for us that a given string is in the language. What should this program return for strings that are not in the language? We want to make sure our program does find a proof if it exists, so if it does not exist then we want a proof that the string is not in the language. We can capture this using a type called \af{Dec} from the Agda standard library. It can be defined as follows:
 
@@ -167,65 +176,261 @@ We want to write a program which can prove for us that a given string is in the 
         ◂no : ¬ A → ◂Dec A
 \end{code}
 
-\begin{code}
-    Parser : Lang → Set
-    Parser L = (w : String) → Dec (L w)
-\end{code}
+A parser for a language, then, is a program which can tell us whether any given string is in the language or not.
 
 \begin{code}
-    `-parse_ : (c : Char) → Parser (` c)
-    (`-parse _) [] = no λ ()
-    (`-parse c) (x ∷ []) = Dec.map (mk⇔ (λ { refl → refl }) (λ { refl → refl })) (x ≟ c)
-    (`-parse _) (_ ∷ _ ∷ _) = no λ ()
+    Parser : Lang → Set
+    Parser P = (w : String) → Dec (P w)
+\end{code}
+
+\begin{remark}
+Readers familiar with Haskell might see similarity between this type and the type \verb|String -> Maybe a|, which is one way to implement parser combinators (although usually the return type is \verb|Maybe (a, String)| giving parsers the freedom to consume only a prefix of the input string and return the rest). The differences are that the result of our $\af{Parser}$ type depends on the language specification and input string, and that a failure carries with it a proof that the string cannot be part of the language. This allows us to separate the specification of our language from the implementation while ensuring correctness.
+\end{remark}
+
+\begin{remark}
+Note that the \af{Dec} type only requires our parsers to produce a single result; it does not have to exhaustively list all possible ways to parse the input string. In Haskell, one might write \verb|String -> [(a, String)]|\jr{cite: monadic parser combinators}, which allows a parser to return multiple results but still does not enforce exhaustiveness. Instead, we could use:\jr{This should be explained in more detail}
+%
+\begin{itemize}
+\item completely unique account of enumeration.
+\item bijection with $\af{Fin}~\ab{n}$ for some $\ab{n}$ or $\af{Nat}$.
+\end{itemize}
+%
+In this paper, however, we use $\af{Dec}$ to keep the presentation simple.
+\end{remark}
+
+To construct a parser for our permissions language, we start by defining parsers for each of the language combinators. Let us start by considering the character combinator. If the given string is empty or has more than one character, it can never be in a language formed by one character. If the string does consist of only one character, then it is in the language if that character is the same as from the language specification. In Agda, we can write such a parser for characters as follows:
+
+\begin{code}
+    ◂`-parse_ : (x : Char) → Parser (` x)
+    (◂`-parse _) [] = no λ ()
+    (◂`-parse x) (c ∷ []) = Dec.map (mk⇔ (λ { refl → refl }) (λ { refl → refl })) (c ≟ x)
+    (◂`-parse _) (_ ∷ _ ∷ _) = no λ ()
+\end{code}
+
+This is a correct implementation of a parser for languages that consist of a single character, but the implementation is hard to read and does not give much insight. Instead, we can factor this parser into two cases: the empty string case and the case where the string has at least one character. We call the former nullability and use the greek character $ν$ to signify it, and we call the latter derivative and use the greek character $δ$ to signify it. \Cref{fig:null-delta} shows how these cases can be defined and how they relate to the basic combinators. These properties motivate the introduction of three new basic combinators: guards $\af{_·_}$, the language consisting of only the empty string $\af{ε}$, and the empty language $\af{∅}$.\jr{This does not motivate the split into $ν$ and $δ$ well enough. Also, the new combinators can be motivated more clearly.}
+
+\begin{code}[hide]
+    variable L P Q : Lang
 \end{code}
 
 \begin{code}[hide]
-    variable P Q : Lang
+    ⊥-dec : Dec ⊥
+    ⊥-dec = no λ ()
+
+    ⊤-dec : Dec ⊤
+    ⊤-dec = yes tt
+\end{code}
+
+\begin{figure}
+\begin{minipage}{0.45\textwidth}
+\begin{code}[hide]
+    ν : {ℓ : Level} {P : String → Type ℓ} → ((w : String) → P w) → P []
+    _◂⇔_ : Set → Set → Set
 \end{code}
 \begin{code}
+    ν P = P []
+\end{code}
+\begin{code}
+    A ◂⇔ B = (A → B) × (B → A) 
+\end{code}
+\begin{code}
+    ν∅  : ⊥            ⇔ ν ∅
+    νε  : ⊤            ⇔ ν ε
+    ν·  : (A × ν P)    ⇔ ν (A · P)
+    ν`  : ⊥            ⇔ ν (` c')
+    ν∪  : (ν P ⊎ ν Q)  ⇔ ν (P ∪ Q)
+    ν∗  : (ν P × ν Q)  ⇔ ν (P ∗ Q)
+
+\end{code}
+\end{minipage}
+\begin{minipage}{0.54\textwidth}
+\begin{code}[hide]
+    δ : {ℓ : Level} {P : String → Type ℓ} (c : Char) → ((w : String) → P w) → ((w : String) → P (c ∷ w))
+    _⟺_ : Lang → Lang → Set
+\end{code}
+\begin{code}
+    (δ c P) w = P (c ∷ w)
+\end{code}
+\begin{code}
+    P ⟺ Q = ∀ {w} → P w ⇔ Q w
+\end{code}
+\begin{code}
+    δ∅  : ∅                ⟺ δ c ∅
+    δε  : ∅                ⟺ δ c ε
+    δ·  : (A · δ c P)      ⟺ δ c (A · P)
+    δ`  : ((c ≡ c') · ε)   ⟺ δ c (` c')
+    δ∪  : (δ c P ∪ δ c Q)  ⟺ δ c (P ∪ Q)
+    δ∗  : (ν P · δ c Q ∪ δ c P ∗ Q)
+                           ⟺ δ c (P ∗ Q)
+\end{code}
+\end{minipage}
+\caption{Nullability, derivatives, and how they relate to the basic combinators.}\label{fig:null-delta}
+\end{figure}
+
+\begin{code}[hide]
+    ν∅ = ⇔.refl
+    δ∅ = ⇔.refl
+\end{code}
+
+\begin{code}[hide]
+    ∅-parse : Parser ∅
+    ∅-parse []       = Dec.map ν∅ ⊥-dec
+    ∅-parse (c ∷ w)  = Dec.map (δ∅ {c} {w}) (∅-parse w)
+
+    νε = mk⇔ (λ { tt → refl }) (λ { refl → tt })
+    δε = mk⇔ (λ ()) (λ ())
+
+    ε-parse : Parser ε
+    ε-parse []       = Dec.map νε ⊤-dec
+    ε-parse (_ ∷ w)  = Dec.map δε (∅-parse w)
+
+    ν· = ⇔.refl
+    δ· = ⇔.refl
+
+    _·-parse_ : (x : Dec A) → Parser P → Parser (A · P)
+    _·-parse_ {P = P} x φ []       = Dec.map (ν· {P = P}) (x ×-dec (ν φ))
+    _·-parse_ {P = P} x φ (c ∷ w)  = Dec.map (δ· {P = P}) ((x ·-parse (δ c φ)) w)
+
+    ν` = mk⇔ (λ ()) (λ ())
+    δ` = mk⇔ (λ { (refl , refl) → refl }) (λ { refl → refl , refl })
+\end{code}
+
+Now the implementation of parsers for languages consisting of a single character follows completely from the decomposition into nullability and derivatives.
+
+\begin{code}
+    `-parse_ : (c' : Char) → Parser (` c')
+    (`-parse _) []        = Dec.map ν` ⊥-dec
+    (`-parse c') (c ∷ w)  = Dec.map δ` (((c ≟ c') ·-parse ε-parse) w)
+\end{code}
+
+The implementation of $\af{·-parse}$, $\af{ε-parse}$, and $\af{∅-parse}$ are straightforward and can be found in our source code artifact.\jr{todo: reference this nicely}
+
+\begin{code}[hide]
+    ν∪ = ⇔.refl
+    δ∪ = ⇔.refl
+\end{code}
+
+\begin{code}[hide]
+    -- To make this work properly we have to do some ugly implicit parameter manipulation
     _∪-parse_ : Parser P → Parser Q → Parser (P ∪ Q)
-    (φ ∪-parse ψ) w = φ w ⊎-dec ψ w
+    _∪-parse_ {P} {Q} φ ψ []       = Dec.map (ν∪ {P} {Q}) (ν φ ⊎-dec ν ψ)
+    _∪-parse_ {P} {Q} φ ψ (c ∷ w)  = Dec.map (δ∪ {c} {P} {Q}) ((δ c φ ∪-parse δ c ψ) w)
+    module _ {P Q : Lang} where
+        ◂ν∪  : (ν P ⊎ ν Q)  ⇔ ν (P ∪ Q)
+        ◂ν∪ = ν∪ {P} {Q}
+        ◂δ∪  : (δ c P ∪ δ c Q)  ⟺ δ c (P ∪ Q)
+        ◂δ∪ = δ∪ {_} {P} {Q}
+\end{code}
+\begin{code}
+        _◂∪-parse_ : Parser P → Parser Q → Parser (P ∪ Q)
+        (φ ◂∪-parse ψ) []       = Dec.map ◂ν∪ (ν φ ⊎-dec ν ψ)
+        (φ ◂∪-parse ψ) (c ∷ w)  = Dec.map ◂δ∪ ((δ c φ ∪-parse δ c ψ) w)
 \end{code}
 
-\begin{code}
-    parseRead : Parser read
-    parseRead = (`-parse '-') ∪-parse (`-parse 'r')
-    parseWrite : Parser write
-    parseWrite = (`-parse '-') ∪-parse (`-parse 'w')
-    parseExecute : Parser execute
-    parseExecute = (`-parse '-') ∪-parse (`-parse 'x')
-\end{code}
-
-\begin{code}
-    _*-parse_ : Parser P → Parser Q → Parser (P * Q)
-    (φ *-parse ψ) [] = Dec.map (mk⇔ (λ x → [] , [] , refl , x) (λ { ([] , [] , refl , x) → x })) (φ [] ×-dec ψ [])
-    (φ *-parse ψ) (c ∷ w) = Dec.map 
-      (mk⇔ 
+\begin{code}[hide]
+    ν∗ = mk⇔ (λ x → [] , [] , refl , x) (λ { ([] , [] , refl , x) → x })
+    δ∗ = mk⇔ 
         (λ where 
           (inj₁ x) → [] , _ , refl , x
           (inj₂ (u , v , refl , x)) → _ ∷ u , v , refl , x)
-        λ where 
+        (λ where 
           ([] , _ , refl , x) → inj₁ x
           (_ ∷ u , v , refl , x) → inj₂ (u , v , refl , x))
-      (φ [] ×-dec ψ (c ∷ w) ⊎-dec ((φ ∘ (c ∷_)) *-parse ψ) w)
 \end{code}
+
+\begin{code}[hide]
+    map′-id-id : {x : Dec A} → Dec.map′ id id x ≡ x
+    map′-id-id {x = yes _} = refl
+    map′-id-id {x = no _} = refl
+    ∪-parse-rewrite : ∀{φ : Parser P} {ψ : Parser Q} → (φ ∪-parse ψ) w ≡ (φ w ⊎-dec ψ w)
+    ∪-parse-rewrite {w = []} = map′-id-id
+    ∪-parse-rewrite {w = x ∷ w} = trans map′-id-id (∪-parse-rewrite {w = w})
+\end{code}
+
+\begin{code}[hide]
+    infix 22 `-parse_
+    infixr 21 _∗-parse_
+    infix 21 _·-parse_
+    infixr 20 _∪-parse_
+    -- To convince Agda this terminates, we need to use the identity:
+    -- (φ ∪-parse ψ) w ≡ φ w ⊎-dec ψ w
+    -- That is easy to prove (see ∪-parse-rewrite above), but convincing Agda to use this is a bit difficult
+    _∗-parse_ : Parser P → Parser Q → Parser (P ∗ Q)
+    (φ ∗-parse ψ) []       = Dec.map ν∗ (ν φ ×-dec ν ψ)
+    (φ ∗-parse ψ) (c ∷ w)  = Dec.map δ∗ ((ν φ ·-parse δ c ψ) w ⊎-dec (δ c φ ∗-parse ψ) w)
+    -- So we just use the TERMINATING pragma for the code that we show in the paper.
+    {-# TERMINATING #-}
+\end{code}
+\begin{code}
+    _◂∗-parse_ : Parser P → Parser Q → Parser (P ∗ Q)
+    (φ ◂∗-parse ψ) []       = Dec.map ν∗ (ν φ ×-dec ν ψ)
+    (φ ◂∗-parse ψ) (c ∷ w)  = Dec.map δ∗ ((ν φ ·-parse δ c ψ ∪-parse δ c φ ∗-parse ψ) w)
+\end{code}
+
+Using these combinators we can define a parser for the permissions language by
+simply mapping each of the language combinators onto their respective parser
+combinators.
+
+\begin{code}[hide]
+    permissions-parse : Parser permissions
+    read-parse : Parser read
+    write-parse : Parser write
+    execute-parse : Parser execute
+\end{code}
+\begin{code}
+    permissions-parse  = read-parse ∗-parse (write-parse ∗-parse execute-parse) 
+    read-parse         = (`-parse '-') ∪-parse (`-parse 'r')
+    write-parse        = (`-parse '-') ∪-parse (`-parse 'w')
+    execute-parse      = (`-parse '-') ∪-parse (`-parse 'x')
+\end{code}
+
+\subsection{Infinite Languages}
+
+This permissions language is very simple. In particular, it is finite. In practice, many languages are inifinite, for which the basic combinators will not suffice. For example, file paths can be arbitrarily long on most systems.
+Elliot~\cite{conal-languages} defines a Kleene star\jr{does this need citation?} combinator which enables him to specify regular languages such as file paths.
+
+However, we want to go one step further, speficying and parsing context-free languages. Most practical programming languages are at least context-free, if not more complicated. One essential feature of many languages is the ability to recognize balanced brackets. A minimal example language with balanced brackets is the following:
+%
+\begin{grammar}
+<brackets> ::= ε | `[' <brackets> `]' | <brackets> <brackets>
+\end{grammar}
+%
+This is the language of all strings which consist of balanced square brackets. 
+Many practical programming languages include some form of balanced brackets. Furthermore, this language is well known to be context-free and not regular. Thus, we need more powerful combinators.
+
+We could try to naively transcribe the brackets grammar using our basic combinators, but Agda will justifiably complain that it is not terminating (here I've added a NON_TERMINATING pragma to make Agda to accept it any way).
+%
+\begin{code}
+    {-# NON_TERMINATING #-}
+    brackets = ε ∪ ` '[' ∗ brackets ∗ ` ']' ∪ brackets ∗ brackets
+\end{code}
+%
+We need to find a different way to encode this recursive relation.
 
 \begin{code}
-    parsePermissions : Parser permissions
-    parsePermissions = parseRead *-parse (parseWrite *-parse parseExecute) 
+    postulate μ : (Lang → Lang) → Lang
+    bracketsμ = μ (λ P → ε ∪ ` '[' ∗ P ∗ ` ']' ∪ P ∗ P)
 \end{code}
 
-\jr{transition}
+\begin{itemize}
+\item μ cannot be implemented just like that
+\item we need to restrict the Lang → Lang function that we take a fixed point over
+\item polynomial functors would work, but our grammars are slightly different.
+\item Luckily, our basic combinators with variables added also works
+\item We can make this obvious to agda by defining a data type of descriptions a la gentle art of levitation.
+\end{itemize}
 
-For starters, we define some structure on this definition of language in
-\cref{fig:combinators}. First, Languages form a semiring, with union
-$\af{\un{}∪\un{}}$, concatenation $\af{\un{}*\un{}}$, the empty language
-$\af{∅}$ which is the unit of union, and the language which only includes the
-empty string $\af{ε}$ which is the unit of concatenation. Furthermore the
-$\af{`\un}$ combinator defines a language which contains exactly the string
-consisting of a single given character. Finally, the scalar multiplication
-$\af{\un{}·\un{}}$ combinator injects an Agda type into a language. The purpose
-of this combinator will become clearer in later sections\jr{mention specific sections}.
+\endinput
+
+% For starters, we define some structure on this definition of language in
+% \cref{fig:combinators}. First, Languages form a semiring, with union
+% $\af{\un{}∪\un{}}$, concatenation $\af{\un{}∗\un{}}$, the empty language
+% $\af{∅}$ which is the unit of union, and the language which only includes the
+% empty string $\af{ε}$ which is the unit of concatenation. Furthermore the
+% $\af{`\un}$ combinator defines a language which contains exactly the string
+% consisting of a single given character. Finally, the scalar multiplication
+% $\af{\un{}·\un{}}$ combinator injects an Agda type into a language. The purpose
+% of this combinator will become clearer in later sections\jr{mention specific sections}.
 
 % \subsection{Decidability}
 
@@ -310,7 +515,7 @@ of this combinator will become clearer in later sections\jr{mention specific sec
 
 % \end{code}
 
-\section{Grammars}\label{sec:gram-and-parsing}
+\subsection{Grammars}\label{sec:gram-and-parsing}
 
 We have seen in \cref{ex:non-context-free} that our definition of language is very general, comprising even context-sensitive languages. Parsing such languages automatically poses a significant challenge. Hence, we side-step this problem by restricting the scope of our parsers to a smaller well-defined subset of languages. In this subsection, we consider a subset of regular languages without Kleene star (i.e., closure under concatenation). In \cref{sec:context-free}, we extend this class of languages to include fixed points which subsume the Kleene star.
 
@@ -324,19 +529,23 @@ module ◆ where
         `_ : (c : Char) → Exp
         _·_ : {A : Type} → Dec A → Exp → Exp
         _∪_ : Exp → Exp → Exp
-        _*_ : Exp → Exp → Exp
+        _∗_ : Exp → Exp → Exp
 \end{code}
 
 This syntax maps directly onto the semantics we defined in \cref{fig:combinators}.
 
+\begin{code}[hide]
+    typeOfDec : {A : Type} → Dec A → Type
+    typeOfDec {A} _ = A
+\end{code}
 \begin{code}
     ⟦_⟧ : Exp → Lang
     ⟦ ∅ ⟧ = ◇.∅
     ⟦ ε ⟧ = ◇.ε
     ⟦ ` c ⟧ = ◇.` c
-    ⟦ x · e ⟧ = x ◇.· ⟦ e ⟧
+    ⟦ x · e ⟧ = typeOfDec x ◇.· ⟦ e ⟧
     ⟦ e ∪ e₁ ⟧ = ⟦ e ⟧ ◇.∪ ⟦ e₁ ⟧
-    ⟦ e * e₁ ⟧ = ⟦ e ⟧ ◇.* ⟦ e₁ ⟧
+    ⟦ e ∗ e₁ ⟧ = ⟦ e ⟧ ◇.∗ ⟦ e₁ ⟧
 \end{code}
 
 \subsection{Parsing}
@@ -391,12 +600,12 @@ Nullability after repeated derivatives fully captures what a language is. Formal
 \subsection{Nullability}
 
 \begin{lemma}
-Two languages, $\ab{ℒ₁}$ and $\ab{ℒ₂}$, are nullable if and only if their concatenation, $\ab{ℒ₁}~\af{◇.*}~\ab{ℒ₂}$, is nullable. 
+Two languages, $\ab{ℒ₁}$ and $\ab{ℒ₂}$, are nullable if and only if their concatenation, $\ab{ℒ₁}~\af{◇.∗}~\ab{ℒ₂}$, is nullable. 
 \begin{code}
-    ν* : (◇ν ℒ₁ × ◇ν ℒ₂) ⇔ ◇ν (ℒ₁ ◇.* ℒ₂)
+    ν∗ : (◇ν ℒ₁ × ◇ν ℒ₂) ⇔ ◇ν (ℒ₁ ◇.∗ ℒ₂)
 \end{code}
 \begin{code}[hide]
-    ν* = mk⇔ (λ x → [] , [] , refl , x) λ { ([] , [] , refl , x) → x }
+    ν∗ = mk⇔ (λ x → [] , [] , refl , x) λ { ([] , [] , refl , x) → x }
 \end{code}
 \end{lemma}
 
@@ -406,7 +615,7 @@ Two languages, $\ab{ℒ₁}$ and $\ab{ℒ₂}$, are nullable if and only if thei
     ν (` c) = no λ ()
     ν (x · e) = x ×-dec ν e 
     ν (e ∪ e₁) = ν e ⊎-dec ν e₁
-    ν (e * e₁) = Dec.map ν* (ν e ×-dec ν e₁)
+    ν (e ∗ e₁) = Dec.map ν∗ (ν e ×-dec ν e₁)
 \end{code}
 
 \subsection{Derivation}
@@ -417,28 +626,18 @@ Two languages, $\ab{ℒ₁}$ and $\ab{ℒ₂}$, are nullable if and only if thei
     δ c (` c₁) = (c ≟ c₁) · ε -- a bit interesting
     δ c (x · e) = x · δ c e
     δ c (e ∪ e₁) = δ c e ∪ δ c e₁
-    δ c (e * e₁) = (δ c e * e₁) ∪ (ν e · δ c e₁) -- interesting
+    δ c (e ∗ e₁) = (δ c e ∗ e₁) ∪ (ν e · δ c e₁) -- interesting
 \end{code}
 
 The proofs are very straightforward:
-
-% \begin{code}
-%     open Equivalence
-%     δ-correct ∅ = ⇔.refl
-%     δ-correct ε = mk⇔ (λ ()) (λ ())
-%     δ-correct (` c) = mk⇔ (λ { (refl , refl) → refl }) λ { refl → refl , refl }
-%     δ-correct (x · e) = mk⇔ (λ (x , y) → x , δ-correct e .to y) λ (x , y) → x , δ-correct e .from y
-%     δ-correct (e ∪ e₁) = mk⇔ (λ { (inj₁ x) → inj₁ (δ-correct e .to x) ; (inj₂ x) → inj₂ (δ-correct e₁ .to x) }) (λ { (inj₁ x) → inj₁ (δ-correct e .from x) ; (inj₂ x) → inj₂ (δ-correct e₁ .from x) })
-%     δ-correct (e * e₁) = {!   !}
-% \end{code}
 
 \begin{code}
     δ-sound (` c) (refl , refl) = refl
     δ-sound (x₁ · e) (x , y) = x , δ-sound e y
     δ-sound (e ∪ e₁) (inj₁ x) = inj₁ (δ-sound e x)
     δ-sound (e ∪ e₁) (inj₂ y) = inj₂ (δ-sound e₁ y)
-    δ-sound (e * e₁) (inj₁ (u , v , refl , x , y)) = _ ∷ u , v , refl , δ-sound e x , y
-    δ-sound (e * e₁) (inj₂ (x , y)) = [] , _ , refl , x , δ-sound e₁ y
+    δ-sound (e ∗ e₁) (inj₁ (u , v , refl , x , y)) = _ ∷ u , v , refl , δ-sound e x , y
+    δ-sound (e ∗ e₁) (inj₂ (x , y)) = [] , _ , refl , x , δ-sound e₁ y
 \end{code}
 
 \begin{code}
@@ -446,8 +645,8 @@ The proofs are very straightforward:
     δ-complete (x₁ · e) (x , y) = x , δ-complete e y
     δ-complete (e ∪ e₁) (inj₁ x) = inj₁ (δ-complete e x)
     δ-complete (e ∪ e₁) (inj₂ y) = inj₂ (δ-complete e₁ y)
-    δ-complete (e * e₁) (_ ∷ _ , _ , refl , x , y) = inj₁ (_ , _ , refl , δ-complete e x , y)
-    δ-complete (e * e₁) ([] , _ , refl , x , y) = inj₂ (x , δ-complete e₁ y)
+    δ-complete (e ∗ e₁) (_ ∷ _ , _ , refl , x , y) = inj₁ (_ , _ , refl , δ-complete e x , y)
+    δ-complete (e ∗ e₁) ([] , _ , refl , x , y) = inj₂ (x , δ-complete e₁ y)
 \end{code}
 
 % \begin{code}[hide]
