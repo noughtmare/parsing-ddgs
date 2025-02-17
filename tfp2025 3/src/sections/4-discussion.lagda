@@ -16,7 +16,7 @@ Going beyond context-free languages, many practical programming languages cannot
 For a parser to practically useful, it must at least have linear asymptotic complexity for practical grammars. Might et al. \cite{parsing-with-derivatives} show that naively parsing using derivatives does not achieve that bound, but optimizations might make it possible. In particular, they argue that we could achieve $O(n|G|)$ time complexity (where $|G|$ is the grammar size) if the grammar size stays approximately constant after every derivative. By compacting the grammar, they conjecture it is possible to achieve this bound for any unambiguous grammar. We want to investigate if similar optimizations could be applied to our parser and if we can prove that we achieve this bound.
 
 \paragraph{Simplicity}
-One of the main contributions of Elliot's type theoretic formalization of languages~\cite{conal-languages} is its simplicity of implementation and proof. To be able to extend his approach to context-free languages we have had to introduce some complications.
+One of the main contributions of Elliott's type theoretic formalization of languages~\cite{conal-languages} is its simplicity of implementation and proof. To be able to extend his approach to context-free languages we have had to introduce some complications.
 \jr{TODO: finish this paragraph}
 % Most notably, we use fuel to define the semantics of our grammars. We have explored other approaches such as using guarded type theory, but we did not manage to significantly simplify our formalization. Furtheremore, we expect that many proofs remain simple despite our fuel-based approach.
 \medbreak

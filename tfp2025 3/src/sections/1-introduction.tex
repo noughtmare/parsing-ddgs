@@ -28,18 +28,18 @@ Though it is a mature research subject, it is still actively studied, for exampl
 
 Most parsing works mix the essence of the parsing technique with operational details \jr{such as... state machines, continuations, memoization?}. Our understanding and ability to improve upon these parsing techniques is hindered by the additional complexity of these inessential practical concerns. To address this issue, we are developing natural denotational semantics for traditional parsing techniques.
 
-\jr{Elliot has kicked off this effort...}
-Recent work by Elliot uses interactive theorem provers to state simple specifications of languages and that proofs of desirable properties of these language specifications transfer easily to their parsers \cite{conal-languages}. Unfortunately, this work only considers regular languages which are not powerful enough to describe practical programming languages.
+\jr{Elliott has kicked off this effort...}
+Recent work by Elliott uses interactive theorem provers to state simple specifications of languages and that proofs of desirable properties of these language specifications transfer easily to their parsers \cite{conal-languages}. Unfortunately, this work only considers regular languages which are not powerful enough to describe practical programming languages.
 
 \jr{Make the problem clear through an example: if we have a left-recursive grammar then naively unfolding it gets us into an infinite loop. }
 
-In this paper, we formalize context-free languages and show how to parse them, extending Elliot’s type theoretic approach to language specfication.  One of the main challenges is that the recursive nature of context-free languages does not map directly onto interactive theorem provers as they do not support general recursion (for good reasons). We encode context-free languages as fixed points of functors (initial algebras).
+In this paper, we formalize context-free languages and show how to parse them, extending Elliott’s type theoretic approach to language specfication.  One of the main challenges is that the recursive nature of context-free languages does not map directly onto interactive theorem provers as they do not support general recursion (for good reasons). We encode context-free languages as fixed points of functors (initial algebras).
 
 \jr{Say something about the limitation that we only study acyclic grammars: there must be a total order on nonterminals and a nonterminal is not allowed to refer to nonterminals that come before it. We wanted to start by limiting ourselves to grammars with only one nonterminal, but those are not closed under derivatives.}
 
 We make the following concrete contributions:
 \begin{itemize}
-\item We extend Elliot's type theoretic formalization of regular languages to context-free languages.
+\item We extend Elliott's type theoretic formalization of regular languages to context-free languages.
 \end{itemize}
 
 For this paper we have chosen Agda as our type theory and interactive theorem prover. We believe our definitions should transfer easily to other theories and tools. This paper itself is a literate Agda file; all highlighted Agda code has been accepted by Agda's type checker, giving us a high confidence of correctness.
@@ -55,7 +55,7 @@ For this paper we have chosen Agda as our type theory and interactive theorem pr
 
 % In section 2:
 % * Could: "This is a background section"
-% * We recall Elliot's ...
+% * We recall Elliott's ...
 % * To make it easier to add fixed points in the next section
 
 % Look for a simple example in Section 2. Can be contrived
