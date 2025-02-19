@@ -91,7 +91,7 @@ For example, the following is an example of a mutually recursive grammar that do
 \\
 \langle\mathit{stmt}\rangle &::= \langle\mathit{expr}\rangle \mid \langle\mathit{stmt}\rangle ; \langle\mathit{stmt}\rangle
 \end{align*}
-The $\langle\mathit{pal}\rangle$ and $\langle\mathit{rec}\rangle$ grammars from the previous section are both examples of grammars that are in the subset we consider.
+The $\langle\mathit{pal}\rangle$, $\langle\mathit{rec}\rangle$, and $\langle\mathit{expr}\rangle$ grammars from the previous section are both examples of grammars that are in the subset we consider.
 We conjecture that our approach is compatible with all context-free grammars, at the cost of some additional book-keeping during derivation.
 We leave verifying this conjecture as a challenge for future work.
 
