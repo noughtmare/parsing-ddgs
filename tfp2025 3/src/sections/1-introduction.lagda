@@ -31,7 +31,7 @@ While the parsers obtained in this manner are not exactly performant, the denota
 
 Elliot leaves open the question of how the approach scales to more expressive grammar formalisms, such as context-free languages and beyond.
 The question of using derivatives to parse context-free grammars has been considered by others.
-Darais and Might~\cite{parsing-with-derivatives} demonstrate how to build parsers from context-free grammars using derivatives and optimizations applied to them, to obtain reasonable performance.
+Might et al.~\cite{parsing-with-derivatives} demonstrate how to build parsers from context-free grammars using derivatives and optimizations applied to them, to obtain reasonable performance.
 Thiemann's work~\cite{Thiemann17} uses lattice theory and powerset semantics to formalize a notion of partial derivative for a variant of context-free grammars.
 In this work, we build on the approach of Elliot and study how to build a simple and direct mechanization in Agda's type theory of the denotational semantics of derivatives for context-free grammars.
 
