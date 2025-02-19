@@ -266,14 +266,14 @@ If we know the nullability of a language, $\ab{P}$, then the nullability of a de
 \end{code}
 \begin{code}
     νₒ : Dec (◇.ν P) → ∀ D → Dec (◇.ν (⟦ D ⟧ₒ P))
-    νₒ νP ∅         = no λ ()
-    νₒ νP ε         = yes refl
-    νₒ νP (` c)     = no λ ()
-    νₒ νP (D ∪ D₁)  = νₒ νP D ⊎-dec νₒ νP D₁
-    νₒ νP (D ∗ D₁)  = Dec.map ◇.ν∗ (νₒ νP D ×-dec νₒ νP D₁)
-    νₒ νP (x · D)   = x ×-dec νₒ νP D
-    νₒ νP var       = νP
-    νₒ νP (μ D)     = νD D
+    νₒ _ ∅         = no λ ()
+    νₒ _ ε         = yes refl
+    νₒ _ (` c)     = no λ ()
+    νₒ z (D ∪ D₁)  = νₒ z D ⊎-dec νₒ z D₁
+    νₒ z (D ∗ D₁)  = Dec.map ◇.ν∗ (νₒ z D ×-dec νₒ z D₁)
+    νₒ z (x · D)   = x ×-dec νₒ z D
+    νₒ z var       = z
+    νₒ _ (μ D)     = νD D
 \end{code}
 
 \begin{itemize}
@@ -371,6 +371,36 @@ In \cref{sec:reduction-by-example}, we established that the meaning of self-refe
     σ (μ D)     D' = μ D
 \end{code}
 
+
+It turns out that the only the sequencing case, $\ac{∗}$ leaves the variables untouched, thus we only need to apply the substitution there.
+This substitution does mean we need to keep track of the original description, $\ab{D₀}$, through the recursion.
+Most other cases follow the structure we uncovered in \cref{fig:null-delta}.
+For the self-reference case, $\ac{var}$, we produce a self-reference again, which works because it now refers to the reduct.
+Finally, for the internal fixed point, $\ac{μ}$, we can simply recursively call the reduction function.
+Thus, our reduction helper function is defined as follows:
+%
+\begin{code}[hide]
+    ◂νₒ : Dec (◇.ν ⟦ D₀ ⟧) → ∀ D → Dec (◇.ν (⟦ D ⟧ₒ ⟦ D₀ ⟧))
+    ◂νₒ = νₒ {P = ⟦ _ ⟧}
+\end{code}
+\begin{code}
+    δₒ : Desc → Char → Desc → Desc
+    δₒ D₀ c ∅         = ∅
+    δₒ D₀ c ε         = ∅
+    δₒ D₀ c (` c')    = (c ≟ c') · ε
+    δₒ D₀ c (D ∪ D₁)  = δₒ D₀ c D ∪ δₒ D₀ c D₁
+    δₒ D₀ c (D ∗ D₁)  = ◂νₒ (νD D₀) D · δₒ D₀ c D₁ ∪ δₒ D₀ c D ∗ σ D₁ (μ D₀)
+    δₒ D₀ c (x · D)   = x · δₒ D₀ c D
+    δₒ D₀ c var       = var
+    δₒ D₀ c (μ D)     = μ (δD c D)
+\end{code}
+%
+At the top level, we simply delegate to the helper by passing $\ab{D₀} = \ab{D}$.
+%
+\begin{code}
+    δD c D = δₒ D c D
+\end{code}
+
 \begin{lemma}
 Substitution of a local fixed point into a description is the same as applying the corresponding functor to the semantic fixed point.
 \begin{code}
@@ -393,42 +423,24 @@ The proof follows directly by induction and computation.
 \end{code}
 
 
-\begin{code}[hide]
-    ◂νₒ : Dec (◇.ν ⟦ D₀ ⟧) → ∀ D → Dec (◇.ν (⟦ D ⟧ₒ ⟦ D₀ ⟧))
-    ◂νₒ = νₒ {P = ⟦ _ ⟧}
-\end{code}
-\begin{code}
-    δₒ : Desc → Char → Desc → Desc
-    δₒ D₀ c ∅         = ∅
-    δₒ D₀ c ε         = ∅
-    δₒ D₀ c (` c')    = (c ≟ c') · ε
-    δₒ D₀ c (D ∪ D₁)  = δₒ D₀ c D ∪ δₒ D₀ c D₁
-    δₒ D₀ c (D ∗ D₁)  = ◂νₒ (νD D₀) D · δₒ D₀ c D₁ ∪ δₒ D₀ c D ∗ σ D₁ (μ D₀)
-    δₒ D₀ c (x · D)   = x · δₒ D₀ c D
-    δₒ D₀ c var       = var
-    δₒ D₀ c (μ D)     = μ (δD c D)
-\end{code}
-\begin{code}
-    δD c D = δₒ D c D
-\end{code}
 \begin{code}
     δD-to : ∀ D → ⟦ δₒ D₀ c D ⟧ₒ ⟦ δD c D₀ ⟧ w → ◇.δ c (⟦ D ⟧ₒ ⟦ D₀ ⟧) w
-    δD-to (` c') = ◇.δ` .to
+    δD-to (` c') (refl , refl) = refl
     δD-to (D ∪ D₁) (inj₁ x) = inj₁ (δD-to D x)
     δD-to (D ∪ D₁) (inj₂ y) = inj₂ (δD-to D₁ y)
     δD-to (D ∗ D₁) (inj₁ (x , y)) = [] , _ , refl , x , δD-to D₁ y
-    δD-to (D ∗ D₁) (inj₂ (u , v , refl , x , y)) = (_ ∷ _) , _ , refl , δD-to D x , subst id (σμ D₁) y
+    δD-to (D ∗ D₁) (inj₂ (_ , _ , refl , x , y)) = _ ∷ _ , _ , refl , δD-to D x , subst id (σμ D₁) y
     δD-to (A · D) (x , y) = x , δD-to D y
     δD-to {D₀ = D} var (roll x) = roll (δD-to D x)
     δD-to (μ D) (roll x) = roll (δD-to D x)
 \end{code}
 \begin{code}
     δD-from : ∀ D → ◇.δ c (⟦ D ⟧ₒ ⟦ D₀ ⟧) w → ⟦ δₒ D₀ c D ⟧ₒ ⟦ δD c D₀ ⟧ w
-    δD-from (` c') = ◇.δ` .from
+    δD-from (` c') refl = refl , refl
     δD-from (D ∪ D₁) (inj₁ x) = inj₁ (δD-from D x)
     δD-from (D ∪ D₁) (inj₂ y) = inj₂ (δD-from D₁ y)
-    δD-from (D ∗ D₁) ([] , w , refl , x , y) = inj₁ (x , δD-from D₁ y)
-    δD-from (D ∗ D₁) (c ∷ u , v , refl , x , y) = inj₂ (u , v , refl , δD-from D x , subst id (sym (σμ D₁)) y)
+    δD-from (D ∗ D₁) ([] , _ , refl , x , y) = inj₁ (x , δD-from D₁ y)
+    δD-from (D ∗ D₁) (_ ∷ _ , _ , refl , x , y) = inj₂ (_ , _ , refl , δD-from D x , subst id (sym (σμ D₁)) y)
     δD-from (A · D) (x , y) = x , δD-from D y
     δD-from {D₀ = D} var (roll x) = roll (δD-from D x)
     δD-from (μ D) (roll x) = roll (δD-from D x)
@@ -437,6 +449,31 @@ The proof follows directly by induction and computation.
     δD-correct {D = D} = mk⇔ (roll ∘ δD-to D ∘ unroll) (roll ∘ δD-from D ∘ unroll)
 \end{code}
 
+% We can write it in one go using only the null/delta laws, congruences,
+% induction, and the σμ lemma.  But Agda's termination checker is not good
+% enough to approve it.
+\begin{code}[hide]
+    _×⇔_ : ∀{ℓ₁ ℓ₂ ℓ₃ ℓ₄} {A : Set ℓ₁} {B : Set ℓ₂} {C : Set ℓ₃} {D : Set ℓ₄} → (A ⇔ B) → (C ⇔ D) → (A × C) ⇔ (B × D)
+    f ×⇔ g = mk⇔ (Prod.map (f .to) (g .to)) (Prod.map (f .from) (g .from))
+    _⊎⇔_ : ∀{ℓ₁ ℓ₂ ℓ₃ ℓ₄} {A : Set ℓ₁} {B : Set ℓ₂} {C : Set ℓ₃} {D : Set ℓ₄} → (A ⇔ B) → (C ⇔ D) → (A ⊎ C) ⇔ (B ⊎ D)
+    f ⊎⇔ g = mk⇔ (Sum.map (f .to) (g .to)) (Sum.map (f .from) (g .from))
+    Σ⇔ : ∀{ℓ} {A : Set ℓ} {B C : A → Set} → (∀{x} → B x ⇔ C x) → (Σ A B) ⇔ (Σ A C)
+    Σ⇔ f = mk⇔ (Prod.map₂ (f .to)) (Prod.map₂ (f .from))
+    ≡⇔ : ∀{A B : Set} → A ≡ B → A ⇔ B
+    ≡⇔ refl = ⇔.refl
+    rolling : ⟦ D ⟧ₒ ⟦ D ⟧ ◇.⟺ ⟦ D ⟧
+    rolling = mk⇔ roll unroll
+    {-# TERMINATING #-}
+    δD-correct' : ∀ D → ⟦ δₒ D₀ c D ⟧ₒ ⟦ δD c D₀ ⟧ ◇.⟺ ◇.δ c (⟦ D ⟧ₒ ⟦ D₀ ⟧)
+    δD-correct' ∅ = ⇔.refl
+    δD-correct' ε = ◇.δε
+    δD-correct' (` c') = ◇.δ`
+    δD-correct' (D ∪ D₁) = ⇔.trans (δD-correct' D ⊎⇔ δD-correct' D₁) (◇.◂δ∪ {⟦ D ⟧ₒ _} {⟦ D₁ ⟧ₒ _})
+    δD-correct' (D ∗ D₁) = ⇔.trans ((⇔.refl ×⇔ δD-correct' D₁) ⊎⇔ Σ⇔ (Σ⇔ (⇔.refl ×⇔ (δD-correct' D ×⇔ ≡⇔ (σμ D₁))))) ◇.δ∗
+    δD-correct' (A · D) = ⇔.trans (⇔.refl ×⇔ δD-correct' D) (◇.δ· {_} {_} {⟦ D ⟧ₒ _})
+    δD-correct' {D₀ = D} var = ⇔.trans (⇔.trans (⇔.sym rolling) (δD-correct' D)) rolling 
+    δD-correct' (μ D) = ⇔.trans (⇔.trans (⇔.sym rolling) (δD-correct' D)) rolling 
+\end{code}
 % \begin{code}
 %     variable D D₀ : Desc
 %     variable P : ◇.Lang
