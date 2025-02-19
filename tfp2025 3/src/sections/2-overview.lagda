@@ -60,7 +60,7 @@ In this section, we introduce background information, namely how we define langu
 
 \subsection{Languages}
 
-We define languages as being functions from strings to types.\footnote{We use \af{Type} as a synonym for Agda's \af{Set} to avoid confusion.}
+We define languages as being functions from strings to types.\footnote{We use \af{Type} as a synonym for Agda's \af{Set} to avoid confusion with set-theoretic sets.}
 \begin{code}[hide]
 module ◇ where
     Lang : Type₁
@@ -90,25 +90,25 @@ We can show that the string $aabbcc$ is in this language by choosing $n$ to be $
     aabbcc = 2 , refl
 \end{code}
 \end{example}
-\cref{ex:non-context-free} shows that it is possible to specify languages and prove that certain strings are in those languages, but for practical applications we do not want to be burdened with writing such proofs ourselves. The compiler should be able to decide whether or not your program is valid by itself.
+\cref{ex:non-context-free} shows that it is possible to specify languages and prove that certain strings are in those languages, but for practical applications we do not want to be burdened with writing such proofs ourselves.
+In other words, we want a parser which can determine by itself whether a string is in the language or not.
 
-\begin{itemize}
-\item Agda is too powerful: it can specify undecidable languages \jr{do I need to give an example?}
-\item So, we need to define a simpler language which still supports all the features we need.
-\end{itemize}
+Unfortunately, we cannot hope to write a parser for arbitrary languages defined in this way. A language could be defined, for example, such that the inclusion of a particular string is predicated on whether or not the Collatz conjecture holds.
+Therefore, we need to restrict ourselves to a subset of languages.
+Next, we explore basic language combinators for this purpose.
 
 \subsection{Basic Language Combinators}
 
-Let's start with a simple example: POSIX file system permissions. These are usually summarized using the characters `r', `w', and `x' if the permissions are granted, or `-' in place of the corresponding character if the permission is denied. For example the string ``r-x'' indicates that read and execute permissions are granted, but the write permission is denied. The full language can be expressed using the following BNF grammar:\jr{cite: BNF}
+Let's start with a simple example: POSIX file system permissions. These are usually summarized using the characters `r', `w', and `x' if the permissions are granted, or `-' in place of the corresponding character if the permission is denied. For example the string ``r-x'' indicates that read and execute permissions are granted, but the write permission is denied. The full language can be expressed using the following grammar:
 
 \begin{grammar}
 <permissions>  ::= <read> <write> <execute>
 
-<read>         ::= `-' | `r'
+<read>         ::= - | r
 
-<write>        ::= `-' | `w'
+<write>        ::= - | w
 
-<execute>      ::= `-' | `x'
+<execute>      ::= - | x
 \end{grammar}
 
 \begin{code}[hide]
@@ -153,8 +153,11 @@ Let's start with a simple example: POSIX file system permissions. These are usua
 \caption{Basic language combinators.}\label{fig:combinators}
 \end{figure}
 
-This grammar uses three important features: sequencing, choice, and matching character literals. We can define these features are combinators in Agda as shown in \cref{fig:combinators} and use them to write our permissions grammar as follows:
-
+This grammar uses three important features: sequencing, choice, and matching
+character literals. We can define these features as combinators on languages in
+Agda as shown in the left column of \cref{fig:combinators}. Using these
+combinators we can define our permissions language as follows:
+%
 \begin{code}[hide]
     permissions read write execute : Lang
 \end{code}
@@ -165,9 +168,11 @@ This grammar uses three important features: sequencing, choice, and matching cha
     execute      = ` '-' ∪ ` 'x'
 \end{code}
 
+The right column of \cref{fig:combinators} lists combinators whose purpose will become clear when we discuss how to write parsers for this simple language in the next section.
+
 \subsection{Parsers}
 
-We want to write a program which can prove for us that a given string is in the language. What should this program return for strings that are not in the language? We want to make sure our program does find a proof if it exists, so if it does not exist then we want a proof that the string is not in the language. We can capture this using a type called \af{Dec} from the Agda standard library. It can be defined as follows:
+We want to write a program which can prove for us that a given string is in a language. What should this program return for strings that are not in the language? We want to make sure our program does find a proof if it exists, so if it does not exist then we want a proof that the string is not in the language. We can capture this using a type called \af{Dec} from the Agda standard library. It can be defined as follows:
 
 \begin{code}
     data ◂Dec (A : Type) : Type where
@@ -187,14 +192,16 @@ Readers familiar with Haskell might see similarity between this type and the typ
 \end{remark}
 
 \begin{remark}
-Note that the \af{Dec} type only requires our parsers to produce a single result; it does not have to exhaustively list all possible ways to parse the input string. In Haskell, one might write \verb|String -> [(a, String)]|\jr{cite: monadic parser combinators}, which allows a parser to return multiple results but still does not enforce exhaustiveness. Instead, we could use:\jr{This should be explained in more detail}
-%
-\begin{itemize}
-\item completely unique account of enumeration.
-\item bijection with $\af{Fin}~\ab{n}$ for some $\ab{n}$ or $\af{Nat}$.
-\end{itemize}
-%
-In this paper, however, we use $\af{Dec}$ to keep the presentation simple.
+Note that the \af{Dec} type only requires our parsers to produce a single
+result; it does not have to exhaustively list all possible ways to parse the
+input string. In Haskell, one might write \verb|String -> [(a, String)]|\cite{monadic-parsing}, which allows a parser to return
+multiple results but does nothing to ensure that it correctly produces all
+possible results. We could imagine requiring that the result type is in
+bijection with a finite or countably infinite set. However, that would introduce
+too many complications in our proofs. In practice, furthermore, we want our
+parsers to only give us a single result. Hence, our effort would be better spent
+in proving that our languages are unambiguous, meaning there is at most one
+valid way to parse each input string. Thus, in this paper, we use $\af{Dec}$.
 \end{remark}
 
 To construct a parser for our permissions language, we start by defining parsers for each of the language combinators. Let us start by considering the character combinator. If the given string is empty or has more than one character, it can never be in a language formed by one character. If the string does consist of only one character, then it is in the language if that character is the same as from the language specification. In Agda, we can write such a parser for characters as follows:
@@ -206,7 +213,16 @@ To construct a parser for our permissions language, we start by defining parsers
     (◂`-parse _) (_ ∷ _ ∷ _) = no λ ()
 \end{code}
 
-This is a correct implementation of a parser for languages that consist of a single character, but the implementation is hard to read and does not give much insight. Instead, we can factor this parser into two cases: the empty string case and the case where the string has at least one character. We call the former nullability and use the greek character $ν$ to signify it, and we call the latter derivative and use the greek character $δ$ to signify it. \Cref{fig:null-delta} shows how these cases can be defined and how they relate to the basic combinators. These properties motivate the introduction of three new basic combinators: guards $\af{_·_}$, the language consisting of only the empty string $\af{ε}$, and the empty language $\af{∅}$.\jr{This does not motivate the split into $ν$ and $δ$ well enough. Also, the new combinators can be motivated more clearly.}
+This is a correct implementation of a parser for languages that consist of a single character, but the implementation seems ad hoc and it is hard to read, especially considering this is one of the simpler combinators.
+
+Following the approach of parsing with derivatives, we can factor this parser into two cases: the empty string case and the case with at least one character.  We call the former nullability and denote it with the greek character $ν$, and we call the latter derivative and denote it with the greek character $δ$. 
+
+Crucially, nullability deals only with (decidable) types, and derivatives deal only with languages. This clearly separates the level of abstraction between both cases. 
+
+Returning to our character parser, a single character language is not nullable. On the level of types we express this as $\af{⊥}$, the uninhabited type, which is trivially decidable as $\ac{no}~\as{λ}~\as{()}$.
+
+The derivative of a single character language depends on whether the character of the derivative is the same as the character of the language. We might be tempted to define this condition externally in Agda, but that would break the abstraction of derivatives only dealing with languages. Instead, we are pushed toward defining a combinator, \af{\un{}·\un{}}, which allows us to express this condintional on the level of languages. If the condition holds then there is still a second condition which is that the remainder of the string needs to be empty. We use the epsilon language, $\af{ε}$, for that purpose.
+To conclude, the derivative of the character language $\af{`}~\ab{c'}$ with respect to the character $\ab{c}$ is $\as{(}\ab{c}~\af{≟}~\ab{c'}\as{)}~\af{·}~\af{ε}$ as shown in \cref{fig:null-delta}.
 
 \begin{code}[hide]
     variable L P Q : Lang
@@ -294,15 +310,18 @@ This is a correct implementation of a parser for languages that consist of a sin
     δ` = mk⇔ (λ { (refl , refl) → refl }) (λ { refl → refl , refl })
 \end{code}
 
-Now the implementation of parsers for languages consisting of a single character follows completely from the decomposition into nullability and derivatives.
 
+Furthermore, \cref{fig:null-delta} shows the nullability and derivatives of all basic combinators using simple and self-contained equivalances.
+The implementation of parsers for our basic combinators follow completely from the decomposition into nullability and derivatives and these equivalances.
+For example, we can rewrite our character parser as follows:
+%
 \begin{code}
     `-parse_ : (c' : Char) → Parser (` c')
     (`-parse _) []        = Dec.map ν` ⊥-dec
     (`-parse c') (c ∷ w)  = Dec.map δ` (((c ≟ c') ·-parse ε-parse) w)
 \end{code}
 
-The implementation of $\af{·-parse}$, $\af{ε-parse}$, and $\af{∅-parse}$ are straightforward and can be found in our source code artifact.\jr{todo: reference this nicely}
+Parsers for the other basic combinators are equally straightforward and can be found in our source code artifact.\jr{todo: reference this nicely}
 
 \begin{code}[hide]
     ν∪ = ⇔.refl
@@ -320,7 +339,7 @@ The implementation of $\af{·-parse}$, $\af{ε-parse}$, and $\af{∅-parse}$ are
         ◂δ∪  : (δ c P ∪ δ c Q)  ⟺ δ c (P ∪ Q)
         ◂δ∪ = δ∪ {_} {P} {Q}
 \end{code}
-\begin{code}
+\begin{code}[hide]
         _◂∪-parse_ : Parser P → Parser Q → Parser (P ∪ Q)
         (φ ◂∪-parse ψ) []       = Dec.map ◂ν∪ (ν φ ⊎-dec ν ψ)
         (φ ◂∪-parse ψ) (c ∷ w)  = Dec.map ◂δ∪ ((δ c φ ∪-parse δ c ψ) w)
@@ -360,16 +379,16 @@ The implementation of $\af{·-parse}$, $\af{ε-parse}$, and $\af{∅-parse}$ are
     -- So we just use the TERMINATING pragma for the code that we show in the paper.
     {-# TERMINATING #-}
 \end{code}
-\begin{code}
+\begin{code}[hide]
     _◂∗-parse_ : Parser P → Parser Q → Parser (P ∗ Q)
     (φ ◂∗-parse ψ) []       = Dec.map ν∗ (ν φ ×-dec ν ψ)
     (φ ◂∗-parse ψ) (c ∷ w)  = Dec.map δ∗ ((ν φ ·-parse δ c ψ ∪-parse δ c φ ∗-parse ψ) w)
 \end{code}
 
-Using these combinators we can define a parser for the permissions language by
-simply mapping each of the language combinators onto their respective parser
+The parser for our full permissions language can now be implemented by simply
+mapping each of the language combinators onto their respective parser
 combinators.
-
+%
 \begin{code}[hide]
     permissions-parse : Parser permissions
     read-parse : Parser read
@@ -382,23 +401,25 @@ combinators.
     write-parse        = (`-parse '-') ∪-parse (`-parse 'w')
     execute-parse      = (`-parse '-') ∪-parse (`-parse 'x')
 \end{code}
+%
+This allows us to generate a parser for any language that is defined using the basic combinators from \cref{fig:combinators}. We mechanize this result later in \cref{sec:parsing-in-general}, but we first consider extending the expressivity of our combinators.
 
 \subsection{Infinite Languages}
 
 This permissions language is very simple. In particular, it is finite. In practice, many languages are inifinite, for which the basic combinators will not suffice. For example, file paths can be arbitrarily long on most systems.
-Elliott~\cite{conal-languages} defines a Kleene star\jr{does this need citation?} combinator which enables him to specify regular languages such as file paths.
+Elliott~\cite{conal-languages} defines a Kleene star combinator which enables him to specify regular languages such as file paths.
 
 However, we want to go one step further, speficying and parsing context-free languages. Most practical programming languages are at least context-free, if not more complicated. An essential feature of many languages is the ability to recognize balanced brackets. A minimal example language with balanced brackets is the following:
 %
 \begin{grammar}
-<brackets> ::= ε | `[' <brackets> `]' | <brackets> <brackets>
+<brackets> ::= ε | [ <brackets> ] | <brackets> <brackets>
 \end{grammar}
 %
 This is the language of all strings which consist of balanced square brackets. 
 Many practical programming languages include some form of balanced brackets. Furthermore, this language is well known to be context-free and not regular. Thus, we need more powerful combinators.
 
 \jr{todo: flesh out this outline}
-We could try to naively transcribe the brackets grammar using our basic combinators, but Agda will justifiably complain that it is not terminating (here we have added a NON_TERMINATING pragma to make Agda to accept it any way).
+We could try to naively transcribe the brackets grammar using our basic combinators, but Agda will justifiably complain that it is not terminating. Here we have added a NON_TERMINATING pragma to make Agda to accept it any way, but this is obviously not the proper way to define our brackets language.
 %
 \begin{code}
     {-# NON_TERMINATING #-}

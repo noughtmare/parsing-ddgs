@@ -13,6 +13,7 @@ And while parsing is an old subject that has been extensively studied, it remain
 Examples of such research questions for parsing today include how to compose grammars and parsers~(e.g.,~\cite{SchwerdfegerW09}), dealing with ambiguous parse trees~(e.g.,~\cite{BrabrandGM10,basten-thesis,one-parser-to-rule-them-all}), and parsing grammar formalisms beyond context-free grammars~(e.g.,~\cite{one-parser-to-rule-them-all}).
 While research questions such as these often serve a practical purpose, answering them often requires a deep theoretical understanding of the semantics of parsing.
 
+
 This theoretical understanding can be approached in a multitude of ways, depending on our purpose.
 Parsing is often studied using automata theory~\cite{hopcroft-book}.
 However, there is value in studying more \emph{denotational} approaches to parsing.
@@ -22,18 +23,18 @@ Such equational reasoning could be used to study and answer some of the open res
 This paper studies the denotational semantics of parsing for context-free grammars.
 While the study is theoretical in nature, the motivation is that the semantics could provide a foundation for practical future studies on proving the correctness of, e.g., parser optimizations and disambiguation techniques, as well as potentially providing a foundation for building and reasoning about parsers for more expressive grammar formalisms, such as data-dependent grammars~\cite{one-parser-to-rule-them-all}.
 
-We approach the question of giving a denotational semantics of parsing by building on existing work by Elliot~\cite{conal-languages}.
-In his work, Elliot demonstrated that regular grammars have a simple and direct denotational semantics.
+We approach the question of giving a denotational semantics of parsing by building on existing work by Elliott~\cite{conal-languages}.
+In his work, Elliott demonstrated that regular grammars have a simple and direct denotational semantics.
 And that we can obtain parsers for such languages that are correct by construction, using \emph{derivatives}.
-While it was well-known that we can parse regular grammars using Brzozowski derivatives~\cite{brzozowski}, Elliot's work provides a simple and direct mechanization in Agda's type theory of the denotational semantics of these derivatives.
+While it was well-known that we can parse regular grammars using Brzozowski derivatives~\cite{brzozowski}, Elliott's work provides a simple and direct mechanization in Agda's type theory of the denotational semantics of these derivatives.
 This mechanization essentially provides an implementation of parsing that is correct by construction, and that we can reason about without relying on (bi-)simulation arguments.
 While the parsers obtained in this manner are not exactly performant, the denotational approach opens up the door to exploiting grammar structure to obtain optimized parsers.
 
-Elliot leaves open the question of how the approach scales to more expressive grammar formalisms, such as context-free languages and beyond.
+Elliott leaves open the question of how the approach scales to more expressive grammar formalisms, such as context-free languages and beyond.
 The question of using derivatives to parse context-free grammars has been considered by others.
 Might et al.~\cite{parsing-with-derivatives} demonstrate how to build parsers from context-free grammars using derivatives and optimizations applied to them, to obtain reasonable performance.
 Thiemann's work~\cite{Thiemann17} uses lattice theory and powerset semantics to formalize a notion of partial derivative for a variant of context-free grammars.
-In this work, we build on the approach of Elliot and study how to build a simple and direct mechanization in Agda's type theory of the denotational semantics of derivatives for context-free grammars.
+In this work, we build on the approach of Elliott and study how to build a simple and direct mechanization in Agda's type theory of the denotational semantics of derivatives for context-free grammars.
 
 A main challenge for our mechanization is the question of how to deal with the recursive nature of context-free languages.
 
@@ -87,7 +88,7 @@ This paper tackles the challenges discussed in the previous section by providing
 The subset of grammars that we consider corresponds to context-free grammars without mutually recursive grammars.
 For example, the following is an example of a mutually recursive grammar that does not fit into the subset of grammars we consider:
 \begin{align*}
-\langle\mathit{expr}\rangle &::= 0 \mid \langle\mathit{stmt}\rangle
+\langle\mathit{expr}\rangle &::= \langle\mathit{expr}\rangle\, +\, \langle\mathit{expr}\rangle \mid 0 \mid 1 \mid \langle\mathit{stmt}\rangle
 \\
 \langle\mathit{stmt}\rangle &::= \langle\mathit{expr}\rangle \mid \langle\mathit{stmt}\rangle ; \langle\mathit{stmt}\rangle
 \end{align*}
@@ -98,12 +99,12 @@ We leave verifying this conjecture as a challenge for future work.
 We make the following technical contributions:
 \begin{itemize}
 \item We provide a semantics in Agda of context-free grammars without mutual recursion.
-\item We provide a semantics of automated differentiation for this class of grammars, along with its simple and direct correctness proof.
+\item We provide a derivative-based parser for this class of grammars, along with its simple and direct correctness proof.
 \end{itemize}
 
 The paper assumes basic familiarity with Agda.
 The rest of this paper is structured as follows.
-\Cref{sec:finite-languages} recalls the essential definition from Elliot's work which we subsequently extend in \cref{sec:context-free} to context-free grammars.
+\Cref{sec:finite-languages} recalls the essential definition from Elliott's work which we subsequently extend in \cref{sec:context-free} to context-free grammars.
 \Cref{sec:discussion} discusses expressiveness, performance, and simplicity of our approach, whereas
 \cref{sec:related-work} discusses related work, and \cref{sec:conclusion} concludes.
 

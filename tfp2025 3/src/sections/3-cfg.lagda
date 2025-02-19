@@ -226,7 +226,7 @@ Conclusion:
 Again, we do not want to have to do this reduction manually. Instead, we show
 how to do it in general for any description in the next section.
 
-\subsection{Parsing in General}
+\subsection{Parsing in General}\label{sec:parsing-in-general}
 
 Our goal is to define:
 
