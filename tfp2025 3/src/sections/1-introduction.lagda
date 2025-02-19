@@ -8,33 +8,34 @@ open import Data.Unit
 
 \section{Introduction}
 
-Parsing remains an open problem
+Parsing---i.e., the process of recovering structure from strings---is an essential building block for modern programming applications in practice.
+And while parsing is an old subject that has been extensively studied, it remains a relevant subject where the new research questions continuously emerge.
+Examples of such research questions for parsing today include how to compose grammars and parsers~[CITE], dealing with ambiguous parse trees~[CITE], and parsing grammar formalisms beyond context-free grammars~[CITE].
+While research questions such as these often serve a practical purpose, answering them often requires a deep theoretical understanding of the semantics of parsing.
 
-E.g., dealing with ambiguities, but also dealing with programming languages beyond context-free languages
+This theoretical understanding can be approached in a multitude of ways, depending on our purpose.
+Parsing is often studied using automata theory~[CITE].
+However, there is value in studying more \emph{denotational} approaches to parsing.
+A main purpose of denotational semantics is to abstract away operational concerns, as such concerns tends to be a hindrance for equational reasoning.
+Such equational reasoning could be used to study and answer some of the open research questions in the parsers of today and tomorrow.
 
-While parsing serves a practical purpose, it is important to also have a deep theoretical understanding of the semantics of parsing
+This paper studies the denotational semantics of parsing for context-free grammars.
+While the study is theoretical in nature, the motivation is that the semantics could provide a foundation for practical future studies on proving the correctness of, e.g., parser optimizations and disambiguation techniques, as well as potentially providing a foundation for building and reasoning about parsers for more expressive grammar formalisms, such as data-dependent grammars~[CITE].
 
-While parsing is often studied using automata theory [CITE], there is also value in studying more denotational approaches to parsing.
-
-Indeed, a main purpose of denotational semantics is to abstract away operational concerns, as such concerns tends to be a hindrance for equational reasoning.
-
-A denotational approach could thus provide a framework for studying and proving the correctness of, e.g., parser optimizations and disambiguation techniques.
-
-It could also provide a building block for obtaining correct parsers of expressive grammar formalisms, such as data-dependent grammars [CITE].
-
-Recent work by Elliott demonstrated that parsers for regular grammars can be given a simple and direct semantics
-
-In turn, we can obtain parsers for such languages that are (practically) correct by construction, by taking their \emph{derivatives}.
-
-While it was well-known~\cite{brzozowski} that we can parse regular grammars using Brzozowski derivatives, Elliot provides a simple and direct mechanization in Agda of the denotational semantics of these derivatives.
+We approach the question of giving a denotational semantics of parsing by building on existing work by Elliot~[CITE].
+In his work, Elliot demonstrated that regular grammars have a simple and direct denotational semantics.
+And that we can obtain parsers for such languages that are correct by construction, using \emph{derivatives}.
+While it was well-known~\cite{brzozowski} that we can parse regular grammars using Brzozowski derivatives, Elliot's work provides a simple and direct mechanization in Agda's type theory of the denotational semantics of these derivatives.
+This mechanization essentially provides an implementation of parsing that is correct by construction, and that we can reason about without relying on (bi-)simulation arguments.
+While the parsers obtained in this manner are not exactly performant, the denotational approach opens up the door to exploiting grammar structure to obtain optimized parsers.
 
 Elliot leaves open the question of how the approach scales to more expressive grammar formalisms, such as context-free languages and beyond.
+The question of using derivatives to parse context-free grammars has been considered by others.
+Darais and Might~[CITE] demonstrate how to build parsers from context-free grammars using derivatives and optimizations applied to them, to obtain reasonable performance.
+Thiemann's work~[CITE] uses lattice theory and powerset semantics to formalize a notion of partial derivative for a variant of context-free grammars.
+In this work, we build on the approach of Elliot and study how to build a simple and direct mechanization in Agda's type theory of the denotational semantics of derivatives for context-free grammars.
 
-This paper addresses that question.
-
-Specifically, we study the problem of mechanizing, also in Agda, (1) the denotational semantics of context-free grammars; and (2) a simple and direct denotational semantics of the derivative of context-free grammars.
-
-A main challenge for this mechanization is dealing with the recursive nature of context-free languages.
+A main challenge for our mechanization is the question of how to deal with the recursive nature of context-free languages.
 
 \subsection{The Challenge with Automated Differentiation of Context-Free Grammars}
 
@@ -92,6 +93,8 @@ Consider, for example, the infinitely recursive grammar:
 
 We cannot ever unfold this grammar to expose a terminal symbol to derive w.r.t., akin to the informal procedure we applied above.
 
+[LEFT-RECURSION NOTE]
+
 Another challenge with context-free grammars is how to encode their recursive nature in a proof assistant such as Agda in a way that our encoding of grammars is strictly positive, and in a way that ensures that automated differentiation---that is, continuously applying the method we informally illustrated above for taking the derivative of a grammar w.r.t. a symbol---is guaranteed to terminate.
 
 
@@ -100,7 +103,14 @@ Another challenge with context-free grammars is how to encode their recursive na
 
 This paper tackles the challenges discussed in the previous section by providing a mechanization in Agda of automated differentiation of a subset of context-free grammars.
 
-The subset we consider corresponds to context-free grammars with non-terminal symbols without mutual recursion.
+The subset we consider corresponds to context-free grammars without mutually recursive grammars.
+
+The following is an example of a mutually recursive grammar that does not fit into the subset of grammars we consider:
+
+
+
+The pal and rec grammars from the previous section are both examples of grammars that are in the subset we consider.
+
 
 We conjecture that our approach is compatible with all context-free grammars, at the cost of some additional book-keeping while taking the derivative.
 
