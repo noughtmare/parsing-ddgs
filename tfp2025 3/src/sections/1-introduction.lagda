@@ -39,92 +39,73 @@ A main challenge for our mechanization is the question of how to deal with the r
 
 \subsection{The Challenge with Automated Differentiation of Context-Free Grammars}
 
-Derivatives provide an automated procedure for differentiation of languages.
-
-In this subsection we consider the problem of automatically taking the derivative of a context-free grammar w.r.t. a given symbol.
+Derivatives (or \emph{language differentiation}) provide an automated procedure for parsing.
+We give an overview of what it means to take the derivative of a grammar, how this provides an approach to parsing, and consider the problem of automatically taking the derivative of a context-free grammar.
 
 To illustrate, let us consider the following context-free grammar of palindromic bit strings:
-
 \[
 \langle\mathit{pal}\rangle ::= 0 \mid 1 \mid 0\, \langle\mathit{pal}\rangle\, 0 \mid 1\, \langle\mathit{pal}\rangle\, 1
 \]
-
 Say we want to use this grammar to parse the string 0110.
-
-The idea of atuomatic differentiation is this:
-
-We first compute the derivative of the grammar w.r.t. the first bit (0) of our bit string (0110).
-
-Let us call this grammar $\langle pal_0\rangle$.
-
+The idea of automatic differentiation is this.
+We first compute the derivative of the grammar w.r.t. the first bit (0) of our bit string (0110); let us call this grammar $\langle pal_0\rangle$.
 Then, we take the derivative of $\langle pal_0\rangle$ w.r.t. the next bit (1).
-
-We continue this procedure until we either (1) get stuck because the derivative is invalid, in which case the bit string is not well-formed w.r.t. our grammar, or (2) the derivative grammar contains the empty production (we will use the symbol ε to denote the empty grammar), in which case the bit string is well-formed w.r.t. our grammar.
+We continue this procedure until we either (a) get stuck because the derivative is invalid, in which case the bit string is not well-formed w.r.t. our grammar, or (b) the derivative grammar contains the empty production (we will use the symbol ε to denote the empty grammar), in which case the bit string is well-formed w.r.t. our grammar.
 
 Taking the derivative of the $\langle\mathit{pal}\rangle$ grammar w.r.t. the bit 0 yields the following derived grammar:
-
 \[
 \langle\mathit{pal}_0\rangle ::= ε \mid \langle\mathit{pal}\rangle\, 0
 \]
-
 This grammar essentially represents the residual parsing obligations after parsing a 0 bit.
-
-The derived grammar contains fewer productions than the original grammar because we have pruned those productions that started with the bit 1 (because the derivative of the bit 0 w.r.t. the terminal symbol 1 is invalid).
+The derived grammar contains fewer productions than the original grammar because we have pruned those productions that started with the terminal symbol 1 (because the derivative of the bit 0 w.r.t. the terminal symbol 1 is invalid).
 
 Now, how do we take the derivative of the grammar $\langle\mathit{pal}_0\rangle$ w.r.t. the next bit (1) in our string?
-
 A simple solution is to recursively unfold the $\langle \mathit{pal} \rangle$ non-terminal.
-
 Doing so for the $\langle\mathit{pal}\rangle$ grammar yields the following derived grammar:
-
 \[
 \langle\mathit{pal}_0'\rangle ::= ε \mid 0\, 0 \mid 1\, 0 \mid 0\, \langle\mathit{pal}\rangle\, 0\, 0 \mid 1\, \langle\mathit{pal}\rangle\, 1\, 0
 \]
-
 By continuing this procedure, with additional recursive unfolding where needed, we eventually yield a grammar that contains the the empty production ε, whereby we can conclude that 0110 is, in fact, a palindromic bit string.
 
 However, the recursive unfolding we performed above is not safe to do for all grammars.
-
 Consider, for example, the infinitely recursive grammar:
-
 \[
 \langle\mathit{rec}\rangle ::= \langle\mathit{rec}\rangle
 \]
-
 We cannot ever unfold this grammar to expose a terminal symbol to derive w.r.t., akin to the informal procedure we applied above.
+While the $\langle\mathit{rec}\rangle$ grammar is contrived, similar issues arise for any \emph{left-recursive} grammar, such as the following grammar of arithmetic expressions (left-recursive because of the $\langle\mathit{expr}\rangle$ non-terminal in the left-most position in the first production):
+\[
+\langle\mathit{expr}\rangle ::= \langle\mathit{expr}\rangle\, +\, \langle\mathit{expr}\rangle \mid 0 \mid 1
+\]
 
-[LEFT-RECURSION NOTE]
-
-Another challenge with context-free grammars is how to encode their recursive nature in a proof assistant such as Agda in a way that our encoding of grammars is strictly positive, and in a way that ensures that automated differentiation---that is, continuously applying the method we informally illustrated above for taking the derivative of a grammar w.r.t. a symbol---is guaranteed to terminate.
+Another challenge with context-free grammars is how to encode their recursive nature in a proof assistant such as Agda in a way that our encoding of grammars is \emph{strictly positive}\footnote{\url{https://agda.readthedocs.io/en/v2.6.1.3/language/data-types.html\#strict-positivity}}, and in a way that ensures that automated differentiation---that is, continuously applying the method we informally illustrated above for taking the derivative of a grammar w.r.t. a symbol---is guaranteed to terminate.
 
 
 \subsection{Contributions}
 
-
 This paper tackles the challenges discussed in the previous section by providing a mechanization in Agda of automated differentiation of a subset of context-free grammars.
-
-The subset we consider corresponds to context-free grammars without mutually recursive grammars.
-
-The following is an example of a mutually recursive grammar that does not fit into the subset of grammars we consider:
-
-
-
-The pal and rec grammars from the previous section are both examples of grammars that are in the subset we consider.
-
-
-We conjecture that our approach is compatible with all context-free grammars, at the cost of some additional book-keeping while taking the derivative.
-
+The subset of grammars that we consider corresponds to context-free grammars without mutually recursive grammars.
+For example, the following is an example of a mutually recursive grammar that does not fit into the subset of grammars we consider:
+\begin{align*}
+\langle\mathit{expr}\rangle &::= 0 \mid \langle\mathit{stmt}\rangle
+\\
+\langle\mathit{stmt}\rangle &::= \langle\mathit{expr}\rangle \mid \langle\mathit{stmt}\rangle ; \langle\mathit{stmt}\rangle
+\end{align*}
+The $\langle\mathit{pal}\rangle$ and $\langle\mathit{rec}\rangle$ grammars from the previous section are both examples of grammars that are in the subset we consider.
+We conjecture that our approach is compatible with all context-free grammars, at the cost of some additional book-keeping during derivation.
 We leave verifying this conjecture as a challenge for future work.
 
 We make the following technical contributions:
+\begin{itemize}
+\item We provide a semantics in Agda of context-free grammars without mutual recursion.
+\item We provide a semantics of automated differentiation for this class of grammars, along with its simple and direct correctness proof.
+\end{itemize}
 
-1. We provide a semantics in Agda of context-free grammars without mutual recursion.
-
-2. We provide a semantics of automated differentiation for this class of grammars, along with its simple and direct correctness proof.
-
-The rest of this paper is structured as follows: [...]
-
-We assume basic familiarity with Agda.
+The paper assumes basic familiarity with Agda.
+The rest of this paper is structured as follows.
+\Cref{sec:finite-languages} recalls the essential definition from Elliot's work which we subsequently extend in \cref{sec:context-free} to context-free grammars.
+\Cref{sec:discussion} discusses expressiveness, performance, and simplicity of our approach, whereas
+\cref{sec:related-work} discusses related work, and \cref{sec:conclusion} concludes.
 
 
 

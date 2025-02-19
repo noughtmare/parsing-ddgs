@@ -1,4 +1,4 @@
-\section{Related Work}
+\section{Related Work}\label{sec:related-work}
 
 \begin{itemize}
 \item Jeremy Yallop - performance

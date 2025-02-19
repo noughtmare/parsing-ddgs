@@ -2,7 +2,7 @@
 module 4-discussion where
 \end{code}
 
-\section{Discussion}
+\section{Discussion}\label{sec:discussion}
 
 Finally, we want to discuss three aspects of our work: expressiveness, performance, and simplicity.
 
