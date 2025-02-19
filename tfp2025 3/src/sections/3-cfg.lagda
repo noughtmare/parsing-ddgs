@@ -66,20 +66,27 @@ We can give semantics to our descriptions in terms of languages that we defined 
 
 \begin{code}
     ⟦_⟧ₒ : Desc → ◇.Lang → ◇.Lang
-    ⟦ ∅ ⟧ₒ        = const ◇.∅
-    ⟦ ε ⟧ₒ        = const ◇.ε
-    ⟦ ` c ⟧ₒ      = const (◇.` c) 
-    ⟦ D₁ ∪ D₂ ⟧ₒ P  = ⟦ D₁ ⟧ₒ P ◇.∪ ⟦ D₂ ⟧ₒ P
-    ⟦ D₁ ∗ D₂ ⟧ₒ P  = ⟦ D₁ ⟧ₒ P ◇.∗ ⟦ D₂ ⟧ₒ P
-    ⟦ _·_ {A} _ D ⟧ₒ P  = A ◇.· ⟦ D ⟧ₒ P 
-    ⟦ var ⟧ₒ P    = P
+    ⟦ ∅ ⟧ₒ            _ = ◇.∅
+    ⟦ ε ⟧ₒ            _ = ◇.ε
+    ⟦ ` c ⟧ₒ          _ = ◇.` c
+    ⟦ D₁ ∪ D₂ ⟧ₒ      P = ⟦ D₁ ⟧ₒ P ◇.∪ ⟦ D₂ ⟧ₒ P
+    ⟦ D₁ ∗ D₂ ⟧ₒ      P = ⟦ D₁ ⟧ₒ P ◇.∗ ⟦ D₂ ⟧ₒ P
+    ⟦ _·_ {A} _ D ⟧ₒ  P = A ◇.· ⟦ D ⟧ₒ P 
+    ⟦ var ⟧ₒ          P = P
 \end{code}
 
 Using these descriptions, we can define a fixed point as follows:
 
 \begin{code}
     data ⟦_⟧ (D : Desc) : ◇.Lang where
-        step : ⟦ D ⟧ₒ ⟦ D ⟧ w → ⟦ D ⟧ w
+        roll : ⟦ D ⟧ₒ ⟦ D ⟧ w → ⟦ D ⟧ w
+\end{code}
+\begin{code}[hide]
+    variable D : Desc
+\end{code}
+\begin{code}
+    unroll : ⟦ D ⟧ w → ⟦ D ⟧ₒ ⟦ D ⟧ w
+    unroll (roll x) = x
 \end{code}
 
 So we can finally define the brackets language.\footnote{We split this definition into two because we want to separately reuse the description later.}\jr{Brackets is one example, but can we characterise the whole class of languages we can define using these descriptions?}
@@ -92,20 +99,20 @@ So we can finally define the brackets language.\footnote{We split this definitio
 This representation is not modular, however. We cannot nest fixed points in
 descriptions.\jr{This modularity and nesting is not clear enough.} This problem comes up naturally when considering reduction, which we discuss next.
 
-\subsection{Reduction by Example}
+\subsection{Reduction by Example}\label{sec:reduction-by-example}
 
 As we have seen with finite languages in \cref{sec:finite-languages}, when writing parsers it is useful to consider how a language changes after one character has been parsed. We will call this \emph{reduction}. For example, we could consider what happens to our brackets languages after one opening brackets has been parsed: $\af{δ}~\aS{'['}~\af{brackets}$. In this section, we search for a description of this reduced language (the \emph{reduct}).
 
 We can mechanically derive this new language from the brackets definition by
-going over each of the disjuncts. The first disjunct, epsilon, does not play a
+going over each of the disjuncts. The first disjunct, $ε$, does not play a
 role because we know the string contains at least the opening bracket. The
 second disjunct, brackets surrounding a self-reference, is trickier. The opening
 bracket clearly matches, but it would be a mistake to say the new disjunct
-should be a self-reference followed by a closing bracket.\jr{Show the code, not just words!}
+should be a self-reference followed by a closing bracket: $\ac{var}~\ac{∗}~\ac{`}~\aS{']'}$.
 
 Note that the self-reference in the new language would refer to the derivative
 of the old language, not to the old language itself. We would like to refer to
-the original bracket language, for example like this
+the original bracket language:
 $\af{brackets}~\ac{∗}~\ac{`}~\aS{']'}$, but we cannot nest the brackets language
 into another description.
 
@@ -171,7 +178,9 @@ module F2 where
 \end{code}
 \begin{code}[hide]
     data ⟦_⟧ (X : Desc) : ◇.Lang where
-        step : ⟦ X ⟧ₒ ⟦ X ⟧ w → ⟦ X ⟧ w
+        roll : ⟦ X ⟧ₒ ⟦ X ⟧ w → ⟦ X ⟧ w
+    unroll : ⟦ D ⟧ w → ⟦ D ⟧ₒ ⟦ D ⟧ w
+    unroll (roll x) = x
     ⟦ ∅ ⟧ₒ        = const ◇.∅
     ⟦ ε ⟧ₒ        = const ◇.ε
     ⟦ ` c ⟧ₒ      = const (◇.` c) 
@@ -196,7 +205,7 @@ The first question is easy to answer: yes, the first disjunct of brackets is eps
 \end{code}
 \begin{code}
     νbrackets : Dec (◇.ν brackets)
-    νbrackets = yes (step (inj₁ refl))
+    νbrackets = yes (roll (inj₁ refl))
 \end{code}
 
 The second question is where having a self-reference in the new language is useful. We can refer to the reduct of brackets by using self-reference.
@@ -248,57 +257,184 @@ The actual parsing can now be done character by character:
 That is the main result of this paper. The remainder of the paper concerns
 the implementation of $\af{νD}$, $\af{δD}$, $\af{δD-correct}$.
 
-\subsection{Implementation and Proof}
+\subsection{Nullability}
 
-\begin{lemma}
+If we know the nullability of a language, $\ab{P}$, then the nullability of a description functor applied to $\ab{P}$ is the same as the empty string parsers for our finite languages, but with the nullability of the variables given by the nullability of $\ab{P}$. For the $\ac{μ}$ case we use the nullability of the fixed point, which we will implement shortly.\jr{Reiterate that the cases for the basic combinators are the same as in \cref{fig:null-delta}.}
+%
+\begin{code}[hide]
+    variable P : ◇.Lang
+\end{code}
+\begin{code}
+    νₒ : Dec (◇.ν P) → ∀ D → Dec (◇.ν (⟦ D ⟧ₒ P))
+    νₒ νP ∅         = no λ ()
+    νₒ νP ε         = yes refl
+    νₒ νP (` c)     = no λ ()
+    νₒ νP (D ∪ D₁)  = νₒ νP D ⊎-dec νₒ νP D₁
+    νₒ νP (D ∗ D₁)  = Dec.map ◇.ν∗ (νₒ νP D ×-dec νₒ νP D₁)
+    νₒ νP (x · D)   = x ×-dec νₒ νP D
+    νₒ νP var       = νP
+    νₒ νP (μ D)     = νD D
+\end{code}
+
+\begin{itemize}
+\item Naively we might try $\af{νD}~\ab{D}~\as{=}~\af{νₒ}~\as{(}\af{νD}~\ab{D}\as{)}~\ab{D}$
+\item But that obviously will not terminate (consider the language $\af{⟦}~\ac{var}~\af{⟧}$). 
+\item Instead we use \cref{lem:null-split}
+\end{itemize}
+%
+\begin{lemma}\label{lem:null-split}
 The nullability of a fixed point is determined completely by a single application of the underlying functor to the empty language.
 \begin{code}
     νD∅⇔νD : ◇.ν (⟦ D ⟧ₒ ◇.∅) ⇔ ◇.ν ⟦ D ⟧
-    νD∅⇔νD = {!   !}
 \end{code}
 \end{lemma}
+\begin{proof}
+The forward direction is easily proven by noting that nullability and the
+semantics of a description are functors and that the empty language is initial.
+It is also straightforward to write the proof directly.
+\begin{code}
+    νD∅→νD : ∀ D → ◇.ν (⟦ D ⟧ₒ ◇.∅) → ◇.ν (⟦ D ⟧ₒ ⟦ D₀ ⟧)
+\end{code}
+\begin{code}[hide]
+    νD∅→νD ε _ = refl
+    νD∅→νD (D ∪ D₁) (inj₁ x) = inj₁ (νD∅→νD D x)
+    νD∅→νD (D ∪ D₁) (inj₂ y) = inj₂ (νD∅→νD D₁ y)
+    νD∅→νD (D ∗ D₁) ([] , [] , refl , x , y) = [] , [] , refl , νD∅→νD D x , νD∅→νD D₁ y
+    νD∅→νD (A · D) (x , y) = x , νD∅→νD D y
+    νD∅→νD (μ D) x = x
+\end{code}
+The backwards direction is more difficult. We prove a more general lemma from which our disired result follows. The generalized lemma states that, if the application of a descriptor functor to a fixed point of another descriptor is nullable, then either the fixed point plays no role and the descriptor functor is also nullable if applied to the empty language, or the other descriptor (that we took the fixed point of) is nullable when applied to the empty language.
+\begin{code}
+    νD∅←νD : ∀ D → ◇.ν (⟦ D ⟧ₒ ⟦ D₀ ⟧) → ◇.ν (⟦ D ⟧ₒ ◇.∅) ⊎ ◇.ν (⟦ D₀ ⟧ₒ ◇.∅)
+\end{code}
+\begin{code}[hide]
+    νD∅←νD ε x = inj₁ refl
+    νD∅←νD (D ∪ D₁) (inj₁ x) = Sum.map₁ inj₁ (νD∅←νD D x)
+    νD∅←νD (D ∪ D₁) (inj₂ y) = Sum.map₁ inj₂ (νD∅←νD D₁ y)
+    νD∅←νD (D ∗ D₁) ([] , [] , refl , x , y) = lift⊎₂ (λ x y → [] , [] , refl , x , y) (νD∅←νD D x) (νD∅←νD D₁ y)
+    νD∅←νD (x₁ · D) (x , y) = Sum.map₁ (x ,_) (νD∅←νD D y)
+    νD∅←νD {D₀ = D₀} var (roll x) = inj₂ (reduce (νD∅←νD D₀ x))
+    νD∅←νD (μ D) x = inj₁ x
+\end{code}
+If we choose $\ab{D₀}~\as{=}~\ab{D}$ then both cases of the resulting disjoint union have the same type, so we can just pick whichever of the two we get as a result using the $\af{reduce}~\as{:}~\ab{A}~\af{⊎}~\ab{A}~\as{→}~\ab{A}$ function. Modulo wrapping and unwrapping of the fixed point (using the $\ac{roll}$ constructor), we now have the two functions which prove the lemma:
+\begin{code}
+    νD∅⇔νD {D} = mk⇔ (roll ∘ νD∅→νD D) (reduce ∘ νD∅←νD {D₀ = D} D ∘ unroll)
+\end{code}
+\end{proof}
+
+Using \cref{lem:null-split}, we can easily define nullability for our description functors.
 
 \begin{code}
-    νD∅ : ∀ D → Dec (◇.ν (⟦ D ⟧ₒ ◇.∅))
-    νD∅ ∅         = no λ ()
-    νD∅ ε         = yes refl
-    νD∅ (` x)     = no λ ()
-    νD∅ (D ∪ D₁)  = νD∅ D ⊎-dec νD∅ D₁
-    νD∅ (D ∗ D₁)  = Dec.map ◇.ν∗ (νD∅ D ×-dec νD∅ D₁)
-    νD∅ (x · D)   = x ×-dec νD∅ D
-    νD∅ var       = no λ ()
-    νD∅ (μ D)     = Dec.map νD∅⇔νD (νD∅ D)
+    νD = Dec.map νD∅⇔νD ∘ νₒ (no λ ())
+\end{code}
+
+\begin{remark}
+\Cref{lem:null-split} does not define an isomorphism on types. In particular, the backwards direction is not injective. Consider the brackets language. It has the following null element, where we first choose the third disjunct, $\ac{var}~\ac{∗}~\ac{var}$, and then the first disjunct $\ac{ε}$ for both branches.
+%
+\begin{code}
+    brackets₀ : ◇.ν brackets
+    brackets₀ = roll (inj₂ (inj₂ ([] , [] , refl , roll (inj₁ refl) , roll (inj₁ refl))))
+\end{code}
+%
+When we round-trip this through our lemma, we get a different result:
+%
+\begin{code}[hide]
+    open Equivalence
 \end{code}
 \begin{code}
-    νD D = Dec.map νD∅⇔νD (νD∅ D)
+    brackets₀'  : νD∅⇔νD {bracketsD} .to (νD∅⇔νD {bracketsD} .from brackets₀)
+                ≡ roll (inj₁ refl)
+    brackets₀' = refl
+\end{code}
+%
+It now directly takes the first disjunct, $\ac{ε}$.
+
+In practice, such problems should be avoided by using unambiguous languages, ensuring that there is only one valid parse result for each string.
+\jr{todo: give recommendations for future work, for example to use data-dependent grammars.}
+\end{remark}
+
+\subsection{Reduction}
+
+The final piece of the puzzle is reduction. This tells us how the language descriptions change after parsing each input character.
+
+In \cref{sec:reduction-by-example}, we established that the meaning of self-references changes and thus they need to be replaced by local fixed points of the original language. We define a function $\af{σD}$ to perform this substitution. It is a simple recursive function which replaces the $\ac{var}$ constructor with a given $\ab{D'}$ description.
+%
+\begin{code}
+    σ : Desc → Desc → Desc
+    σ ∅         D' = ∅
+    σ ε         D' = ε
+    σ (` c)     D' = ` c
+    σ (D ∪ D₁)  D' = σ D D' ∪ σ D₁ D'
+    σ (D ∗ D₁)  D' = σ D D' ∗ σ D₁ D'
+    σ (x · D)   D' = x · σ D D'
+    σ var       D' = D'
+    σ (μ D)     D' = μ D
+\end{code}
+
+\begin{lemma}
+Substitution of a local fixed point into a description is the same as applying the corresponding functor to the semantic fixed point.
+\begin{code}
+    σμ : ∀ D → ⟦ σ D (μ D₀) ⟧ₒ P w ≡ ⟦ D ⟧ₒ ⟦ D₀ ⟧ w
+\end{code}
+\end{lemma}
+The proof follows directly by induction and computation.
+\begin{code}[hide]
+    σμ' : ∀ D → ⟦ σ D (μ D₀) ⟧ₒ P ≡ ⟦ D ⟧ₒ ⟦ D₀ ⟧
+    σμ' ∅ = refl
+    σμ' ε = refl
+    σμ' (` x) = refl
+    σμ' (D ∪ D₁) = cong₂ ◇._∪_ (σμ' D) (σμ' D₁)
+    σμ' (D ∗ D₁) = cong₂ ◇._∗_ (σμ' D) (σμ' D₁)
+    σμ' (_ · D) = cong (_ ◇.·_) (σμ' D)
+    σμ' var = refl
+    σμ' (μ D) = refl
+    
+    σμ D = cong (λ f → f _) (σμ' D)
+\end{code}
+
+
+\begin{code}[hide]
+    ◂νₒ : Dec (◇.ν ⟦ D₀ ⟧) → ∀ D → Dec (◇.ν (⟦ D ⟧ₒ ⟦ D₀ ⟧))
+    ◂νₒ = νₒ {P = ⟦ _ ⟧}
 \end{code}
 \begin{code}
-    σD : Desc → Desc → Desc
-    σD ∅         D' = ∅
-    σD ε         D' = ε
-    σD (` c)     D' = ` c
-    σD (D ∪ D₁)  D' = σD D D' ∪ σD D₁ D'
-    σD (D ∗ D₁)  D' = σD D D' ∗ σD D₁ D'
-    σD (x · D)   D' = x · σD D D'
-    σD var       D' = D'
-    σD (μ D)     D' = μ D
+    δₒ : Desc → Char → Desc → Desc
+    δₒ D₀ c ∅         = ∅
+    δₒ D₀ c ε         = ∅
+    δₒ D₀ c (` c')    = (c ≟ c') · ε
+    δₒ D₀ c (D ∪ D₁)  = δₒ D₀ c D ∪ δₒ D₀ c D₁
+    δₒ D₀ c (D ∗ D₁)  = ◂νₒ (νD D₀) D · δₒ D₀ c D₁ ∪ δₒ D₀ c D ∗ σ D₁ (μ D₀)
+    δₒ D₀ c (x · D)   = x · δₒ D₀ c D
+    δₒ D₀ c var       = var
+    δₒ D₀ c (μ D)     = μ (δD c D)
 \end{code}
 \begin{code}
-    δDₒ : Desc → Char → Desc → Desc
-    δDₒ D₀ c ∅         = ∅
-    δDₒ D₀ c ε         = ∅
-    δDₒ D₀ c (` c')    = (c ≟ c') · ε
-    δDₒ D₀ c (D ∪ D₁)  = δDₒ D₀ c D ∪ δDₒ D₀ c D₁
-    δDₒ D₀ c (D ∗ D₁)  = νD D · δDₒ D₀ c D₁ ∪ δDₒ D₀ c D ∗ σD D₁ D₀
-    δDₒ D₀ c (x · D)   = x · δDₒ D₀ c D
-    δDₒ D₀ c var       = var
-    δDₒ D₀ c (μ D)     = μ (δDₒ D c D)
+    δD c D = δₒ D c D
 \end{code}
 \begin{code}
-    δD c D = δDₒ D c D
+    δD-to : ∀ D → ⟦ δₒ D₀ c D ⟧ₒ ⟦ δD c D₀ ⟧ w → ◇.δ c (⟦ D ⟧ₒ ⟦ D₀ ⟧) w
+    δD-to (` c') = ◇.δ` .to
+    δD-to (D ∪ D₁) (inj₁ x) = inj₁ (δD-to D x)
+    δD-to (D ∪ D₁) (inj₂ y) = inj₂ (δD-to D₁ y)
+    δD-to (D ∗ D₁) (inj₁ (x , y)) = [] , _ , refl , x , δD-to D₁ y
+    δD-to (D ∗ D₁) (inj₂ (u , v , refl , x , y)) = (_ ∷ _) , _ , refl , δD-to D x , subst id (σμ D₁) y
+    δD-to (A · D) (x , y) = x , δD-to D y
+    δD-to {D₀ = D} var (roll x) = roll (δD-to D x)
+    δD-to (μ D) (roll x) = roll (δD-to D x)
 \end{code}
 \begin{code}
-    δD-correct = {!   !}
+    δD-from : ∀ D → ◇.δ c (⟦ D ⟧ₒ ⟦ D₀ ⟧) w → ⟦ δₒ D₀ c D ⟧ₒ ⟦ δD c D₀ ⟧ w
+    δD-from (` c') = ◇.δ` .from
+    δD-from (D ∪ D₁) (inj₁ x) = inj₁ (δD-from D x)
+    δD-from (D ∪ D₁) (inj₂ y) = inj₂ (δD-from D₁ y)
+    δD-from (D ∗ D₁) ([] , w , refl , x , y) = inj₁ (x , δD-from D₁ y)
+    δD-from (D ∗ D₁) (c ∷ u , v , refl , x , y) = inj₂ (u , v , refl , δD-from D x , subst id (sym (σμ D₁)) y)
+    δD-from (A · D) (x , y) = x , δD-from D y
+    δD-from {D₀ = D} var (roll x) = roll (δD-from D x)
+    δD-from (μ D) (roll x) = roll (δD-from D x)
+\end{code}
+\begin{code}
+    δD-correct {D = D} = mk⇔ (roll ∘ δD-to D ∘ unroll) (roll ∘ δD-from D ∘ unroll)
 \end{code}
 
 % \begin{code}
@@ -350,7 +486,7 @@ The nullability of a fixed point is determined completely by a single applicatio
 %     -- ⟦ var ⟧ₒ-parse (c ∷ w) = ⟦ var ⟧ₒ-parse w
 % 
 %     -- ⟦_⟧-parse : ∀ D → ◇.Parser ⟦ D ⟧
-%     -- ⟦ D ⟧-parse = Dec.map (mk⇔ step (λ { (step x) → x })) ∘ ⟦ D ⟧ₒ-parse
+%     -- ⟦ D ⟧-parse = Dec.map (mk⇔ roll (λ { (roll x) → x })) ∘ ⟦ D ⟧ₒ-parse
 % \end{code}
 % 
 % % Practice for the indexed thing
@@ -364,7 +500,7 @@ The nullability of a fixed point is determined completely by a single applicatio
 %     distrib (inj₂ x , _) = inj₂ x
 % 
 %     ν⟦⟧ : ◇.ν (⟦ D ⟧ₒ ◇.∅) ⇔ ◇.ν ⟦ D ⟧
-%     ν⟦⟧ {D = D} = mk⇔ (λ { x → step (go→ {D₀ = D} D x) }) λ { (step x) → reduce (go← {D₀ = D} D x) } where
+%     ν⟦⟧ {D = D} = mk⇔ (λ { x → roll (go→ {D₀ = D} D x) }) λ { (roll x) → reduce (go← {D₀ = D} D x) } where
 % 
 %       go→ : ∀ D → ◇.ν (⟦ D ⟧ₒ ◇.∅) → ◇.ν (⟦ D ⟧ₒ ⟦ D₀ ⟧)
 %       go→ ε refl = refl
@@ -379,7 +515,7 @@ The nullability of a fixed point is determined completely by a single applicatio
 %       go← (D ∪ D₁) (inj₂ y) = Sum.map₁ inj₂ (go← D₁ y)
 %       go← (D ∗ D₁) ([] , [] , refl , x , y) = Sum.map₁ (λ x → [] , [] , refl , x) (distrib (go← D x , go← D₁ y))
 %       go← (A · D) (x , y) = Sum.map₁ (x ,_) (go← D y)
-%       go← {D₀ = D} var (step x) = inj₂ (reduce (go← D x))
+%       go← {D₀ = D} var (roll x) = inj₂ (reduce (go← D x))
 % 
 %     -- there is not a simple way to define this
 %     -- δ⟦⟧ : ? ◇.⟺ ◇.δ c ⟦ D ⟧
@@ -429,7 +565,7 @@ The nullability of a fixed point is determined completely by a single applicatio
 %     cons x Γ here = x
 %     cons x Γ (there i) = Γ i
 %     data ⟦_⟧ (D : IDesc (𝟏+ I)) (Γ : I → ◇.Lang) : ◇.Lang where
-%         step : ⟦ D ⟧ₒ (cons (⟦ D ⟧ Γ) Γ) w → ⟦ D ⟧ Γ w
+%         roll : ⟦ D ⟧ₒ (cons (⟦ D ⟧ Γ) Γ) w → ⟦ D ⟧ Γ w
 % \end{code}
 % 
 % \begin{code}[hide]
@@ -440,7 +576,7 @@ The nullability of a fixed point is determined completely by a single applicatio
 %     distrib (inj₂ x , _) = inj₂ x
 % 
 %     ν⟦⟧ : ◇.ν (⟦ D ⟧ₒ (cons ◇.∅ Γ)) ⇔ ◇.ν (⟦ D ⟧ Γ)
-%     ν⟦⟧ {D = D} = mk⇔ (λ { x → step (go→ {D₀ = D} D x) }) λ { (step x) → reduce (go← {D₀ = D} D x) } where
+%     ν⟦⟧ {D = D} = mk⇔ (λ { x → roll (go→ {D₀ = D} D x) }) λ { (roll x) → reduce (go← {D₀ = D} D x) } where
 % 
 %       go→ : ∀ D → ◇.ν (⟦ D ⟧ₒ (cons ◇.∅ Γ)) → ◇.ν (⟦ D ⟧ₒ (cons (⟦ D₀ ⟧ Γ) Γ))
 %       go→ ε refl = refl
@@ -456,7 +592,7 @@ The nullability of a fixed point is determined completely by a single applicatio
 %       go← (D ∪ D₁) (inj₂ y) = Sum.map₁ inj₂ (go← D₁ y)
 %       go← (D ∗ D₁) ([] , [] , refl , x , y) = Sum.map₁ (λ x → [] , [] , refl , x) (distrib (go← D x , go← D₁ y))
 %       go← (A · D) (x , y) = Sum.map₁ (x ,_) (go← D y)
-%       go← {D₀ = D} (var here) (step x) = inj₂ (reduce (go← D x))
+%       go← {D₀ = D} (var here) (roll x) = inj₂ (reduce (go← D x))
 %       go← {D₀ = D} (var (there i)) x = inj₁ x
 % 
 %     data Δ (I : Type) : Type where
@@ -943,7 +1079,7 @@ The nullability of a fixed point is determined completely by a single applicatio
 % % % \begin{example}\label{ex:cfg-parsing}
 % % % Let us consider the balanced bracket grammar example. We can see that it is nullable because it contains an \ac{ε} in the fixed point. It is also possible to parse the empty string by taking one iteration of the fixed point using the \ac{var}~\ac{zero}~∗~\ac{var}~\ac{zero} part and then the \ac{ε} for both recursive calls, but note that we always need to end in an empty base case. Thus, for a fixed point to be nullable, it must be nullable even if we do not consider the recursive calls.
 % % % 
-% % % The derivative of the balanced bracket grammar can be taken with respect to any character, but only the character \ac{`[} results in anything interesting because any string in the balanced bracket language needs to start with an opening bracket. The first thing we might try is to unroll the fixed point one step, yielding the following grammar:
+% % % The derivative of the balanced bracket grammar can be taken with respect to any character, but only the character \ac{`[} results in anything interesting because any string in the balanced bracket language needs to start with an opening bracket. The first thing we might try is to unroll the fixed point one roll, yielding the following grammar:
 % % % \begin{code}
 % % % bracketsG₁ : Gram n
 % % % bracketsG₁ = ε ∪ char `[ ∗ bracketsG ∗ char `] ∪ bracketsG ∗ bracketsG
