@@ -3,55 +3,55 @@
 -- {-# OPTIONS --safe #-}
 module 2-overview where
 
-open import Agda.Primitive renaming (Set to Type ; Setω to Typeω)
+    open import Agda.Primitive renaming (Set to Type ; Setω to Typeω)
 
-import Function.Properties.Equivalence as ⇔
-import Data.Bool as Bool
-open import Data.Bool using (Bool ; true ; false)
-open import Data.Char using (Char ; _≟_)
-open import Data.List as List hiding (foldl)
-open import Data.Empty
-open import Data.Product
-open import Data.Sum as Sum
-open import Data.Unit hiding (_≟_)
-open import Relation.Nullary.Decidable as Dec hiding (from-yes ; from-no)
-open import Relation.Nullary.Reflects using (ofʸ ; ofⁿ)
-open import Level hiding (zero ; suc)
-open import Relation.Binary.PropositionalEquality
-open import Function
-open import Data.Fin hiding (_≟_)
-open import Data.Nat hiding (_≟_)
-open import Relation.Nullary.Negation
-import Data.String as String
-open import Agda.Builtin.FromString
+    import Function.Properties.Equivalence as ⇔
+    import Data.Bool as Bool
+    open import Data.Bool using (Bool ; true ; false)
+    open import Data.Char using (Char ; _≟_)
+    open import Data.List as List hiding (foldl)
+    open import Data.Empty
+    open import Data.Product
+    open import Data.Sum as Sum
+    open import Data.Unit hiding (_≟_)
+    open import Relation.Nullary.Decidable as Dec hiding (from-yes ; from-no)
+    open import Relation.Nullary.Reflects using (ofʸ ; ofⁿ)
+    open import Level hiding (zero ; suc)
+    open import Relation.Binary.PropositionalEquality
+    open import Function
+    open import Data.Fin hiding (_≟_)
+    open import Data.Nat hiding (_≟_)
+    open import Relation.Nullary.Negation
+    import Data.String as String
+    open import Agda.Builtin.FromString
 
-transport : ∀{A B : Type} → A ≡ B → A → B
-transport refl x = x
+    transport : ∀{A B : Type} → A ≡ B → A → B
+    transport refl x = x
 
-≡→⇔ : ∀ {A B : Type} → A ≡ B → A ⇔ B
-≡→⇔ refl = ⇔.refl
+    ≡→⇔ : ∀ {A B : Type} → A ≡ B → A ⇔ B
+    ≡→⇔ refl = ⇔.refl
 
-lift⊎₂ : ∀{A B C D : Type} → (A → B → C) → A ⊎ D → B ⊎ D → C ⊎ D
-lift⊎₂ f (inj₁ x) (inj₁ y) = inj₁ (f x y)
-lift⊎₂ _ (inj₁ _) (inj₂ y) = inj₂ y
-lift⊎₂ _ (inj₂ x) _ = inj₂ x
+    lift⊎₂ : ∀{A B C D : Type} → (A → B → C) → A ⊎ D → B ⊎ D → C ⊎ D
+    lift⊎₂ f (inj₁ x) (inj₁ y) = inj₁ (f x y)
+    lift⊎₂ _ (inj₁ _) (inj₂ y) = inj₂ y
+    lift⊎₂ _ (inj₂ x) _ = inj₂ x
 
-String : Type
-String = List Char
-instance
-  string : IsString String 
-  IsString.Constraint string _ = ⊤
-  IsString.fromString string xs = String.toList xs
+    String : Type
+    String = List Char
+    instance
+        string : IsString String 
+        IsString.Constraint string _ = ⊤
+        IsString.fromString string xs = String.toList xs
 
-foldl : ∀ {ℓ₁ ℓ₂} {A : Type ℓ₁} {B : Type ℓ₂} → (A → B → B) → B → List A → B
-foldl k z [] = z
-foldl k z (c ∷ w) = foldl k (k c z) w
+    foldl : ∀ {ℓ₁ ℓ₂} {A : Type ℓ₁} {B : Type ℓ₂} → (A → B → B) → B → List A → B
+    foldl k z [] = z
+    foldl k z (c ∷ w) = foldl k (k c z) w
 
-variable
-    ℓ ℓ′ : Level
-    A : Type ℓ
-    c c' : Char
-    w : String
+    variable
+        ℓ ℓ′ : Level
+        A : Type ℓ
+        c c' : Char
+        w : String
 \end{code}
 
 \section{Finite Languages}\label{sec:finite-languages}
@@ -62,7 +62,7 @@ In this section, we introduce background information, namely how we define langu
 
 We define languages as being functions from strings to types.\footnote{We use \af{Type} as a synonym for Agda's \af{Set} to avoid confusion with set-theoretic sets.}
 \begin{code}[hide]
-module ◇ where
+-- module ◇ where
     Lang : Type₁
 \end{code}
 \begin{code}
@@ -427,17 +427,15 @@ We could try to naively transcribe the brackets grammar using our basic combinat
 \end{code}
 %
 We need to find a different way to encode this recursive relation.
-
+A fixed point combinator could resolve this issue as follows:
 \begin{code}
     postulate μ : (Lang → Lang) → Lang
     bracketsμ = μ (λ P → ε ∪ ` '[' ∗ P ∗ ` ']' ∪ P ∗ P)
 \end{code}
 
-\begin{itemize}
-\item $\af{μ}$, with that exact type, cannot be implemented
-\item The Lang → Lang function needs to be restricted
-\end{itemize}
-\jr{Can we give a concrete example of how Lang → Lang is too general?}
+Unfortunately, such a fixed point combinator does not exists for arbitrary
+functions on languages. Luckily, we will see in the next section that we can
+define such a fixed point combinator if we restrict the functions we are allowed to take the fixed point of.
 
 \endinput
 

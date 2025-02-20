@@ -24,7 +24,7 @@ open import Relation.Nullary.Negation
 import Data.String as String
 open import Agda.Builtin.FromString
 
-open import 2-overview as ◇
+open import 2-overview renaming (∅ to ◇∅ ; ε to ◇ε ; `_ to ◇`_ ; _·_ to _◇·_ ; _∪_ to _◇∪_ ; _∗_ to _◇∗_) hiding (brackets ; μ)
 \end{code}
 
 \subsection{Fixed Points}
@@ -62,23 +62,23 @@ module F where
     infixr 20 _∪_
 \end{code}
 
-We can give semantics to our descriptions in terms of languages that we defined in the previous section.\jr{todo: proper ref}
+We can give semantics to our descriptions in terms of languages that we defined in \cref{sec:finite-languages}.\footnote{We use the ◇ prefix to refer to the language combinators defined in \cref{sec:finite-language}.}
 
 \begin{code}
-    ⟦_⟧ₒ : Desc → ◇.Lang → ◇.Lang
-    ⟦ ∅ ⟧ₒ            _ = ◇.∅
-    ⟦ ε ⟧ₒ            _ = ◇.ε
-    ⟦ ` c ⟧ₒ          _ = ◇.` c
-    ⟦ D₁ ∪ D₂ ⟧ₒ      P = ⟦ D₁ ⟧ₒ P ◇.∪ ⟦ D₂ ⟧ₒ P
-    ⟦ D₁ ∗ D₂ ⟧ₒ      P = ⟦ D₁ ⟧ₒ P ◇.∗ ⟦ D₂ ⟧ₒ P
-    ⟦ _·_ {A} _ D ⟧ₒ  P = A ◇.· ⟦ D ⟧ₒ P 
+    ⟦_⟧ₒ : Desc → Lang → Lang
+    ⟦ ∅ ⟧ₒ            _ = ◇∅
+    ⟦ ε ⟧ₒ            _ = ◇ε
+    ⟦ ` c ⟧ₒ          _ = ◇` c
+    ⟦ D₁ ∪ D₂ ⟧ₒ      P = ⟦ D₁ ⟧ₒ P ◇∪ ⟦ D₂ ⟧ₒ P
+    ⟦ D₁ ∗ D₂ ⟧ₒ      P = ⟦ D₁ ⟧ₒ P ◇∗ ⟦ D₂ ⟧ₒ P
+    ⟦ _·_ {A} _ D ⟧ₒ  P = A ◇· ⟦ D ⟧ₒ P 
     ⟦ var ⟧ₒ          P = P
 \end{code}
 
 Using these descriptions, we can define a fixed point as follows:
 
 \begin{code}
-    data ⟦_⟧ (D : Desc) : ◇.Lang where
+    data ⟦_⟧ (D : Desc) : Lang where
         roll : ⟦ D ⟧ₒ ⟦ D ⟧ w → ⟦ D ⟧ w
 \end{code}
 \begin{code}[hide]
@@ -173,20 +173,20 @@ module F2 where
 \begin{AgdaAlign}
 \AgdaNoSpaceAroundCode{}
 \begin{code}
-    ⟦_⟧ₒ : Desc → ◇.Lang → ◇.Lang
+    ⟦_⟧ₒ : Desc → Lang → Lang
     -- ...
 \end{code}
 \begin{code}[hide]
-    data ⟦_⟧ (X : Desc) : ◇.Lang where
+    data ⟦_⟧ (X : Desc) : Lang where
         roll : ⟦ X ⟧ₒ ⟦ X ⟧ w → ⟦ X ⟧ w
     unroll : ⟦ D ⟧ w → ⟦ D ⟧ₒ ⟦ D ⟧ w
     unroll (roll x) = x
-    ⟦ ∅ ⟧ₒ        = const ◇.∅
-    ⟦ ε ⟧ₒ        = const ◇.ε
-    ⟦ ` c ⟧ₒ      = const (◇.` c) 
-    ⟦ X ∪ Y ⟧ₒ P  = ⟦ X ⟧ₒ P ◇.∪ ⟦ Y ⟧ₒ P
-    ⟦ X ∗ Y ⟧ₒ P  = ⟦ X ⟧ₒ P ◇.∗ ⟦ Y ⟧ₒ P
-    ⟦ _·_ {A} _ X ⟧ₒ P  = A ◇.· ⟦ X ⟧ₒ P 
+    ⟦ ∅ ⟧ₒ        = const ◇∅
+    ⟦ ε ⟧ₒ        = const ◇ε
+    ⟦ ` c ⟧ₒ      = const (◇` c) 
+    ⟦ X ∪ Y ⟧ₒ P  = ⟦ X ⟧ₒ P ◇∪ ⟦ Y ⟧ₒ P
+    ⟦ X ∗ Y ⟧ₒ P  = ⟦ X ⟧ₒ P ◇∗ ⟦ Y ⟧ₒ P
+    ⟦ _·_ {A} _ X ⟧ₒ P  = A ◇· ⟦ X ⟧ₒ P 
     ⟦ var ⟧ₒ P    = P
 \end{code}
 \begin{code}
@@ -204,7 +204,7 @@ The first question is easy to answer: yes, the first disjunct of brackets is eps
     brackets = ⟦ bracketsD ⟧
 \end{code}
 \begin{code}
-    νbrackets : Dec (◇.ν brackets)
+    νbrackets : Dec (ν brackets)
     νbrackets = yes (roll (inj₁ refl))
 \end{code}
 
@@ -228,23 +228,24 @@ how to do it in general for any description in the next section.
 
 \subsection{Parsing in General}\label{sec:parsing-in-general}
 
-Our goal is to define:
-
+Our goal is to define a parse function for every description fixed point.
+%
 \begin{code}
-    parse : ∀ D → ◇.Parser ⟦ D ⟧
+    parse : ∀ D → Parser ⟦ D ⟧
 \end{code}
-
-We approach this by decomposing parsing into $\af{ν}$ and $\af{δ}$.
-
+%
+We approach this by decomposing parsing into computing nullability and
+derivatives separately as follows:
+%
 \begin{code}
-    νD : ∀ D → Dec (◇.ν ⟦ D ⟧)
+    νD : ∀ D → Dec (ν ⟦ D ⟧)
     δD : Char → Desc → Desc
 \end{code}
 
 The $\af{νD}$ function can easily be written to be correct by construction, however $\af{δD}$ must be proven correct separately as follows:
-
+%
 \begin{code}
-    δD-correct : ⟦ δD c D ⟧ ◇.⟺ ◇.δ c ⟦ D ⟧
+    δD-correct : ⟦ δD c D ⟧ ⟺ δ c ⟦ D ⟧
 \end{code}
 
 The actual parsing can now be done character by character:
@@ -262,15 +263,15 @@ the implementation of $\af{νD}$, $\af{δD}$, $\af{δD-correct}$.
 If we know the nullability of a language, $\ab{P}$, then the nullability of a description functor applied to $\ab{P}$ is the same as the empty string parsers for our finite languages, but with the nullability of the variables given by the nullability of $\ab{P}$. For the $\ac{μ}$ case we use the nullability of the fixed point, which we will implement shortly.\jr{Reiterate that the cases for the basic combinators are the same as in \cref{fig:null-delta}.}
 %
 \begin{code}[hide]
-    variable P : ◇.Lang
+    -- variable P : Lang
 \end{code}
 \begin{code}
-    νₒ : Dec (◇.ν P) → ∀ D → Dec (◇.ν (⟦ D ⟧ₒ P))
+    νₒ : Dec (ν P) → ∀ D → Dec (ν (⟦ D ⟧ₒ P))
     νₒ _ ∅         = no λ ()
     νₒ _ ε         = yes refl
     νₒ _ (` c)     = no λ ()
     νₒ z (D ∪ D₁)  = νₒ z D ⊎-dec νₒ z D₁
-    νₒ z (D ∗ D₁)  = Dec.map ◇.ν∗ (νₒ z D ×-dec νₒ z D₁)
+    νₒ z (D ∗ D₁)  = Dec.map ν∗ (νₒ z D ×-dec νₒ z D₁)
     νₒ z (x · D)   = x ×-dec νₒ z D
     νₒ z var       = z
     νₒ _ (μ D)     = νD D
@@ -285,7 +286,7 @@ If we know the nullability of a language, $\ab{P}$, then the nullability of a de
 \begin{lemma}\label{lem:null-split}
 The nullability of a fixed point is determined completely by a single application of the underlying functor to the empty language.
 \begin{code}
-    νD∅⇔νD : ◇.ν (⟦ D ⟧ₒ ◇.∅) ⇔ ◇.ν ⟦ D ⟧
+    νD∅⇔νD : ν (⟦ D ⟧ₒ ◇∅) ⇔ ν ⟦ D ⟧
 \end{code}
 \end{lemma}
 \begin{proof}
@@ -293,7 +294,7 @@ The forward direction is easily proven by noting that nullability and the
 semantics of a description are functors and that the empty language is initial.
 It is also straightforward to write the proof directly.
 \begin{code}
-    νD∅→νD : ∀ D → ◇.ν (⟦ D ⟧ₒ ◇.∅) → ◇.ν (⟦ D ⟧ₒ ⟦ D₀ ⟧)
+    νD∅→νD : ∀ D → ν (⟦ D ⟧ₒ ◇∅) → ν (⟦ D ⟧ₒ ⟦ D₀ ⟧)
 \end{code}
 \begin{code}[hide]
     νD∅→νD ε _ = refl
@@ -305,7 +306,7 @@ It is also straightforward to write the proof directly.
 \end{code}
 The backwards direction is more difficult. We prove a more general lemma from which our disired result follows. The generalized lemma states that, if the application of a descriptor functor to a fixed point of another descriptor is nullable, then either the fixed point plays no role and the descriptor functor is also nullable if applied to the empty language, or the other descriptor (that we took the fixed point of) is nullable when applied to the empty language.
 \begin{code}
-    νD∅←νD : ∀ D → ◇.ν (⟦ D ⟧ₒ ⟦ D₀ ⟧) → ◇.ν (⟦ D ⟧ₒ ◇.∅) ⊎ ◇.ν (⟦ D₀ ⟧ₒ ◇.∅)
+    νD∅←νD : ∀ D → ν (⟦ D ⟧ₒ ⟦ D₀ ⟧) → ν (⟦ D ⟧ₒ ◇∅) ⊎ ν (⟦ D₀ ⟧ₒ ◇∅)
 \end{code}
 \begin{code}[hide]
     νD∅←νD ε x = inj₁ refl
@@ -332,7 +333,7 @@ Using \cref{lem:null-split}, we can easily define nullability for our descriptio
 \Cref{lem:null-split} does not define an isomorphism on types. In particular, the backwards direction is not injective. Consider the brackets language. It has the following null element, where we first choose the third disjunct, $\ac{var}~\ac{∗}~\ac{var}$, and then the first disjunct $\ac{ε}$ for both branches.
 %
 \begin{code}
-    brackets₀ : ◇.ν brackets
+    brackets₀ : ν brackets
     brackets₀ = roll (inj₂ (inj₂ ([] , [] , refl , roll (inj₁ refl) , roll (inj₁ refl))))
 \end{code}
 %
@@ -380,7 +381,7 @@ Finally, for the internal fixed point, $\ac{μ}$, we can simply recursively call
 Thus, our reduction helper function is defined as follows:
 %
 \begin{code}[hide]
-    ◂νₒ : Dec (◇.ν ⟦ D₀ ⟧) → ∀ D → Dec (◇.ν (⟦ D ⟧ₒ ⟦ D₀ ⟧))
+    ◂νₒ : Dec (ν ⟦ D₀ ⟧) → ∀ D → Dec (ν (⟦ D ⟧ₒ ⟦ D₀ ⟧))
     ◂νₒ = νₒ {P = ⟦ _ ⟧}
 \end{code}
 \begin{code}
@@ -413,9 +414,9 @@ The proof follows directly by induction and computation.
     σμ' ∅ = refl
     σμ' ε = refl
     σμ' (` x) = refl
-    σμ' (D ∪ D₁) = cong₂ ◇._∪_ (σμ' D) (σμ' D₁)
-    σμ' (D ∗ D₁) = cong₂ ◇._∗_ (σμ' D) (σμ' D₁)
-    σμ' (_ · D) = cong (_ ◇.·_) (σμ' D)
+    σμ' (D ∪ D₁) = cong₂ _◇∪_ (σμ' D) (σμ' D₁)
+    σμ' (D ∗ D₁) = cong₂ _◇∗_ (σμ' D) (σμ' D₁)
+    σμ' (_ · D) = cong (_ ◇·_) (σμ' D)
     σμ' var = refl
     σμ' (μ D) = refl
     
@@ -425,7 +426,7 @@ The proof follows directly by induction and computation.
 To prove the correctness of the derivative, we consider both directions of the equivalence separately. Furthermore, it is important that we separate the top-level description, $\ab{D₀}$, from the current description, $\ab{D}$, as they need to change independently throughout the induction.
 %
 \begin{code}
-    δD-to : ∀ D → ⟦ δₒ D₀ c D ⟧ₒ ⟦ δD c D₀ ⟧ w → ◇.δ c (⟦ D ⟧ₒ ⟦ D₀ ⟧) w
+    δD-to : ∀ D → ⟦ δₒ D₀ c D ⟧ₒ ⟦ δD c D₀ ⟧ w → δ c (⟦ D ⟧ₒ ⟦ D₀ ⟧) w
 \end{code}
 \begin{code}[hide]
     δD-to (` c') (refl , refl) = refl
@@ -438,7 +439,7 @@ To prove the correctness of the derivative, we consider both directions of the e
     δD-to (μ D) (roll x) = roll (δD-to D x)
 \end{code}
 \begin{code}
-    δD-from : ∀ D → ◇.δ c (⟦ D ⟧ₒ ⟦ D₀ ⟧) w → ⟦ δₒ D₀ c D ⟧ₒ ⟦ δD c D₀ ⟧ w
+    δD-from : ∀ D → δ c (⟦ D ⟧ₒ ⟦ D₀ ⟧) w → ⟦ δₒ D₀ c D ⟧ₒ ⟦ δD c D₀ ⟧ w
 \end{code}
 \begin{code}[hide]
     δD-from (` c') refl = refl , refl
@@ -473,16 +474,16 @@ This completes our proof.
     Σ⇔ f = mk⇔ (Prod.map₂ (f .to)) (Prod.map₂ (f .from))
     ≡⇔ : ∀{A B : Set} → A ≡ B → A ⇔ B
     ≡⇔ refl = ⇔.refl
-    rolling : ⟦ D ⟧ₒ ⟦ D ⟧ ◇.⟺ ⟦ D ⟧
+    rolling : ⟦ D ⟧ₒ ⟦ D ⟧ ⟺ ⟦ D ⟧
     rolling = mk⇔ roll unroll
     {-# TERMINATING #-}
-    δD-correct' : ∀ D → ⟦ δₒ D₀ c D ⟧ₒ ⟦ δD c D₀ ⟧ ◇.⟺ ◇.δ c (⟦ D ⟧ₒ ⟦ D₀ ⟧)
+    δD-correct' : ∀ D → ⟦ δₒ D₀ c D ⟧ₒ ⟦ δD c D₀ ⟧ ⟺ δ c (⟦ D ⟧ₒ ⟦ D₀ ⟧)
     δD-correct' ∅ = ⇔.refl
-    δD-correct' ε = ◇.δε
-    δD-correct' (` c') = ◇.δ`
-    δD-correct' (D ∪ D₁) = ⇔.trans (δD-correct' D ⊎⇔ δD-correct' D₁) (◇.◂δ∪ {⟦ D ⟧ₒ _} {⟦ D₁ ⟧ₒ _})
-    δD-correct' (D ∗ D₁) = ⇔.trans ((⇔.refl ×⇔ δD-correct' D₁) ⊎⇔ Σ⇔ (Σ⇔ (⇔.refl ×⇔ (δD-correct' D ×⇔ ≡⇔ (σμ D₁))))) ◇.δ∗
-    δD-correct' (A · D) = ⇔.trans (⇔.refl ×⇔ δD-correct' D) (◇.δ· {_} {_} {⟦ D ⟧ₒ _})
+    δD-correct' ε = δε
+    δD-correct' (` c') = δ`
+    δD-correct' (D ∪ D₁) = ⇔.trans (δD-correct' D ⊎⇔ δD-correct' D₁) (◂δ∪ {⟦ D ⟧ₒ _} {⟦ D₁ ⟧ₒ _})
+    δD-correct' (D ∗ D₁) = ⇔.trans ((⇔.refl ×⇔ δD-correct' D₁) ⊎⇔ Σ⇔ (Σ⇔ (⇔.refl ×⇔ (δD-correct' D ×⇔ ≡⇔ (σμ D₁))))) δ∗
+    δD-correct' (A · D) = ⇔.trans (⇔.refl ×⇔ δD-correct' D) (δ· {_} {_} {⟦ D ⟧ₒ _})
     δD-correct' {D₀ = D} var = ⇔.trans (⇔.trans (⇔.sym rolling) (δD-correct' D)) rolling 
     δD-correct' (μ D) = ⇔.trans (⇔.trans (⇔.sym rolling) (δD-correct' D)) rolling 
 \end{code}
