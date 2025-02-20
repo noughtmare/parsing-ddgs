@@ -8,30 +8,29 @@ open import Data.Unit
 
 \section{Introduction}
 
-Parsing---i.e., the process of recovering structure from strings---is an essential building block for modern programming applications in practice.
-And while parsing is an old subject that has been extensively studied, it remains a relevant subject where the new research questions continuously emerge.
-Examples of such research questions for parsing today include how to compose grammars and parsers~(e.g.,~\cite{SchwerdfegerW09}), dealing with ambiguous parse trees~(e.g.,~\cite{BrabrandGM10,basten-thesis,one-parser-to-rule-them-all}), and parsing grammar formalisms beyond context-free grammars~(e.g.,~\cite{one-parser-to-rule-them-all}).
-While research questions such as these often serve a practical purpose, answering them often requires a deep theoretical understanding of the semantics of parsing.
+Parsing---i.e., the process of recovering structure from strings---is an essential building block for many practical programming applications.
+While parsing has been extensively studied, it remains a relevant subject of research where new research questions continuously emerge.
+For example, how to compose grammars and parsers~(e.g.,~\cite{SchwerdfegerW09}), dealing with ambiguous parse trees~(e.g.,~\cite{BrabrandGM10,basten-thesis,one-parser-to-rule-them-all}), and parsing grammar formalisms beyond context-free grammars~(e.g.,~\cite{one-parser-to-rule-them-all}).
+Research questions such as these serve a practical purpose, but answering them often requires a deep theoretical understanding of the semantics of parsing.
 
-
-This theoretical understanding can be approached in a multitude of ways, depending on our purpose.
+This theoretical understanding can be approached in different ways.
 Parsing is often studied using automata theory~\cite{hopcroft-book}.
 However, there is value in studying more \emph{denotational} approaches to parsing.
 A main purpose of denotational semantics is to abstract away operational concerns, as such concerns tends to be a hindrance for equational reasoning.
 Such equational reasoning could be used to study and answer some of the open research questions in the parsers of today and tomorrow.
 
 This paper studies the denotational semantics of parsing for context-free grammars.
-While the study is theoretical in nature, the motivation is that the semantics could provide a foundation for practical future studies on proving the correctness of, e.g., parser optimizations and disambiguation techniques, as well as potentially providing a foundation for building and reasoning about parsers for more expressive grammar formalisms, such as data-dependent grammars~\cite{one-parser-to-rule-them-all}.
+While the study is theoretical in nature, the motivation is to provide a foundation for practical future studies on proving the correctness of, e.g., parser optimizations and disambiguation techniques, as well as potentially providing a foundation for building and reasoning about parsers for more expressive grammar formalisms, such as data-dependent grammars~\cite{one-parser-to-rule-them-all}.
 
 We approach the question of giving a denotational semantics of parsing by building on existing work by Elliott~\cite{conal-languages}.
-In his work, Elliott demonstrated that regular grammars have a simple and direct denotational semantics.
+In his recent work, Elliott demonstrated that regular grammars have a simple and direct denotational semantics.
 And that we can obtain parsers for such languages that are correct by construction, using \emph{derivatives}.
 While it was well-known that we can parse regular grammars using Brzozowski derivatives~\cite{brzozowski}, Elliott's work provides a simple and direct mechanization in Agda's type theory of the denotational semantics of these derivatives.
-This mechanization essentially provides an implementation of parsing that is correct by construction, and that we can reason about without relying on (bi-)simulation arguments.
+This mechanization provides an implementation of parsing that is correct by construction, and that we can reason about without relying on (bi-)simulation arguments.
 While the parsers obtained in this manner are not exactly performant, the denotational approach opens up the door to exploiting grammar structure to obtain optimized parsers.
 
 Elliott leaves open the question of how the approach scales to more expressive grammar formalisms, such as context-free languages and beyond.
-The question of using derivatives to parse context-free grammars has been considered by others.
+However, the question of using derivatives to parse context-free grammars has been considered by others.
 Might et al.~\cite{parsing-with-derivatives} demonstrate how to build parsers from context-free grammars using derivatives and optimizations applied to them, to obtain reasonable performance.
 Thiemann's work~\cite{Thiemann17} uses lattice theory and powerset semantics to formalize a notion of partial derivative for a variant of context-free grammars.
 In this work, we build on the approach of Elliott and study how to build a simple and direct mechanization in Agda's type theory of the denotational semantics of derivatives for context-free grammars.
