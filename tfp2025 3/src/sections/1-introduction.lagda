@@ -42,7 +42,7 @@ A main challenge for our mechanization is the question of how to deal with the r
 Derivatives (or \emph{language differentiation}) provide an automated procedure for parsing.
 We give an overview of what it means to take the derivative of a grammar, how this provides an approach to parsing, and consider the problem of automatically taking the derivative of a context-free grammar.
 
-To illustrate, let us consider the following context-free grammar of palindromic bit strings:
+To illustrate, consider the following context-free grammar of palindromic bit strings:
 \[
 \langle\mathit{pal}\rangle ::= 0 \mid 1 \mid 0\, \langle\mathit{pal}\rangle\, 0 \mid 1\, \langle\mathit{pal}\rangle\, 1
 \]
@@ -50,7 +50,7 @@ Say we want to use this grammar to parse the string 0110.
 The idea of automatic differentiation is this.
 We first compute the derivative of the grammar w.r.t. the first bit (0) of our bit string (0110); let us call this grammar $\langle pal_0\rangle$.
 Then, we take the derivative of $\langle pal_0\rangle$ w.r.t. the next bit (1).
-We continue this procedure until we either (a) get stuck because the derivative is invalid, in which case the bit string is not well-formed w.r.t. our grammar, or (b) the derivative grammar contains the empty production (we will use the symbol ε to denote the empty grammar), in which case the bit string is well-formed w.r.t. our grammar.
+We continue this procedure until we either (a) get stuck because the derivative is invalid, in which case the bit string is not well-formed w.r.t. our grammar, or (b) we reach the end of our bit string, in which case the bit string is well-formed w.r.t. our grammar  if the derived final grammar contains the empty production (we will use the symbol ε to denote the empty grammar).
 
 Taking the derivative of the $\langle\mathit{pal}\rangle$ grammar w.r.t. the bit 0 yields the following derived grammar:
 \[
@@ -78,7 +78,7 @@ While the $\langle\mathit{rec}\rangle$ grammar is contrived, similar issues aris
 \langle\mathit{expr}\rangle ::= \langle\mathit{expr}\rangle\, +\, \langle\mathit{expr}\rangle \mid 0 \mid 1
 \]
 
-Another challenge with context-free grammars is how to encode their recursive nature in a proof assistant such as Agda in a way that our encoding of grammars is \emph{strictly positive}\footnote{\url{https://agda.readthedocs.io/en/v2.6.1.3/language/data-types.html\#strict-positivity}}, and in a way that ensures that automated differentiation---that is, continuously applying the method we informally illustrated above for taking the derivative of a grammar w.r.t. a symbol---is guaranteed to terminate.
+Another challenge with context-free grammars is how to encode their recursive nature in a proof assistant such as Agda in a way that our encoding of grammars is \emph{strictly positive},\footnote{\url{https://agda.readthedocs.io/en/v2.6.1.3/language/data-types.html\#strict-positivity}} and in a way that ensures that automated differentiation---that is, continuously applying the method we informally illustrated above for taking the derivative of a grammar w.r.t. a symbol---is guaranteed to terminate.
 
 
 \subsection{Contributions}
@@ -91,8 +91,8 @@ For example, the following is an example of a mutually recursive grammar that do
 \\
 \langle\mathit{stmt}\rangle &::= \langle\mathit{expr}\rangle \mid \langle\mathit{stmt}\rangle ; \langle\mathit{stmt}\rangle
 \end{align*}
-The $\langle\mathit{pal}\rangle$, $\langle\mathit{rec}\rangle$, and $\langle\mathit{expr}\rangle$ grammars from the previous section are both examples of grammars that are in the subset we consider.
-We conjecture that our approach is compatible with all context-free grammars, at the cost of some additional book-keeping during derivation.
+The $\langle\mathit{pal}\rangle$, $\langle\mathit{rec}\rangle$, and $\langle\mathit{expr}\rangle$ grammars from the previous section are all examples of grammars that are in the subset.
+We conjecture that the approach we present later can be extended to deal with all context-free grammars, at the cost of some additional book-keeping during derivation.
 We leave verifying this conjecture as a challenge for future work.
 
 We make the following technical contributions:
