@@ -401,7 +401,7 @@ At the top level, we simply delegate to the helper by passing $\ab{D₀} = \ab{D
     δD c D = δₒ D c D
 \end{code}
 
-\begin{lemma}
+\begin{lemma}\label{lem:sub-sem}
 Substitution of a local fixed point into a description is the same as applying the corresponding functor to the semantic fixed point.
 \begin{code}
     σμ : ∀ D → ⟦ σ D (μ D₀) ⟧ₒ P w ≡ ⟦ D ⟧ₒ ⟦ D₀ ⟧ w
@@ -422,9 +422,12 @@ The proof follows directly by induction and computation.
     σμ D = cong (λ f → f _) (σμ' D)
 \end{code}
 
-
+To prove the correctness of the derivative, we consider both directions of the equivalence separately. Furthermore, it is important that we separate the top-level description, $\ab{D₀}$, from the current description, $\ab{D}$, as they need to change independently throughout the induction.
+%
 \begin{code}
     δD-to : ∀ D → ⟦ δₒ D₀ c D ⟧ₒ ⟦ δD c D₀ ⟧ w → ◇.δ c (⟦ D ⟧ₒ ⟦ D₀ ⟧) w
+\end{code}
+\begin{code}[hide]
     δD-to (` c') (refl , refl) = refl
     δD-to (D ∪ D₁) (inj₁ x) = inj₁ (δD-to D x)
     δD-to (D ∪ D₁) (inj₂ y) = inj₂ (δD-to D₁ y)
@@ -436,6 +439,8 @@ The proof follows directly by induction and computation.
 \end{code}
 \begin{code}
     δD-from : ∀ D → ◇.δ c (⟦ D ⟧ₒ ⟦ D₀ ⟧) w → ⟦ δₒ D₀ c D ⟧ₒ ⟦ δD c D₀ ⟧ w
+\end{code}
+\begin{code}[hide]
     δD-from (` c') refl = refl , refl
     δD-from (D ∪ D₁) (inj₁ x) = inj₁ (δD-from D x)
     δD-from (D ∪ D₁) (inj₂ y) = inj₂ (δD-from D₁ y)
@@ -445,9 +450,16 @@ The proof follows directly by induction and computation.
     δD-from {D₀ = D} var (roll x) = roll (δD-from D x)
     δD-from (μ D) (roll x) = roll (δD-from D x)
 \end{code}
+%
+The proofs follow from induction, the equivalances in \cref{fig:null-delta}, and
+\cref{lem:sub-sem}.  Finally, we combine these two direction into our desired
+equivalance:
+%
 \begin{code}
     δD-correct {D = D} = mk⇔ (roll ∘ δD-to D ∘ unroll) (roll ∘ δD-from D ∘ unroll)
 \end{code}
+%
+This completes our proof.
 
 % We can write it in one go using only the null/delta laws, congruences,
 % induction, and the σμ lemma.  But Agda's termination checker is not good

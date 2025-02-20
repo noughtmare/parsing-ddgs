@@ -1,8 +1,8 @@
 \section{Related Work}\label{sec:related-work}
 
-Formal languages have a long history; too long to summarize here. We refer the
-interested reader to Hocroft et al.~\cite{hopcroft-book} which is an overview of
-traditional formal language theory.
+Formal languages have a long history. We refer the interested reader to Hocroft
+et al.~\cite{hopcroft-book} which is an overview of traditional formal language
+theory.
 
 The main inspiration for our work is the work by Elliott on automatic and
 symbolic differentiation of languages \cite{conal-languages}. As the title
@@ -40,3 +40,6 @@ is only the boolean which tells you whether the input string is in the language
 or not. In this way, the information about the tree structure that naturally
 results from parsing---and which is often desired in practice---remains
 implicit. Furthermore, our proofs are mechanized in Agda, which gives us confidence in the correctness, but also facilitates computer-aided experimentation.
+
+\jr{TODO}
+Krishnaswami and Yallop~\cite{yallop} propose an alternative approach to parsing μ-regular expressions. They introduce a type system which enforces their languages to be in LL(1), which they parse efficiently using staging. 

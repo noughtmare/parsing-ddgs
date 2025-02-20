@@ -4,21 +4,31 @@ module 4-discussion where
 
 \section{Discussion}\label{sec:discussion}
 
-Finally, we want to discuss three aspects of our work: expressiveness, performance, and simplicity.
+Zooming back out, we want to discuss three aspects of our work: expressiveness, performance, and simplicity.
 
-\jr{TODO: μ-regular expressions have been studied before, cite}
-\paragraph{Expressiveness} We conjecture that our grammars which include variables and fixed points can describe any context-free language.
-\jr{mention that we only support context-free languages without mutual recursion and how we use a subset of μ-regular languages}.
-% We have shown the example of balanced the bracket language which is known to be context-free. Furthermore, Grenrus shows that any context-free grammar can be converted to his grammars \cite{fix-ing-regular-expressions}, which are similar to our grammars. The main problem is showing that mutually recursive nonterminals can be expressed using our simple fixed points, which requires Beki\'c's bisection lemma~\cite{Bekic1984}. Formalizing this in our framework is future work.
+\paragraph{Expressiveness} Our language descriptions are similar to μ-regular
+expressions, which have been shown to be equivalent to context-free
+grammars~\cite{Thiemann17}. The major difference is that we only allow variables
+to refer to the nearest enclosing fixed point and not back to earlier fixed
+points. Each fixed point roughly corresponds to a nonterminal in the
+context-free grammar, so we conjecture this limitation means we only support
+context-free grammars without mutual recursion. We hope to expand our work to cover mutually recursive context-free grammars in future work.
 
-Going beyond context-free languages, many practical programming languages cannot be adequately described as context-free languages. For example, features such as associativity, precedence, and indentation sensitivity cannot be expressed directly using context-free grammars. Recent work by Afroozeh and Izmaylova~\cite{one-parser-to-rule-them-all} shows that all these advanced features can be supported if we extend our grammars with data-dependencies. Our framework can form a foundation for such extensions and we consider formalizing it as future work.
+Furthermore, an anonymous reviewer of a draft of this paper have pointed out
+that simply showing an equivalence of expressive power does not mean μ-regular
+expressions are as easy to use as context-free grammars in practice. In future
+work, we hope to explore this further by specifying and parsing more
+representative and practical languages.
 
-\paragraph{Performance}
-Related work: Krishnaswami and Yallop~\cite{yallop} show how to efficiently parse LL(1) μ-regular expressions
+Going beyond context-free languages, many practical programming languages cannot
+be adequately described as context-free languages. For example, features such as
+associativity, precedence, and indentation sensitivity cannot be expressed
+directly using context-free grammars. Recent work by Afroozeh and
+Izmaylova~\cite{one-parser-to-rule-them-all} shows that all these advanced
+features can be supported if we extend our grammars with data-dependencies. In
+future work, we want to explore using our framework as a foundation for such
+extensions.
 
-For a parser to practically useful, it must at least have linear asymptotic complexity for practical grammars. Might et al. \cite{parsing-with-derivatives} show that naively parsing using derivatives does not achieve that bound, but optimizations might make it possible. In particular, they argue that we could achieve $O(n|G|)$ time complexity (where $|G|$ is the grammar size) if the grammar size stays approximately constant after every derivative. By compacting the grammar, they conjecture it is possible to achieve this bound for any unambiguous grammar. We want to investigate if similar optimizations could be applied to our parser and if we can prove that we achieve this bound.
+\paragraph{Performance} For a parser to practically useful, it must at least have linear asymptotic complexity for practical grammars. Might et al.~\cite{parsing-with-derivatives} show that naively parsing using derivatives does not achieve that bound, but optimizations might make it possible. In particular, they argue that we could achieve $O(n|G|)$ time complexity (where $|G|$ is the grammar size) if the grammar size stays approximately constant after every derivative. By compacting the grammar, they conjecture it is possible to achieve this bound for all unambiguous grammars. In future work, we want to investigate if similar optimizations could be applied to our parser and if we can prove that we achieve this bound.
 
-\paragraph{Simplicity}
-One of the main contributions of Elliott's type theoretic formalization of languages~\cite{conal-languages} is its simplicity of implementation and proof. To be able to extend his approach to context-free languages we have had to introduce some complications.
-\jr{TODO: finish this paragraph}
-% Most notably, we use fuel to define the semantics of our grammars. We have explored other approaches such as using guarded type theory, but we did not manage to significantly simplify our formalization. Furtheremore, we expect that many proofs remain simple despite our fuel-based approach.
+\paragraph{Simplicity} One of the main contributions of Elliott's type theoretic formalization of languages~\cite{conal-languages} is its simplicity of implementation and proof. To be able to extend his approach to context-free languages we have had to introduce language descriptors, which are a slight complication. For example, descriptors made it harder to parameterize the symbolic representation of a language with its semantics as Elliott does in his paper, allowing him to write a correct by construction derivative function. Instead, we have split the derivative function into a syntactic transformation and an external correctness proof. Nevertheless, we think our approach retains much of the simplicity of Elliott's work.
