@@ -121,11 +121,11 @@ into another description.
 
 There are cases where we do want to use self-reference in the new language.
 Consider the third disjunct, $\ac{var}~\ac{∗}~\ac{var}$. It is a sequence so we
-expect from the finite case of \cref{sec:finite-languages} that matching one character results in
-two new disjuncts: one where the first sequent matches the empty string and the
-second is reduced and one where the first is reduced and the second is
-unchanged. In this case both sequents are self-references, so we need to know
-three things: 
+expect from the finite case of \cref{sec:finite-languages} that matching one
+character results in two new disjuncts: one where the first sequent matches the
+empty string and the we take the derivative of the second, and one where we take
+the derivative of the first and the second is unchanged. In this case both
+sequents are self-references, so we need to know three things: 
 %
 \begin{enumerate}
 \item Does the original language match the empty string?
@@ -133,10 +133,12 @@ three things:
 \item What does it mean for the language to remain the same?
 \end{enumerate}
 %
-At first glance, the last point seems obvious, but remember that we are reducing
-the language, so self-references will change meaning even if they remain
-unchanged. Similarly to the previous disjunct, we want to refer to the original
-brackets in this case. To resolve this issue of referring to the original brackets expression, we introduce a new combinator $\ac{μ}$, which has the meaning of locally taking a fixed point of a subexpression.
+At first glance, the last point seems obvious, but remember that we are taking
+the derivative of the language, so self-references will change meaning even if
+they remain unchanged. Similarly to the previous disjunct, we want to refer to
+the original brackets in this case. To resolve this issue of referring to the
+original brackets expression, we introduce a new combinator $\ac{μ}$, which has
+the meaning of locally taking a fixed point of a subexpression.
 %
 \begin{code}[hide]
 module F2 where
@@ -222,8 +224,9 @@ Using these answers, we can write the derivative of brackets with respect to the
 From this example, we have learned the following three lessons:
 \begin{itemize}
 \item We can reuse many of the results of finite languages (\cref{sec:finite-languages}).
-\item We need a new $\ac{μ}$ combinator to nest fixed points in descriptions. This is necessary to refer back to the original language before reduction.
-\item Reducing a self-reference simply results in a self-reference again, because self-references in the reduct refer to the reduct.
+\item We need a new $\ac{μ}$ combinator to nest fixed points in descriptions. This is necessary to refer back to the original language before derivation.
+\item Taking the derivative of a self-reference simply results in a
+self-reference again, because self-references in the derivative refer to the derivative.
 \end{itemize}
 Again, we do not want to have to manually construct these derivatives. Instead,
 we show how to do it in general for any description in the next section.
@@ -353,9 +356,9 @@ case, only one of the two solutions are possible and we would have to specify
 exactly which one we intend to allow when defining the language.
 \end{remark}
 
-\subsection{Reduction}
+\subsection{Derivatives}
 
-The final piece of the puzzle is reduction. This tells us how the language descriptions change after parsing each input character.
+The final piece of the puzzle are derivatives. They tell us how the language descriptions change after parsing each input character.
 
 In \cref{sec:reduction-by-example}, we established that the meaning of self-references changes and thus they need to be replaced by local fixed points of the original language. We define a function $\af{σD}$ to perform this substitution. It is a simple recursive function which replaces the $\ac{var}$ constructor with a given $\ab{D'}$ description.
 %
@@ -375,9 +378,9 @@ In \cref{sec:reduction-by-example}, we established that the meaning of self-refe
 It turns out that the only the sequencing case, $\ac{∗}$ leaves the variables untouched, thus we only need to apply the substitution there.
 This substitution does mean we need to keep track of the original description, $\ab{D₀}$, through the recursion.
 Most other cases follow the structure we uncovered in \cref{fig:null-delta}.
-For the self-reference case, $\ac{var}$, we produce a self-reference again, which works because it now refers to the reduct.
-Finally, for the internal fixed point, $\ac{μ}$, we can simply recursively call the reduction function.
-Thus, our reduction helper function is defined as follows:
+For the self-reference case, $\ac{var}$, we produce a self-reference again, which works because it now refers to the derivative.
+Finally, for the internal fixed point, $\ac{μ}$, we can simply recursively call the derivative function.
+Thus, our derivative helper function is defined as follows:
 %
 \begin{code}[hide]
     ◂νₒ : Dec (ν ⟦ D₀ ⟧) → ∀ D → Dec (ν (⟦ D ⟧ₒ ⟦ D₀ ⟧))
