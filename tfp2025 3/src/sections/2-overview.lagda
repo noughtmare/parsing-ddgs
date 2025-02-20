@@ -418,7 +418,6 @@ However, we want to go one step further, speficying and parsing context-free lan
 This is the language of all strings which consist of balanced square brackets. 
 Many practical programming languages include some form of balanced brackets. Furthermore, this language is well known to be context-free and not regular. Thus, we need more powerful combinators.
 
-\jr{todo: flesh out this outline}
 We could try to naively transcribe the brackets grammar using our basic combinators, but Agda will justifiably complain that it is not terminating. Here we have added a NON_TERMINATING pragma to make Agda to accept it any way, but this is obviously not the proper way to define our brackets language.
 %
 \begin{code}

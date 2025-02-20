@@ -26,7 +26,7 @@ build/document.tex: $(SRC)/document.tex
 	cp $(SRC)/document.tex build/document.tex
 
 %.tex: %.lagda
-	agda --latex --only-scope-checking --latex-dir=$(SCT) $<
+	agda --latex --latex-dir=$(SCT) $<
 
 build:
 	mkdir $@

@@ -41,5 +41,10 @@ or not. In this way, the information about the tree structure that naturally
 results from parsing---and which is often desired in practice---remains
 implicit. Furthermore, our proofs are mechanized in Agda, which gives us confidence in the correctness, but also facilitates computer-aided experimentation.
 
-\jr{TODO}
-Krishnaswami and Yallop~\cite{yallop} propose an alternative approach to parsing μ-regular expressions. They introduce a type system which enforces their languages to be in LL(1), which they parse efficiently using staging. 
+Finally, there are some works which focus less on formalization and more on the
+practical implementation of parsing μ-regular languages. Might et
+al.~\cite{parsing-with-derivatives} show how to parse μ-regular languages using
+derivatives. They use laziness and memoization to avoid nontermination.
+Krishnaswami and Yallop~\cite{yallop} propose an alternative approach to parsing
+μ-regular expressions. They introduce a type system which enforces their
+languages to be in LL(1), which they parse efficiently using staging. 

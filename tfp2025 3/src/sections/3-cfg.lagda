@@ -29,14 +29,12 @@ open import 2-overview renaming (∅ to ◇∅ ; ε to ◇ε ; `_ to ◇`_ ; _·
 
 \subsection{Fixed Points}
 
-\jr{Make it clear that we depart from Elliott's work at this point.}
-\begin{itemize}
-\item If $\ab{F}~\as{:}~\af{Type}~\as{→}~\af{Type}$ is a strictly positive functor, then we know its fixed point is well-defined.
-\item So we could restrict the argument of our fixed point combinator to only accept strictly positive functors.
-\item We are dealing with languages and not types directly, but luckily our definition of language is based on types and our basic combinators are strictly positive.
-\item One catch is that Agda currently has no way of directly expressing that a functor is strictly positive.\footnote{There is work on implementing positivity annotations.}
-\item We can still make this evident to Agda by defining a data type of descriptions such as those used in the paper "gentle art of levitation".\jr{todo: cite this}
-\end{itemize}
+To be able to specify the recursive structure of context-free languages, we need a fixed point.
+From type theory we know that a fixed point of a functor $\ab{F}~\as{:}~\af{Type}~\as{→}~\af{Type}$ is well-defined if it is strictly positive.
+So we could restrict the argument of our fixed point combinator to only accept strictly positive functors.
+We are dealing with languages and not types directly, but luckily our definition of language is based on types and our basic combinators are strictly positive.
+One catch is that Agda currently has no way of directly expressing that a functor is strictly positive.\footnote{There is work on implementing positivity annotations.\cite{positivity}}
+We can still make this evident to Agda by defining a data type of descriptions as shown by Chapman et al.~\cite{levitation}.
 
 \begin{code}[hide]
 module F where
@@ -49,8 +47,6 @@ module F where
         `_   : Char → Desc
         _∪_  : Desc → Desc → Desc
         _∗_  : Desc → Desc → Desc
-        -- We need Dec if we want to be able to write parsers
-        -- but for specifiction it is not really needed
         _·_  : {A : Type} → Dec A → Desc → Desc
         var  : Desc
 \end{code}
@@ -62,8 +58,8 @@ module F where
     infixr 20 _∪_
 \end{code}
 
-We can give semantics to our descriptions in terms of languages that we defined in \cref{sec:finite-languages}.\footnote{We use the ◇ prefix to refer to the language combinators defined in \cref{sec:finite-language}.}
-
+We can give semantics to our descriptions in terms of languages that we defined in \cref{sec:finite-languages}. We use the ◇ prefix to refer to the language combinators defined in \cref{sec:finite-languages}.
+%
 \begin{code}
     ⟦_⟧ₒ : Desc → Lang → Lang
     ⟦ ∅ ⟧ₒ            _ = ◇∅
@@ -89,7 +85,7 @@ Using these descriptions, we can define a fixed point as follows:
     unroll (roll x) = x
 \end{code}
 
-So we can finally define the brackets language.\footnote{We split this definition into two because we want to separately reuse the description later.}\jr{Brackets is one example, but can we characterise the whole class of languages we can define using these descriptions?}
+With this fixed point, we can finally define the brackets language.\footnote{We split this definition into two because we want to separately reuse the description later.}
 
 \begin{code}
     bracketsD = ε ∪ ` '[' ∗ var ∗ ` ']' ∪ var ∗ var
@@ -97,18 +93,25 @@ So we can finally define the brackets language.\footnote{We split this definitio
 \end{code}
 
 This representation is not modular, however. We cannot nest fixed points in
-descriptions.\jr{This modularity and nesting is not clear enough.} This problem comes up naturally when considering reduction, which we discuss next.
+descriptions. For example, we could not create a new language which contains the brackets language as a subexpression, because the fixed point is only taken over the whole descriptor. This problem comes up naturally when considering derivatives, which we discuss next.
 
-\subsection{Reduction by Example}\label{sec:reduction-by-example}
+\subsection{Derivatives by Example}\label{sec:reduction-by-example}
 
-As we have seen with finite languages in \cref{sec:finite-languages}, when writing parsers it is useful to consider how a language changes after one character has been parsed. We will call this \emph{reduction}. For example, we could consider what happens to our brackets languages after one opening brackets has been parsed: $\af{δ}~\aS{'['}~\af{brackets}$. In this section, we search for a description of this reduced language (the \emph{reduct}).
+As we have seen with finite languages in \cref{sec:finite-languages}, when
+writing parsers it is useful to consider how a language changes after one
+character has been parsed. We will call this the \emph{derivative} of the
+original language. For example, we could consider what happens to our brackets
+languages after one opening brackets has been parsed:
+$\af{δ}~\aS{'['}~\af{brackets}$. In this section, we search for a description of
+this reduced language.
 
-We can mechanically derive this new language from the brackets definition by
-going over each of the disjuncts. The first disjunct, $ε$, does not play a
-role because we know the string contains at least the opening bracket. The
-second disjunct, brackets surrounding a self-reference, is trickier. The opening
-bracket clearly matches, but it would be a mistake to say the new disjunct
-should be a self-reference followed by a closing bracket: $\ac{var}~\ac{∗}~\ac{`}~\aS{']'}$.
+We can systematically deduce the derivative language from the brackets
+definition by going over each of the disjuncts. The first disjunct, $ε$, does
+not play a role because we know the string contains at least the opening
+bracket. The second disjunct, brackets surrounding a self-reference, is
+trickier. The opening bracket clearly matches, but it would be a mistake to say
+the new disjunct should be a self-reference followed by a closing bracket:
+$\ac{var}~\ac{∗}~\ac{`}~\aS{']'}$.
 
 Note that the self-reference in the new language would refer to the derivative
 of the old language, not to the old language itself. We would like to refer to
@@ -121,12 +124,12 @@ Consider the third disjunct, $\ac{var}~\ac{∗}~\ac{var}$. It is a sequence so w
 expect from the finite case of \cref{sec:finite-languages} that matching one character results in
 two new disjuncts: one where the first sequent matches the empty string and the
 second is reduced and one where the first is reduced and the second is
-unchanged.\jr{Why? That is what we saw in Section 2} In this case both sequents are self-references, so we need to know
+unchanged. In this case both sequents are self-references, so we need to know
 three things: 
 %
 \begin{enumerate}
 \item Does the original language match the empty string?
-\item What is the reduct of the language? (With reduct I mean the new language that results after one character is matched.)
+\item What is the derivative of the language?
 \item What does it mean for the language to remain the same?
 \end{enumerate}
 %
@@ -195,7 +198,6 @@ module F2 where
 \AgdaSpaceAroundCode{}
 \vspace{\belowdisplayskip}
 \end{AgdaAlign}
-\jr{How is this used in our example?}
 
 The first question is easy to answer: yes, the first disjunct of brackets is epsilon which matches the empty string.
 %
@@ -208,23 +210,23 @@ The first question is easy to answer: yes, the first disjunct of brackets is eps
     νbrackets = yes (roll (inj₁ refl))
 \end{code}
 
-The second question is where having a self-reference in the new language is useful. We can refer to the reduct of brackets by using self-reference.
+The second question is where having a self-reference in the new language is useful. We can refer to the derivative of brackets by using self-reference.
 
-This enables us to write the reduct of brackets with respect to the opening bracket.
+Using these answers, we can write the derivative of brackets with respect to the opening bracket.
 
 \begin{code}
     bracketsD'  = μ bracketsD ∗ ` ']' ∪ νbrackets · var ∪ var ∗ μ bracketsD
     brackets'   = ⟦ bracketsD' ⟧
 \end{code}
 
-Conclusion:
+From this example, we have learned the following three lessons:
 \begin{itemize}
 \item We can reuse many of the results of finite languages (\cref{sec:finite-languages}).
 \item We need a new $\ac{μ}$ combinator to nest fixed points in descriptions. This is necessary to refer back to the original language before reduction.
 \item Reducing a self-reference simply results in a self-reference again, because self-references in the reduct refer to the reduct.
 \end{itemize}
-Again, we do not want to have to do this reduction manually. Instead, we show
-how to do it in general for any description in the next section.
+Again, we do not want to have to manually construct these derivatives. Instead,
+we show how to do it in general for any description in the next section.
 
 \subsection{Parsing in General}\label{sec:parsing-in-general}
 
@@ -260,11 +262,8 @@ the implementation of $\af{νD}$, $\af{δD}$, $\af{δD-correct}$.
 
 \subsection{Nullability}
 
-If we know the nullability of a language, $\ab{P}$, then the nullability of a description functor applied to $\ab{P}$ is the same as the empty string parsers for our finite languages, but with the nullability of the variables given by the nullability of $\ab{P}$. For the $\ac{μ}$ case we use the nullability of the fixed point, which we will implement shortly.\jr{Reiterate that the cases for the basic combinators are the same as in \cref{fig:null-delta}.}
+If we know the nullability of a language, $\ab{P}$, then the nullability of a description functor applied to $\ab{P}$ is the same as the empty string parsers for our finite languages, but with the nullability of the variables given by the nullability of $\ab{P}$. For the $\ac{μ}$ case we use the nullability of the fixed point, which we will implement shortly. The cases for the basic combinators are the same as in \cref{fig:null-delta}. We only use this explicitly in the sequencing case because the other cases are simple enough to implement directly.
 %
-\begin{code}[hide]
-    -- variable P : Lang
-\end{code}
 \begin{code}
     νₒ : Dec (ν P) → ∀ D → Dec (ν (⟦ D ⟧ₒ P))
     νₒ _ ∅         = no λ ()
@@ -277,11 +276,9 @@ If we know the nullability of a language, $\ab{P}$, then the nullability of a de
     νₒ _ (μ D)     = νD D
 \end{code}
 
-\begin{itemize}
-\item Naively we might try $\af{νD}~\ab{D}~\as{=}~\af{νₒ}~\as{(}\af{νD}~\ab{D}\as{)}~\ab{D}$
-\item But that obviously will not terminate (consider the language $\af{⟦}~\ac{var}~\af{⟧}$). 
-\item Instead we use \cref{lem:null-split}
-\end{itemize}
+Naively, we might try $\af{νD}~\ab{D}~\as{=}~\af{νₒ}~\as{(}\af{νD}~\ab{D}\as{)}~\ab{D}$
+But that will not terminate. Consider the language $\af{⟦}~\ac{var}~\af{⟧}$, to determine the nullability of this language we would need to know the its nullability. 
+Instead we use the following lemma.
 %
 \begin{lemma}\label{lem:null-split}
 The nullability of a fixed point is determined completely by a single application of the underlying functor to the empty language.
@@ -323,8 +320,8 @@ If we choose $\ab{D₀}~\as{=}~\ab{D}$ then both cases of the resulting disjoint
 \end{code}
 \end{proof}
 
-Using \cref{lem:null-split}, we can easily define nullability for our description functors.
-
+From \cref{lem:null-split}, we know that it is sufficient to only look one layer deep when determining the nullability of a fixed point. We can safely assume the argument is not nullable. 
+%
 \begin{code}
     νD = Dec.map νD∅⇔νD ∘ νₒ (no λ ())
 \end{code}
@@ -350,8 +347,10 @@ When we round-trip this through our lemma, we get a different result:
 %
 It now directly takes the first disjunct, $\ac{ε}$.
 
-In practice, such problems should be avoided by using unambiguous languages, ensuring that there is only one valid parse result for each string.
-\jr{todo: give recommendations for future work, for example to use data-dependent grammars.}
+In practice, such problems should be avoided by using unambiguous languages,
+ensuring that there is only one valid parse result for each string. In that
+case, only one of the two solutions are possible and we would have to specify
+exactly which one we intend to allow when defining the language.
 \end{remark}
 
 \subsection{Reduction}

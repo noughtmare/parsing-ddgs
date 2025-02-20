@@ -56,7 +56,7 @@
 \urlstyle{rm}
 
 \newtoggle{draft}
-\toggletrue{draft} % enables notes
+% \toggletrue{draft} % enables notes
 
 \iftoggle{draft}{
 \linenumbers
@@ -130,9 +130,9 @@ University of Southern Denmark, Odense, Denmark}
 Parsing is the process of recovering structure from strings, an essential part of implementing programming languages.
 Previous work has shown that formalizing languages and parsers using an idiomatic type theoretic approach can be simple and enlightening.
 Unfortunately, this approach has only been applied to regular languages, which are not expressive enough for many practical applications.
-We are working on extending the type theoretic formalization to context-free languages which substantially more expressive.
-We hope our formalization can serve as a foundation for reasoning about new disambiguation techniques and even more expressive formalisms such as data-dependent grammars.\jr{todo: keywords}
-\keywords{Formal Languages \and Context-Free Grammars \and Parsing \and Type Theory}
+We have extended the type theoretic formalization to context-free languages (without mutual recursion) which are substantially more expressive.
+We hope our formalization can serve as a foundation for reasoning about new disambiguation techniques and even more expressive formalisms such as data-dependent grammars.
+\keywords{Parsing \and Type Theory \and Formal Languages}
 \end{abstract}
 
 %
