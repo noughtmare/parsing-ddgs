@@ -123,8 +123,8 @@ There are cases where we do want to use self-reference in the new language.
 Consider the third disjunct, $\ac{var}~\ac{∗}~\ac{var}$. It is a sequence so we
 expect from the finite case of \cref{sec:finite-languages} that matching one
 character results in two new disjuncts: one where the first sequent matches the
-empty string and the we take the derivative of the second, and one where we take
-the derivative of the first and the second is unchanged. In this case both
+empty string and then we take the derivative of the second, and one where we
+take the derivative of the first and the second is unchanged. In this case both
 sequents are self-references, so we need to know three things: 
 %
 \begin{enumerate}
@@ -201,7 +201,7 @@ module F2 where
 \vspace{\belowdisplayskip}
 \end{AgdaAlign}
 
-The first question is easy to answer: yes, the first disjunct of brackets is epsilon which matches the empty string.
+The first question is easy to answer: yes, the first disjunct of brackets is $\af{ε}$ which matches the empty string.
 %
 \begin{code}[hide]
     bracketsD = ε ∪ ` '[' ∗ var ∗ ` ']' ∪ var ∗ var
@@ -221,7 +221,7 @@ Using these answers, we can write the derivative of brackets with respect to the
     brackets'   = ⟦ bracketsD' ⟧
 \end{code}
 
-From this example, we have learned the following three lessons:
+This example has illustrated three important points which we should keep in mind:
 \begin{itemize}
 \item We can reuse many of the results of finite languages (\cref{sec:finite-languages}).
 \item We need a new $\ac{μ}$ combinator to nest fixed points in descriptions. This is necessary to refer back to the original language before derivation.
@@ -279,9 +279,11 @@ If we know the nullability of a language, $\ab{P}$, then the nullability of a de
     νₒ _ (μ D)     = νD D
 \end{code}
 
-Naively, we might try $\af{νD}~\ab{D}~\as{=}~\af{νₒ}~\as{(}\af{νD}~\ab{D}\as{)}~\ab{D}$
-But that will not terminate. Consider the language $\af{⟦}~\ac{var}~\af{⟧}$, to determine the nullability of this language we would need to know the its nullability. 
-Instead we use the following lemma.
+Naively, we might try
+$\af{νD}~\ab{D}~\as{=}~\af{νₒ}~\as{(}\af{νD}~\ab{D}\as{)}~\ab{D}$, but that will
+not terminate. Consider the language $\af{⟦}~\ac{var}~\af{⟧}$, to determine the
+nullability of this language we would need to know the its nullability. 
+Instead, we use the following lemma.
 %
 \begin{lemma}\label{lem:null-split}
 The nullability of a fixed point is determined completely by a single application of the underlying functor to the empty language.
@@ -304,7 +306,7 @@ It is also straightforward to write the proof directly.
     νD∅→νD (A · D) (x , y) = x , νD∅→νD D y
     νD∅→νD (μ D) x = x
 \end{code}
-The backwards direction is more difficult. We prove a more general lemma from which our disired result follows. The generalized lemma states that, if the application of a descriptor functor to a fixed point of another descriptor is nullable, then either the fixed point plays no role and the descriptor functor is also nullable if applied to the empty language, or the other descriptor (that we took the fixed point of) is nullable when applied to the empty language.
+The backwards direction is more difficult. We prove a more general lemma from which our desired result follows. The generalized lemma states that, if the application of a descriptor functor to a fixed point of another descriptor is nullable, then either the fixed point plays no role and the descriptor functor is also nullable if applied to the empty language, or the other descriptor (that we took the fixed point of) is nullable when applied to the empty language.
 \begin{code}
     νD∅←νD : ∀ D → ν (⟦ D ⟧ₒ ⟦ D₀ ⟧) → ν (⟦ D ⟧ₒ ◇∅) ⊎ ν (⟦ D₀ ⟧ₒ ◇∅)
 \end{code}

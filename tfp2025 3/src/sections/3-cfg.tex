@@ -137,20 +137,44 @@
 \>[0]\AgdaKeyword{open}\AgdaSpace{}%
 \AgdaKeyword{import}\AgdaSpace{}%
 \AgdaModule{2-overview}\AgdaSpace{}%
-\AgdaSymbol{as}\AgdaSpace{}%
-\AgdaModule{◇}\<%
+\AgdaKeyword{renaming}\AgdaSpace{}%
+\AgdaSymbol{(}\AgdaFunction{∅}\AgdaSpace{}%
+\AgdaSymbol{to}\AgdaSpace{}%
+\AgdaFunction{◇∅}\AgdaSpace{}%
+\AgdaSymbol{;}\AgdaSpace{}%
+\AgdaFunction{ε}\AgdaSpace{}%
+\AgdaSymbol{to}\AgdaSpace{}%
+\AgdaFunction{◇ε}\AgdaSpace{}%
+\AgdaSymbol{;}\AgdaSpace{}%
+\AgdaOperator{\AgdaFunction{`\AgdaUnderscore{}}}\AgdaSpace{}%
+\AgdaSymbol{to}\AgdaSpace{}%
+\AgdaOperator{\AgdaFunction{◇`\AgdaUnderscore{}}}\AgdaSpace{}%
+\AgdaSymbol{;}\AgdaSpace{}%
+\AgdaOperator{\AgdaFunction{\AgdaUnderscore{}·\AgdaUnderscore{}}}\AgdaSpace{}%
+\AgdaSymbol{to}\AgdaSpace{}%
+\AgdaOperator{\AgdaFunction{\AgdaUnderscore{}◇·\AgdaUnderscore{}}}\AgdaSpace{}%
+\AgdaSymbol{;}\AgdaSpace{}%
+\AgdaOperator{\AgdaFunction{\AgdaUnderscore{}∪\AgdaUnderscore{}}}\AgdaSpace{}%
+\AgdaSymbol{to}\AgdaSpace{}%
+\AgdaOperator{\AgdaFunction{\AgdaUnderscore{}◇∪\AgdaUnderscore{}}}\AgdaSpace{}%
+\AgdaSymbol{;}\AgdaSpace{}%
+\AgdaOperator{\AgdaFunction{\AgdaUnderscore{}∗\AgdaUnderscore{}}}\AgdaSpace{}%
+\AgdaSymbol{to}\AgdaSpace{}%
+\AgdaOperator{\AgdaFunction{\AgdaUnderscore{}◇∗\AgdaUnderscore{}}}\AgdaSymbol{)}\AgdaSpace{}%
+\AgdaKeyword{hiding}\AgdaSpace{}%
+\AgdaSymbol{(}\AgdaFunction{brackets}\AgdaSpace{}%
+\AgdaSymbol{;}\AgdaSpace{}%
+\AgdaPostulate{μ}\AgdaSymbol{)}\<%
 \end{code}
 
 \subsection{Fixed Points}
 
-\jr{Make it clear that we depart from Elliott's work at this point.}
-\begin{itemize}
-\item If $\ab{F}~\as{:}~\af{Type}~\as{→}~\af{Type}$ is a strictly positive functor, then we know its fixed point is well-defined.
-\item So we could restrict the argument of our fixed point combinator to only accept strictly positive functors.
-\item We are dealing with languages and not types directly, but luckily our definition of language is based on types and our basic combinators are strictly positive.
-\item One catch is that Agda currently has no way of directly expressing that a functor is strictly positive.\footnote{There is work on implementing positivity annotations.}
-\item We can still make this evident to Agda by defining a data type of descriptions such as those used in the paper "gentle art of levitation".\jr{todo: cite this}
-\end{itemize}
+To be able to specify the recursive structure of context-free languages, we need a fixed point.
+From type theory we know that a fixed point of a functor $\ab{F}~\as{:}~\af{Type}~\as{→}~\af{Type}$ is well-defined if it is strictly positive.
+So we could restrict the argument of our fixed point combinator to only accept strictly positive functors.
+We are dealing with languages and not types directly, but luckily our definition of language is based on types and our basic combinators are strictly positive.
+One catch is that Agda currently has no way of directly expressing that a functor is strictly positive.\footnote{There is work on implementing positivity annotations.\cite{positivity}}
+We can still make this evident to Agda by defining a data type of descriptions as shown by Chapman et al.~\cite{levitation}.
 
 \begin{code}[hide]%
 \>[0]\AgdaKeyword{module}\AgdaSpace{}%
@@ -202,12 +226,6 @@
 \AgdaDatatype{Desc}\<%
 \\
 %
-\>[8]\AgdaComment{--\ We\ need\ Dec\ if\ we\ want\ to\ be\ able\ to\ write\ parsers}\<%
-\\
-%
-\>[8]\AgdaComment{--\ but\ for\ specifiction\ it\ is\ not\ really\ needed}\<%
-\\
-%
 \>[8]\AgdaOperator{\AgdaInductiveConstructor{\AgdaUnderscore{}·\AgdaUnderscore{}}}%
 \>[13]\AgdaSymbol{:}\AgdaSpace{}%
 \AgdaSymbol{\{}\AgdaBound{A}\AgdaSpace{}%
@@ -249,17 +267,17 @@
 \AgdaOperator{\AgdaInductiveConstructor{\AgdaUnderscore{}∪\AgdaUnderscore{}}}\<%
 \end{code}
 
-We can give semantics to our descriptions in terms of languages that we defined in the previous section.\jr{todo: proper ref}
-
+We can give semantics to our descriptions in terms of languages that we defined in \cref{sec:finite-languages}. We use the ◇ prefix to refer to the language combinators defined in \cref{sec:finite-languages}.
+%
 \begin{code}%
 %
 \>[4]\AgdaOperator{\AgdaFunction{⟦\AgdaUnderscore{}⟧ₒ}}\AgdaSpace{}%
 \AgdaSymbol{:}\AgdaSpace{}%
 \AgdaDatatype{Desc}\AgdaSpace{}%
 \AgdaSymbol{→}\AgdaSpace{}%
-\AgdaFunction{◇.Lang}\AgdaSpace{}%
+\AgdaFunction{Lang}\AgdaSpace{}%
 \AgdaSymbol{→}\AgdaSpace{}%
-\AgdaFunction{◇.Lang}\<%
+\AgdaFunction{Lang}\<%
 \\
 %
 \>[4]\AgdaOperator{\AgdaFunction{⟦}}\AgdaSpace{}%
@@ -267,7 +285,7 @@ We can give semantics to our descriptions in terms of languages that we defined 
 \AgdaOperator{\AgdaFunction{⟧ₒ}}%
 \>[22]\AgdaSymbol{\AgdaUnderscore{}}\AgdaSpace{}%
 \AgdaSymbol{=}\AgdaSpace{}%
-\AgdaFunction{◇.∅}\<%
+\AgdaFunction{◇∅}\<%
 \\
 %
 \>[4]\AgdaOperator{\AgdaFunction{⟦}}\AgdaSpace{}%
@@ -275,7 +293,7 @@ We can give semantics to our descriptions in terms of languages that we defined 
 \AgdaOperator{\AgdaFunction{⟧ₒ}}%
 \>[22]\AgdaSymbol{\AgdaUnderscore{}}\AgdaSpace{}%
 \AgdaSymbol{=}\AgdaSpace{}%
-\AgdaFunction{◇.ε}\<%
+\AgdaFunction{◇ε}\<%
 \\
 %
 \>[4]\AgdaOperator{\AgdaFunction{⟦}}\AgdaSpace{}%
@@ -284,7 +302,7 @@ We can give semantics to our descriptions in terms of languages that we defined 
 \AgdaOperator{\AgdaFunction{⟧ₒ}}%
 \>[22]\AgdaSymbol{\AgdaUnderscore{}}\AgdaSpace{}%
 \AgdaSymbol{=}\AgdaSpace{}%
-\AgdaOperator{\AgdaFunction{◇.`}}\AgdaSpace{}%
+\AgdaOperator{\AgdaFunction{◇`}}\AgdaSpace{}%
 \AgdaBound{c}\<%
 \\
 %
@@ -299,7 +317,7 @@ We can give semantics to our descriptions in terms of languages that we defined 
 \AgdaBound{D₁}\AgdaSpace{}%
 \AgdaOperator{\AgdaFunction{⟧ₒ}}\AgdaSpace{}%
 \AgdaBound{P}\AgdaSpace{}%
-\AgdaOperator{\AgdaFunction{◇.∪}}\AgdaSpace{}%
+\AgdaOperator{\AgdaFunction{◇∪}}\AgdaSpace{}%
 \AgdaOperator{\AgdaFunction{⟦}}\AgdaSpace{}%
 \AgdaBound{D₂}\AgdaSpace{}%
 \AgdaOperator{\AgdaFunction{⟧ₒ}}\AgdaSpace{}%
@@ -317,7 +335,7 @@ We can give semantics to our descriptions in terms of languages that we defined 
 \AgdaBound{D₁}\AgdaSpace{}%
 \AgdaOperator{\AgdaFunction{⟧ₒ}}\AgdaSpace{}%
 \AgdaBound{P}\AgdaSpace{}%
-\AgdaOperator{\AgdaFunction{◇.∗}}\AgdaSpace{}%
+\AgdaOperator{\AgdaFunction{◇∗}}\AgdaSpace{}%
 \AgdaOperator{\AgdaFunction{⟦}}\AgdaSpace{}%
 \AgdaBound{D₂}\AgdaSpace{}%
 \AgdaOperator{\AgdaFunction{⟧ₒ}}\AgdaSpace{}%
@@ -333,7 +351,7 @@ We can give semantics to our descriptions in terms of languages that we defined 
 \>[22]\AgdaBound{P}\AgdaSpace{}%
 \AgdaSymbol{=}\AgdaSpace{}%
 \AgdaBound{A}\AgdaSpace{}%
-\AgdaOperator{\AgdaFunction{◇.·}}\AgdaSpace{}%
+\AgdaOperator{\AgdaFunction{◇·}}\AgdaSpace{}%
 \AgdaOperator{\AgdaFunction{⟦}}\AgdaSpace{}%
 \AgdaBound{D}\AgdaSpace{}%
 \AgdaOperator{\AgdaFunction{⟧ₒ}}\AgdaSpace{}%
@@ -358,7 +376,7 @@ Using these descriptions, we can define a fixed point as follows:
 \AgdaSymbol{:}\AgdaSpace{}%
 \AgdaDatatype{Desc}\AgdaSymbol{)}\AgdaSpace{}%
 \AgdaSymbol{:}\AgdaSpace{}%
-\AgdaFunction{◇.Lang}\AgdaSpace{}%
+\AgdaFunction{Lang}\AgdaSpace{}%
 \AgdaKeyword{where}\<%
 \\
 \>[4][@{}l@{\AgdaIndent{0}}]%
@@ -409,7 +427,7 @@ Using these descriptions, we can define a fixed point as follows:
 \AgdaBound{x}\<%
 \end{code}
 
-So we can finally define the brackets language.\footnote{We split this definition into two because we want to separately reuse the description later.}\jr{Brackets is one example, but can we characterise the whole class of languages we can define using these descriptions?}
+With this fixed point, we can finally define the brackets language.\footnote{We split this definition into two because we want to separately reuse the description later.}
 
 \begin{code}%
 %
@@ -438,18 +456,25 @@ So we can finally define the brackets language.\footnote{We split this definitio
 \end{code}
 
 This representation is not modular, however. We cannot nest fixed points in
-descriptions.\jr{This modularity and nesting is not clear enough.} This problem comes up naturally when considering reduction, which we discuss next.
+descriptions. For example, we could not create a new language which contains the brackets language as a subexpression, because the fixed point is only taken over the whole descriptor. This problem comes up naturally when considering derivatives, which we discuss next.
 
-\subsection{Reduction by Example}\label{sec:reduction-by-example}
+\subsection{Derivatives by Example}\label{sec:reduction-by-example}
 
-As we have seen with finite languages in \cref{sec:finite-languages}, when writing parsers it is useful to consider how a language changes after one character has been parsed. We will call this \emph{reduction}. For example, we could consider what happens to our brackets languages after one opening brackets has been parsed: $\af{δ}~\aS{'['}~\af{brackets}$. In this section, we search for a description of this reduced language (the \emph{reduct}).
+As we have seen with finite languages in \cref{sec:finite-languages}, when
+writing parsers it is useful to consider how a language changes after one
+character has been parsed. We will call this the \emph{derivative} of the
+original language. For example, we could consider what happens to our brackets
+languages after one opening brackets has been parsed:
+$\af{δ}~\aS{'['}~\af{brackets}$. In this section, we search for a description of
+this reduced language.
 
-We can mechanically derive this new language from the brackets definition by
-going over each of the disjuncts. The first disjunct, $ε$, does not play a
-role because we know the string contains at least the opening bracket. The
-second disjunct, brackets surrounding a self-reference, is trickier. The opening
-bracket clearly matches, but it would be a mistake to say the new disjunct
-should be a self-reference followed by a closing bracket: $\ac{var}~\ac{∗}~\ac{`}~\aS{']'}$.
+We can systematically deduce the derivative language from the brackets
+definition by going over each of the disjuncts. The first disjunct, $ε$, does
+not play a role because we know the string contains at least the opening
+bracket. The second disjunct, brackets surrounding a self-reference, is
+trickier. The opening bracket clearly matches, but it would be a mistake to say
+the new disjunct should be a self-reference followed by a closing bracket:
+$\ac{var}~\ac{∗}~\ac{`}~\aS{']'}$.
 
 Note that the self-reference in the new language would refer to the derivative
 of the old language, not to the old language itself. We would like to refer to
@@ -459,22 +484,24 @@ into another description.
 
 There are cases where we do want to use self-reference in the new language.
 Consider the third disjunct, $\ac{var}~\ac{∗}~\ac{var}$. It is a sequence so we
-expect from the finite case of \cref{sec:finite-languages} that matching one character results in
-two new disjuncts: one where the first sequent matches the empty string and the
-second is reduced and one where the first is reduced and the second is
-unchanged.\jr{Why? That is what we saw in Section 2} In this case both sequents are self-references, so we need to know
-three things: 
+expect from the finite case of \cref{sec:finite-languages} that matching one
+character results in two new disjuncts: one where the first sequent matches the
+empty string and then we take the derivative of the second, and one where we
+take the derivative of the first and the second is unchanged. In this case both
+sequents are self-references, so we need to know three things: 
 %
 \begin{enumerate}
 \item Does the original language match the empty string?
-\item What is the reduct of the language? (With reduct I mean the new language that results after one character is matched.)
+\item What is the derivative of the language?
 \item What does it mean for the language to remain the same?
 \end{enumerate}
 %
-At first glance, the last point seems obvious, but remember that we are reducing
-the language, so self-references will change meaning even if they remain
-unchanged. Similarly to the previous disjunct, we want to refer to the original
-brackets in this case. To resolve this issue of referring to the original brackets expression, we introduce a new combinator $\ac{μ}$, which has the meaning of locally taking a fixed point of a subexpression.
+At first glance, the last point seems obvious, but remember that we are taking
+the derivative of the language, so self-references will change meaning even if
+they remain unchanged. Similarly to the previous disjunct, we want to refer to
+the original brackets in this case. To resolve this issue of referring to the
+original brackets expression, we introduce a new combinator $\ac{μ}$, which has
+the meaning of locally taking a fixed point of a subexpression.
 %
 \begin{code}[hide]%
 \>[0]\AgdaKeyword{module}\AgdaSpace{}%
@@ -606,9 +633,9 @@ brackets in this case. To resolve this issue of referring to the original bracke
 \AgdaSymbol{:}\AgdaSpace{}%
 \AgdaDatatype{Desc}\AgdaSpace{}%
 \AgdaSymbol{→}\AgdaSpace{}%
-\AgdaFunction{◇.Lang}\AgdaSpace{}%
+\AgdaFunction{Lang}\AgdaSpace{}%
 \AgdaSymbol{→}\AgdaSpace{}%
-\AgdaFunction{◇.Lang}\<%
+\AgdaFunction{Lang}\<%
 \\
 %
 \>[4]\AgdaComment{--\ ...}\<%
@@ -621,7 +648,7 @@ brackets in this case. To resolve this issue of referring to the original bracke
 \AgdaSymbol{:}\AgdaSpace{}%
 \AgdaDatatype{Desc}\AgdaSymbol{)}\AgdaSpace{}%
 \AgdaSymbol{:}\AgdaSpace{}%
-\AgdaFunction{◇.Lang}\AgdaSpace{}%
+\AgdaFunction{Lang}\AgdaSpace{}%
 \AgdaKeyword{where}\<%
 \\
 \>[4][@{}l@{\AgdaIndent{0}}]%
@@ -669,7 +696,7 @@ brackets in this case. To resolve this issue of referring to the original bracke
 \AgdaOperator{\AgdaFunction{⟧ₒ}}%
 \>[18]\AgdaSymbol{=}\AgdaSpace{}%
 \AgdaFunction{const}\AgdaSpace{}%
-\AgdaFunction{◇.∅}\<%
+\AgdaFunction{◇∅}\<%
 \\
 %
 \>[4]\AgdaOperator{\AgdaFunction{⟦}}\AgdaSpace{}%
@@ -677,7 +704,7 @@ brackets in this case. To resolve this issue of referring to the original bracke
 \AgdaOperator{\AgdaFunction{⟧ₒ}}%
 \>[18]\AgdaSymbol{=}\AgdaSpace{}%
 \AgdaFunction{const}\AgdaSpace{}%
-\AgdaFunction{◇.ε}\<%
+\AgdaFunction{◇ε}\<%
 \\
 %
 \>[4]\AgdaOperator{\AgdaFunction{⟦}}\AgdaSpace{}%
@@ -686,7 +713,7 @@ brackets in this case. To resolve this issue of referring to the original bracke
 \AgdaOperator{\AgdaFunction{⟧ₒ}}%
 \>[18]\AgdaSymbol{=}\AgdaSpace{}%
 \AgdaFunction{const}\AgdaSpace{}%
-\AgdaSymbol{(}\AgdaOperator{\AgdaFunction{◇.`}}\AgdaSpace{}%
+\AgdaSymbol{(}\AgdaOperator{\AgdaFunction{◇`}}\AgdaSpace{}%
 \AgdaBound{c}\AgdaSymbol{)}\<%
 \\
 %
@@ -701,7 +728,7 @@ brackets in this case. To resolve this issue of referring to the original bracke
 \AgdaBound{X}\AgdaSpace{}%
 \AgdaOperator{\AgdaFunction{⟧ₒ}}\AgdaSpace{}%
 \AgdaBound{P}\AgdaSpace{}%
-\AgdaOperator{\AgdaFunction{◇.∪}}\AgdaSpace{}%
+\AgdaOperator{\AgdaFunction{◇∪}}\AgdaSpace{}%
 \AgdaOperator{\AgdaFunction{⟦}}\AgdaSpace{}%
 \AgdaBound{Y}\AgdaSpace{}%
 \AgdaOperator{\AgdaFunction{⟧ₒ}}\AgdaSpace{}%
@@ -719,7 +746,7 @@ brackets in this case. To resolve this issue of referring to the original bracke
 \AgdaBound{X}\AgdaSpace{}%
 \AgdaOperator{\AgdaFunction{⟧ₒ}}\AgdaSpace{}%
 \AgdaBound{P}\AgdaSpace{}%
-\AgdaOperator{\AgdaFunction{◇.∗}}\AgdaSpace{}%
+\AgdaOperator{\AgdaFunction{◇∗}}\AgdaSpace{}%
 \AgdaOperator{\AgdaFunction{⟦}}\AgdaSpace{}%
 \AgdaBound{Y}\AgdaSpace{}%
 \AgdaOperator{\AgdaFunction{⟧ₒ}}\AgdaSpace{}%
@@ -735,7 +762,7 @@ brackets in this case. To resolve this issue of referring to the original bracke
 \AgdaBound{P}%
 \>[24]\AgdaSymbol{=}\AgdaSpace{}%
 \AgdaBound{A}\AgdaSpace{}%
-\AgdaOperator{\AgdaFunction{◇.·}}\AgdaSpace{}%
+\AgdaOperator{\AgdaFunction{◇·}}\AgdaSpace{}%
 \AgdaOperator{\AgdaFunction{⟦}}\AgdaSpace{}%
 \AgdaBound{X}\AgdaSpace{}%
 \AgdaOperator{\AgdaFunction{⟧ₒ}}\AgdaSpace{}%
@@ -764,9 +791,8 @@ brackets in this case. To resolve this issue of referring to the original bracke
 \AgdaSpaceAroundCode{}
 \vspace{\belowdisplayskip}
 \end{AgdaAlign}
-\jr{How is this used in our example?}
 
-The first question is easy to answer: yes, the first disjunct of brackets is epsilon which matches the empty string.
+The first question is easy to answer: yes, the first disjunct of brackets is $\af{ε}$ which matches the empty string.
 %
 \begin{code}[hide]%
 %
@@ -798,7 +824,7 @@ The first question is easy to answer: yes, the first disjunct of brackets is eps
 \>[4]\AgdaFunction{νbrackets}\AgdaSpace{}%
 \AgdaSymbol{:}\AgdaSpace{}%
 \AgdaRecord{Dec}\AgdaSpace{}%
-\AgdaSymbol{(}\AgdaFunction{◇.ν}\AgdaSpace{}%
+\AgdaSymbol{(}\AgdaFunction{ν}\AgdaSpace{}%
 \AgdaFunction{brackets}\AgdaSymbol{)}\<%
 \\
 %
@@ -810,9 +836,9 @@ The first question is easy to answer: yes, the first disjunct of brackets is eps
 \AgdaInductiveConstructor{refl}\AgdaSymbol{))}\<%
 \end{code}
 
-The second question is where having a self-reference in the new language is useful. We can refer to the reduct of brackets by using self-reference.
+The second question is where having a self-reference in the new language is useful. We can refer to the derivative of brackets by using self-reference.
 
-This enables us to write the reduct of brackets with respect to the opening bracket.
+Using these answers, we can write the derivative of brackets with respect to the opening bracket.
 
 \begin{code}%
 %
@@ -841,19 +867,20 @@ This enables us to write the reduct of brackets with respect to the opening brac
 \AgdaOperator{\AgdaDatatype{⟧}}\<%
 \end{code}
 
-Conclusion:
+This example has illustrated three important points which we should keep in mind:
 \begin{itemize}
 \item We can reuse many of the results of finite languages (\cref{sec:finite-languages}).
-\item We need a new $\ac{μ}$ combinator to nest fixed points in descriptions. This is necessary to refer back to the original language before reduction.
-\item Reducing a self-reference simply results in a self-reference again, because self-references in the reduct refer to the reduct.
+\item We need a new $\ac{μ}$ combinator to nest fixed points in descriptions. This is necessary to refer back to the original language before derivation.
+\item Taking the derivative of a self-reference simply results in a
+self-reference again, because self-references in the derivative refer to the derivative.
 \end{itemize}
-Again, we do not want to have to do this reduction manually. Instead, we show
-how to do it in general for any description in the next section.
+Again, we do not want to have to manually construct these derivatives. Instead,
+we show how to do it in general for any description in the next section.
 
-\subsection{Parsing in General}
+\subsection{Parsing in General}\label{sec:parsing-in-general}
 
-Our goal is to define:
-
+Our goal is to define a parse function for every description fixed point.
+%
 \begin{code}%
 %
 \>[4]\AgdaFunction{parse}\AgdaSpace{}%
@@ -861,14 +888,15 @@ Our goal is to define:
 \AgdaSymbol{∀}\AgdaSpace{}%
 \AgdaBound{D}\AgdaSpace{}%
 \AgdaSymbol{→}\AgdaSpace{}%
-\AgdaFunction{◇.Parser}\AgdaSpace{}%
+\AgdaFunction{Parser}\AgdaSpace{}%
 \AgdaOperator{\AgdaDatatype{⟦}}\AgdaSpace{}%
 \AgdaBound{D}\AgdaSpace{}%
 \AgdaOperator{\AgdaDatatype{⟧}}\<%
 \end{code}
-
-We approach this by decomposing parsing into $\af{ν}$ and $\af{δ}$.
-
+%
+We approach this by decomposing parsing into computing nullability and
+derivatives separately as follows:
+%
 \begin{code}%
 %
 \>[4]\AgdaFunction{νD}\AgdaSpace{}%
@@ -877,7 +905,7 @@ We approach this by decomposing parsing into $\af{ν}$ and $\af{δ}$.
 \AgdaBound{D}\AgdaSpace{}%
 \AgdaSymbol{→}\AgdaSpace{}%
 \AgdaRecord{Dec}\AgdaSpace{}%
-\AgdaSymbol{(}\AgdaFunction{◇.ν}\AgdaSpace{}%
+\AgdaSymbol{(}\AgdaFunction{ν}\AgdaSpace{}%
 \AgdaOperator{\AgdaDatatype{⟦}}\AgdaSpace{}%
 \AgdaBound{D}\AgdaSpace{}%
 \AgdaOperator{\AgdaDatatype{⟧}}\AgdaSymbol{)}\<%
@@ -893,7 +921,7 @@ We approach this by decomposing parsing into $\af{ν}$ and $\af{δ}$.
 \end{code}
 
 The $\af{νD}$ function can easily be written to be correct by construction, however $\af{δD}$ must be proven correct separately as follows:
-
+%
 \begin{code}%
 %
 \>[4]\AgdaFunction{δD-correct}\AgdaSpace{}%
@@ -903,8 +931,8 @@ The $\af{νD}$ function can easily be written to be correct by construction, how
 \AgdaGeneralizable{c}\AgdaSpace{}%
 \AgdaGeneralizable{D}\AgdaSpace{}%
 \AgdaOperator{\AgdaDatatype{⟧}}\AgdaSpace{}%
-\AgdaOperator{\AgdaFunction{◇.⟺}}\AgdaSpace{}%
-\AgdaFunction{◇.δ}\AgdaSpace{}%
+\AgdaOperator{\AgdaFunction{⟺}}\AgdaSpace{}%
+\AgdaFunction{δ}\AgdaSpace{}%
 \AgdaGeneralizable{c}\AgdaSpace{}%
 \AgdaOperator{\AgdaDatatype{⟦}}\AgdaSpace{}%
 \AgdaGeneralizable{D}\AgdaSpace{}%
@@ -943,28 +971,21 @@ the implementation of $\af{νD}$, $\af{δD}$, $\af{δD-correct}$.
 
 \subsection{Nullability}
 
-If we know the nullability of a language, $\ab{P}$, then the nullability of a description functor applied to $\ab{P}$ is the same as the empty string parsers for our finite languages, but with the nullability of the variables given by the nullability of $\ab{P}$. For the $\ac{μ}$ case we use the nullability of the fixed point, which we will implement shortly.\jr{Reiterate that the cases for the basic combinators are the same as in \cref{fig:null-delta}.}
+If we know the nullability of a language, $\ab{P}$, then the nullability of a description functor applied to $\ab{P}$ is the same as the empty string parsers for our finite languages, but with the nullability of the variables given by the nullability of $\ab{P}$. For the $\ac{μ}$ case we use the nullability of the fixed point, which we will implement shortly. The cases for the basic combinators are the same as in \cref{fig:null-delta}. We only use this explicitly in the sequencing case because the other cases are simple enough to implement directly.
 %
-\begin{code}[hide]%
-%
-\>[4]\AgdaKeyword{variable}\AgdaSpace{}%
-\AgdaGeneralizable{P}\AgdaSpace{}%
-\AgdaSymbol{:}\AgdaSpace{}%
-\AgdaFunction{◇.Lang}\<%
-\end{code}
 \begin{code}%
 %
 \>[4]\AgdaFunction{νₒ}\AgdaSpace{}%
 \AgdaSymbol{:}\AgdaSpace{}%
 \AgdaRecord{Dec}\AgdaSpace{}%
-\AgdaSymbol{(}\AgdaFunction{◇.ν}\AgdaSpace{}%
+\AgdaSymbol{(}\AgdaFunction{ν}\AgdaSpace{}%
 \AgdaGeneralizable{P}\AgdaSymbol{)}\AgdaSpace{}%
 \AgdaSymbol{→}\AgdaSpace{}%
 \AgdaSymbol{∀}\AgdaSpace{}%
 \AgdaBound{D}\AgdaSpace{}%
 \AgdaSymbol{→}\AgdaSpace{}%
 \AgdaRecord{Dec}\AgdaSpace{}%
-\AgdaSymbol{(}\AgdaFunction{◇.ν}\AgdaSpace{}%
+\AgdaSymbol{(}\AgdaFunction{ν}\AgdaSpace{}%
 \AgdaSymbol{(}\AgdaOperator{\AgdaFunction{⟦}}\AgdaSpace{}%
 \AgdaBound{D}\AgdaSpace{}%
 \AgdaOperator{\AgdaFunction{⟧ₒ}}\AgdaSpace{}%
@@ -972,98 +993,98 @@ If we know the nullability of a language, $\ab{P}$, then the nullability of a de
 \\
 %
 \>[4]\AgdaFunction{νₒ}\AgdaSpace{}%
-\AgdaBound{νP}\AgdaSpace{}%
+\AgdaSymbol{\AgdaUnderscore{}}\AgdaSpace{}%
 \AgdaInductiveConstructor{∅}%
-\>[20]\AgdaSymbol{=}\AgdaSpace{}%
+\>[19]\AgdaSymbol{=}\AgdaSpace{}%
 \AgdaInductiveConstructor{no}\AgdaSpace{}%
 \AgdaSymbol{λ}\AgdaSpace{}%
 \AgdaSymbol{()}\<%
 \\
 %
 \>[4]\AgdaFunction{νₒ}\AgdaSpace{}%
-\AgdaBound{νP}\AgdaSpace{}%
+\AgdaSymbol{\AgdaUnderscore{}}\AgdaSpace{}%
 \AgdaInductiveConstructor{ε}%
-\>[20]\AgdaSymbol{=}\AgdaSpace{}%
+\>[19]\AgdaSymbol{=}\AgdaSpace{}%
 \AgdaInductiveConstructor{yes}\AgdaSpace{}%
 \AgdaInductiveConstructor{refl}\<%
 \\
 %
 \>[4]\AgdaFunction{νₒ}\AgdaSpace{}%
-\AgdaBound{νP}\AgdaSpace{}%
+\AgdaSymbol{\AgdaUnderscore{}}\AgdaSpace{}%
 \AgdaSymbol{(}\AgdaOperator{\AgdaInductiveConstructor{`}}\AgdaSpace{}%
 \AgdaBound{c}\AgdaSymbol{)}%
-\>[20]\AgdaSymbol{=}\AgdaSpace{}%
+\>[19]\AgdaSymbol{=}\AgdaSpace{}%
 \AgdaInductiveConstructor{no}\AgdaSpace{}%
 \AgdaSymbol{λ}\AgdaSpace{}%
 \AgdaSymbol{()}\<%
 \\
 %
 \>[4]\AgdaFunction{νₒ}\AgdaSpace{}%
-\AgdaBound{νP}\AgdaSpace{}%
+\AgdaBound{z}\AgdaSpace{}%
 \AgdaSymbol{(}\AgdaBound{D}\AgdaSpace{}%
 \AgdaOperator{\AgdaInductiveConstructor{∪}}\AgdaSpace{}%
 \AgdaBound{D₁}\AgdaSymbol{)}%
-\>[20]\AgdaSymbol{=}\AgdaSpace{}%
+\>[19]\AgdaSymbol{=}\AgdaSpace{}%
 \AgdaFunction{νₒ}\AgdaSpace{}%
-\AgdaBound{νP}\AgdaSpace{}%
+\AgdaBound{z}\AgdaSpace{}%
 \AgdaBound{D}\AgdaSpace{}%
 \AgdaOperator{\AgdaFunction{⊎-dec}}\AgdaSpace{}%
 \AgdaFunction{νₒ}\AgdaSpace{}%
-\AgdaBound{νP}\AgdaSpace{}%
+\AgdaBound{z}\AgdaSpace{}%
 \AgdaBound{D₁}\<%
 \\
 %
 \>[4]\AgdaFunction{νₒ}\AgdaSpace{}%
-\AgdaBound{νP}\AgdaSpace{}%
+\AgdaBound{z}\AgdaSpace{}%
 \AgdaSymbol{(}\AgdaBound{D}\AgdaSpace{}%
 \AgdaOperator{\AgdaInductiveConstructor{∗}}\AgdaSpace{}%
 \AgdaBound{D₁}\AgdaSymbol{)}%
-\>[20]\AgdaSymbol{=}\AgdaSpace{}%
+\>[19]\AgdaSymbol{=}\AgdaSpace{}%
 \AgdaFunction{Dec.map}\AgdaSpace{}%
-\AgdaFunction{◇.ν∗}\AgdaSpace{}%
+\AgdaFunction{ν∗}\AgdaSpace{}%
 \AgdaSymbol{(}\AgdaFunction{νₒ}\AgdaSpace{}%
-\AgdaBound{νP}\AgdaSpace{}%
+\AgdaBound{z}\AgdaSpace{}%
 \AgdaBound{D}\AgdaSpace{}%
 \AgdaOperator{\AgdaFunction{×-dec}}\AgdaSpace{}%
 \AgdaFunction{νₒ}\AgdaSpace{}%
-\AgdaBound{νP}\AgdaSpace{}%
+\AgdaBound{z}\AgdaSpace{}%
 \AgdaBound{D₁}\AgdaSymbol{)}\<%
 \\
 %
 \>[4]\AgdaFunction{νₒ}\AgdaSpace{}%
-\AgdaBound{νP}\AgdaSpace{}%
+\AgdaBound{z}\AgdaSpace{}%
 \AgdaSymbol{(}\AgdaBound{x}\AgdaSpace{}%
 \AgdaOperator{\AgdaInductiveConstructor{·}}\AgdaSpace{}%
 \AgdaBound{D}\AgdaSymbol{)}%
-\>[20]\AgdaSymbol{=}\AgdaSpace{}%
+\>[19]\AgdaSymbol{=}\AgdaSpace{}%
 \AgdaBound{x}\AgdaSpace{}%
 \AgdaOperator{\AgdaFunction{×-dec}}\AgdaSpace{}%
 \AgdaFunction{νₒ}\AgdaSpace{}%
-\AgdaBound{νP}\AgdaSpace{}%
+\AgdaBound{z}\AgdaSpace{}%
 \AgdaBound{D}\<%
 \\
 %
 \>[4]\AgdaFunction{νₒ}\AgdaSpace{}%
-\AgdaBound{νP}\AgdaSpace{}%
+\AgdaBound{z}\AgdaSpace{}%
 \AgdaInductiveConstructor{var}%
-\>[20]\AgdaSymbol{=}\AgdaSpace{}%
-\AgdaBound{νP}\<%
+\>[19]\AgdaSymbol{=}\AgdaSpace{}%
+\AgdaBound{z}\<%
 \\
 %
 \>[4]\AgdaFunction{νₒ}\AgdaSpace{}%
-\AgdaBound{νP}\AgdaSpace{}%
+\AgdaSymbol{\AgdaUnderscore{}}\AgdaSpace{}%
 \AgdaSymbol{(}\AgdaInductiveConstructor{μ}\AgdaSpace{}%
 \AgdaBound{D}\AgdaSymbol{)}%
-\>[20]\AgdaSymbol{=}\AgdaSpace{}%
+\>[19]\AgdaSymbol{=}\AgdaSpace{}%
 \AgdaFunction{νD}\AgdaSpace{}%
 \AgdaBound{D}\<%
 \end{code}
 
-\begin{itemize}
-\item Naively we might try $\af{νD}~\ab{D}~\as{=}~\af{νₒ}~\as{(}\af{νD}~\ab{D}\as{)}~\ab{D}$
-\item But that obviously will not terminate (consider the language $\af{⟦}~\ac{var}~\af{⟧}$). 
-\item Instead we use \cref{lem:null-split}
-\end{itemize}
+Naively, we might try
+$\af{νD}~\ab{D}~\as{=}~\af{νₒ}~\as{(}\af{νD}~\ab{D}\as{)}~\ab{D}$, but that will
+not terminate. Consider the language $\af{⟦}~\ac{var}~\af{⟧}$, to determine the
+nullability of this language we would need to know the its nullability. 
+Instead, we use the following lemma.
 %
 \begin{lemma}\label{lem:null-split}
 The nullability of a fixed point is determined completely by a single application of the underlying functor to the empty language.
@@ -1071,13 +1092,13 @@ The nullability of a fixed point is determined completely by a single applicatio
 %
 \>[4]\AgdaFunction{νD∅⇔νD}\AgdaSpace{}%
 \AgdaSymbol{:}\AgdaSpace{}%
-\AgdaFunction{◇.ν}\AgdaSpace{}%
+\AgdaFunction{ν}\AgdaSpace{}%
 \AgdaSymbol{(}\AgdaOperator{\AgdaFunction{⟦}}\AgdaSpace{}%
 \AgdaGeneralizable{D}\AgdaSpace{}%
 \AgdaOperator{\AgdaFunction{⟧ₒ}}\AgdaSpace{}%
-\AgdaFunction{◇.∅}\AgdaSymbol{)}\AgdaSpace{}%
+\AgdaFunction{◇∅}\AgdaSymbol{)}\AgdaSpace{}%
 \AgdaOperator{\AgdaFunction{⇔}}\AgdaSpace{}%
-\AgdaFunction{◇.ν}\AgdaSpace{}%
+\AgdaFunction{ν}\AgdaSpace{}%
 \AgdaOperator{\AgdaDatatype{⟦}}\AgdaSpace{}%
 \AgdaGeneralizable{D}\AgdaSpace{}%
 \AgdaOperator{\AgdaDatatype{⟧}}\<%
@@ -1094,13 +1115,13 @@ It is also straightforward to write the proof directly.
 \AgdaSymbol{∀}\AgdaSpace{}%
 \AgdaBound{D}\AgdaSpace{}%
 \AgdaSymbol{→}\AgdaSpace{}%
-\AgdaFunction{◇.ν}\AgdaSpace{}%
+\AgdaFunction{ν}\AgdaSpace{}%
 \AgdaSymbol{(}\AgdaOperator{\AgdaFunction{⟦}}\AgdaSpace{}%
 \AgdaBound{D}\AgdaSpace{}%
 \AgdaOperator{\AgdaFunction{⟧ₒ}}\AgdaSpace{}%
-\AgdaFunction{◇.∅}\AgdaSymbol{)}\AgdaSpace{}%
+\AgdaFunction{◇∅}\AgdaSymbol{)}\AgdaSpace{}%
 \AgdaSymbol{→}\AgdaSpace{}%
-\AgdaFunction{◇.ν}\AgdaSpace{}%
+\AgdaFunction{ν}\AgdaSpace{}%
 \AgdaSymbol{(}\AgdaOperator{\AgdaFunction{⟦}}\AgdaSpace{}%
 \AgdaBound{D}\AgdaSpace{}%
 \AgdaOperator{\AgdaFunction{⟧ₒ}}\AgdaSpace{}%
@@ -1194,7 +1215,7 @@ It is also straightforward to write the proof directly.
 \AgdaSymbol{=}\AgdaSpace{}%
 \AgdaBound{x}\<%
 \end{code}
-The backwards direction is more difficult. We prove a more general lemma from which our disired result follows. The generalized lemma states that, if the application of a descriptor functor to a fixed point of another descriptor is nullable, then either the fixed point plays no role and the descriptor functor is also nullable if applied to the empty language, or the other descriptor (that we took the fixed point of) is nullable when applied to the empty language.
+The backwards direction is more difficult. We prove a more general lemma from which our desired result follows. The generalized lemma states that, if the application of a descriptor functor to a fixed point of another descriptor is nullable, then either the fixed point plays no role and the descriptor functor is also nullable if applied to the empty language, or the other descriptor (that we took the fixed point of) is nullable when applied to the empty language.
 \begin{code}%
 %
 \>[4]\AgdaFunction{νD∅←νD}\AgdaSpace{}%
@@ -1202,7 +1223,7 @@ The backwards direction is more difficult. We prove a more general lemma from wh
 \AgdaSymbol{∀}\AgdaSpace{}%
 \AgdaBound{D}\AgdaSpace{}%
 \AgdaSymbol{→}\AgdaSpace{}%
-\AgdaFunction{◇.ν}\AgdaSpace{}%
+\AgdaFunction{ν}\AgdaSpace{}%
 \AgdaSymbol{(}\AgdaOperator{\AgdaFunction{⟦}}\AgdaSpace{}%
 \AgdaBound{D}\AgdaSpace{}%
 \AgdaOperator{\AgdaFunction{⟧ₒ}}\AgdaSpace{}%
@@ -1210,17 +1231,17 @@ The backwards direction is more difficult. We prove a more general lemma from wh
 \AgdaGeneralizable{D₀}\AgdaSpace{}%
 \AgdaOperator{\AgdaDatatype{⟧}}\AgdaSymbol{)}\AgdaSpace{}%
 \AgdaSymbol{→}\AgdaSpace{}%
-\AgdaFunction{◇.ν}\AgdaSpace{}%
+\AgdaFunction{ν}\AgdaSpace{}%
 \AgdaSymbol{(}\AgdaOperator{\AgdaFunction{⟦}}\AgdaSpace{}%
 \AgdaBound{D}\AgdaSpace{}%
 \AgdaOperator{\AgdaFunction{⟧ₒ}}\AgdaSpace{}%
-\AgdaFunction{◇.∅}\AgdaSymbol{)}\AgdaSpace{}%
+\AgdaFunction{◇∅}\AgdaSymbol{)}\AgdaSpace{}%
 \AgdaOperator{\AgdaDatatype{⊎}}\AgdaSpace{}%
-\AgdaFunction{◇.ν}\AgdaSpace{}%
+\AgdaFunction{ν}\AgdaSpace{}%
 \AgdaSymbol{(}\AgdaOperator{\AgdaFunction{⟦}}\AgdaSpace{}%
 \AgdaGeneralizable{D₀}\AgdaSpace{}%
 \AgdaOperator{\AgdaFunction{⟧ₒ}}\AgdaSpace{}%
-\AgdaFunction{◇.∅}\AgdaSymbol{)}\<%
+\AgdaFunction{◇∅}\AgdaSymbol{)}\<%
 \end{code}
 \begin{code}[hide]%
 %
@@ -1358,8 +1379,8 @@ If we choose $\ab{D₀}~\as{=}~\ab{D}$ then both cases of the resulting disjoint
 \end{code}
 \end{proof}
 
-Using \cref{lem:null-split}, we can easily define nullability for our description functors.
-
+From \cref{lem:null-split}, we know that it is sufficient to only look one layer deep when determining the nullability of a fixed point. We can safely assume the argument is not nullable. 
+%
 \begin{code}%
 %
 \>[4]\AgdaFunction{νD}\AgdaSpace{}%
@@ -1380,7 +1401,7 @@ Using \cref{lem:null-split}, we can easily define nullability for our descriptio
 %
 \>[4]\AgdaFunction{brackets₀}\AgdaSpace{}%
 \AgdaSymbol{:}\AgdaSpace{}%
-\AgdaFunction{◇.ν}\AgdaSpace{}%
+\AgdaFunction{ν}\AgdaSpace{}%
 \AgdaFunction{brackets}\<%
 \\
 %
@@ -1437,13 +1458,15 @@ When we round-trip this through our lemma, we get a different result:
 %
 It now directly takes the first disjunct, $\ac{ε}$.
 
-In practice, such problems should be avoided by using unambiguous languages, ensuring that there is only one valid parse result for each string.
-\jr{todo: give recommendations for future work, for example to use data-dependent grammars.}
+In practice, such problems should be avoided by using unambiguous languages,
+ensuring that there is only one valid parse result for each string. In that
+case, only one of the two solutions are possible and we would have to specify
+exactly which one we intend to allow when defining the language.
 \end{remark}
 
-\subsection{Reduction}
+\subsection{Derivatives}
 
-The final piece of the puzzle is reduction. This tells us how the language descriptions change after parsing each input character.
+The final piece of the puzzle are derivatives. They tell us how the language descriptions change after parsing each input character.
 
 In \cref{sec:reduction-by-example}, we established that the meaning of self-references changes and thus they need to be replaced by local fixed points of the original language. We define a function $\af{σD}$ to perform this substitution. It is a simple recursive function which replaces the $\ac{var}$ constructor with a given $\ab{D'}$ description.
 %
@@ -1540,149 +1563,20 @@ In \cref{sec:reduction-by-example}, we established that the meaning of self-refe
 \AgdaBound{D}\<%
 \end{code}
 
-\begin{lemma}
-Substitution of a local fixed point into a description is the same as applying the corresponding functor to the semantic fixed point.
-\begin{code}%
-%
-\>[4]\AgdaFunction{σμ}\AgdaSpace{}%
-\AgdaSymbol{:}\AgdaSpace{}%
-\AgdaSymbol{∀}\AgdaSpace{}%
-\AgdaBound{D}\AgdaSpace{}%
-\AgdaSymbol{→}\AgdaSpace{}%
-\AgdaOperator{\AgdaFunction{⟦}}\AgdaSpace{}%
-\AgdaFunction{σ}\AgdaSpace{}%
-\AgdaBound{D}\AgdaSpace{}%
-\AgdaSymbol{(}\AgdaInductiveConstructor{μ}\AgdaSpace{}%
-\AgdaGeneralizable{D₀}\AgdaSymbol{)}\AgdaSpace{}%
-\AgdaOperator{\AgdaFunction{⟧ₒ}}\AgdaSpace{}%
-\AgdaGeneralizable{P}\AgdaSpace{}%
-\AgdaGeneralizable{w}\AgdaSpace{}%
-\AgdaOperator{\AgdaDatatype{≡}}\AgdaSpace{}%
-\AgdaOperator{\AgdaFunction{⟦}}\AgdaSpace{}%
-\AgdaBound{D}\AgdaSpace{}%
-\AgdaOperator{\AgdaFunction{⟧ₒ}}\AgdaSpace{}%
-\AgdaOperator{\AgdaDatatype{⟦}}\AgdaSpace{}%
-\AgdaGeneralizable{D₀}\AgdaSpace{}%
-\AgdaOperator{\AgdaDatatype{⟧}}\AgdaSpace{}%
-\AgdaGeneralizable{w}\<%
-\end{code}
-\end{lemma}
-The proof follows directly by induction and computation.
-\begin{code}[hide]%
-%
-\>[4]\AgdaFunction{σμ'}\AgdaSpace{}%
-\AgdaSymbol{:}\AgdaSpace{}%
-\AgdaSymbol{∀}\AgdaSpace{}%
-\AgdaBound{D}\AgdaSpace{}%
-\AgdaSymbol{→}\AgdaSpace{}%
-\AgdaOperator{\AgdaFunction{⟦}}\AgdaSpace{}%
-\AgdaFunction{σ}\AgdaSpace{}%
-\AgdaBound{D}\AgdaSpace{}%
-\AgdaSymbol{(}\AgdaInductiveConstructor{μ}\AgdaSpace{}%
-\AgdaGeneralizable{D₀}\AgdaSymbol{)}\AgdaSpace{}%
-\AgdaOperator{\AgdaFunction{⟧ₒ}}\AgdaSpace{}%
-\AgdaGeneralizable{P}\AgdaSpace{}%
-\AgdaOperator{\AgdaDatatype{≡}}\AgdaSpace{}%
-\AgdaOperator{\AgdaFunction{⟦}}\AgdaSpace{}%
-\AgdaBound{D}\AgdaSpace{}%
-\AgdaOperator{\AgdaFunction{⟧ₒ}}\AgdaSpace{}%
-\AgdaOperator{\AgdaDatatype{⟦}}\AgdaSpace{}%
-\AgdaGeneralizable{D₀}\AgdaSpace{}%
-\AgdaOperator{\AgdaDatatype{⟧}}\<%
-\\
-%
-\>[4]\AgdaFunction{σμ'}\AgdaSpace{}%
-\AgdaInductiveConstructor{∅}\AgdaSpace{}%
-\AgdaSymbol{=}\AgdaSpace{}%
-\AgdaInductiveConstructor{refl}\<%
-\\
-%
-\>[4]\AgdaFunction{σμ'}\AgdaSpace{}%
-\AgdaInductiveConstructor{ε}\AgdaSpace{}%
-\AgdaSymbol{=}\AgdaSpace{}%
-\AgdaInductiveConstructor{refl}\<%
-\\
-%
-\>[4]\AgdaFunction{σμ'}\AgdaSpace{}%
-\AgdaSymbol{(}\AgdaOperator{\AgdaInductiveConstructor{`}}\AgdaSpace{}%
-\AgdaBound{x}\AgdaSymbol{)}\AgdaSpace{}%
-\AgdaSymbol{=}\AgdaSpace{}%
-\AgdaInductiveConstructor{refl}\<%
-\\
-%
-\>[4]\AgdaFunction{σμ'}\AgdaSpace{}%
-\AgdaSymbol{(}\AgdaBound{D}\AgdaSpace{}%
-\AgdaOperator{\AgdaInductiveConstructor{∪}}\AgdaSpace{}%
-\AgdaBound{D₁}\AgdaSymbol{)}\AgdaSpace{}%
-\AgdaSymbol{=}\AgdaSpace{}%
-\AgdaFunction{cong₂}\AgdaSpace{}%
-\AgdaOperator{\AgdaFunction{◇.\AgdaUnderscore{}∪\AgdaUnderscore{}}}\AgdaSpace{}%
-\AgdaSymbol{(}\AgdaFunction{σμ'}\AgdaSpace{}%
-\AgdaBound{D}\AgdaSymbol{)}\AgdaSpace{}%
-\AgdaSymbol{(}\AgdaFunction{σμ'}\AgdaSpace{}%
-\AgdaBound{D₁}\AgdaSymbol{)}\<%
-\\
-%
-\>[4]\AgdaFunction{σμ'}\AgdaSpace{}%
-\AgdaSymbol{(}\AgdaBound{D}\AgdaSpace{}%
-\AgdaOperator{\AgdaInductiveConstructor{∗}}\AgdaSpace{}%
-\AgdaBound{D₁}\AgdaSymbol{)}\AgdaSpace{}%
-\AgdaSymbol{=}\AgdaSpace{}%
-\AgdaFunction{cong₂}\AgdaSpace{}%
-\AgdaOperator{\AgdaFunction{◇.\AgdaUnderscore{}∗\AgdaUnderscore{}}}\AgdaSpace{}%
-\AgdaSymbol{(}\AgdaFunction{σμ'}\AgdaSpace{}%
-\AgdaBound{D}\AgdaSymbol{)}\AgdaSpace{}%
-\AgdaSymbol{(}\AgdaFunction{σμ'}\AgdaSpace{}%
-\AgdaBound{D₁}\AgdaSymbol{)}\<%
-\\
-%
-\>[4]\AgdaFunction{σμ'}\AgdaSpace{}%
-\AgdaSymbol{(\AgdaUnderscore{}}\AgdaSpace{}%
-\AgdaOperator{\AgdaInductiveConstructor{·}}\AgdaSpace{}%
-\AgdaBound{D}\AgdaSymbol{)}\AgdaSpace{}%
-\AgdaSymbol{=}\AgdaSpace{}%
-\AgdaFunction{cong}\AgdaSpace{}%
-\AgdaSymbol{(\AgdaUnderscore{}}\AgdaSpace{}%
-\AgdaOperator{\AgdaFunction{◇.·\AgdaUnderscore{}}}\AgdaSymbol{)}\AgdaSpace{}%
-\AgdaSymbol{(}\AgdaFunction{σμ'}\AgdaSpace{}%
-\AgdaBound{D}\AgdaSymbol{)}\<%
-\\
-%
-\>[4]\AgdaFunction{σμ'}\AgdaSpace{}%
-\AgdaInductiveConstructor{var}\AgdaSpace{}%
-\AgdaSymbol{=}\AgdaSpace{}%
-\AgdaInductiveConstructor{refl}\<%
-\\
-%
-\>[4]\AgdaFunction{σμ'}\AgdaSpace{}%
-\AgdaSymbol{(}\AgdaInductiveConstructor{μ}\AgdaSpace{}%
-\AgdaBound{D}\AgdaSymbol{)}\AgdaSpace{}%
-\AgdaSymbol{=}\AgdaSpace{}%
-\AgdaInductiveConstructor{refl}\<%
-\\
-\>[0]\<%
-\\
-%
-\>[4]\AgdaFunction{σμ}\AgdaSpace{}%
-\AgdaBound{D}\AgdaSpace{}%
-\AgdaSymbol{=}\AgdaSpace{}%
-\AgdaFunction{cong}\AgdaSpace{}%
-\AgdaSymbol{(λ}\AgdaSpace{}%
-\AgdaBound{f}\AgdaSpace{}%
-\AgdaSymbol{→}\AgdaSpace{}%
-\AgdaBound{f}\AgdaSpace{}%
-\AgdaSymbol{\AgdaUnderscore{})}\AgdaSpace{}%
-\AgdaSymbol{(}\AgdaFunction{σμ'}\AgdaSpace{}%
-\AgdaBound{D}\AgdaSymbol{)}\<%
-\end{code}
 
-
+It turns out that the only the sequencing case, $\ac{∗}$ leaves the variables untouched, thus we only need to apply the substitution there.
+This substitution does mean we need to keep track of the original description, $\ab{D₀}$, through the recursion.
+Most other cases follow the structure we uncovered in \cref{fig:null-delta}.
+For the self-reference case, $\ac{var}$, we produce a self-reference again, which works because it now refers to the derivative.
+Finally, for the internal fixed point, $\ac{μ}$, we can simply recursively call the derivative function.
+Thus, our derivative helper function is defined as follows:
+%
 \begin{code}[hide]%
 %
 \>[4]\AgdaFunction{◂νₒ}\AgdaSpace{}%
 \AgdaSymbol{:}\AgdaSpace{}%
 \AgdaRecord{Dec}\AgdaSpace{}%
-\AgdaSymbol{(}\AgdaFunction{◇.ν}\AgdaSpace{}%
+\AgdaSymbol{(}\AgdaFunction{ν}\AgdaSpace{}%
 \AgdaOperator{\AgdaDatatype{⟦}}\AgdaSpace{}%
 \AgdaGeneralizable{D₀}\AgdaSpace{}%
 \AgdaOperator{\AgdaDatatype{⟧}}\AgdaSymbol{)}\AgdaSpace{}%
@@ -1691,7 +1585,7 @@ The proof follows directly by induction and computation.
 \AgdaBound{D}\AgdaSpace{}%
 \AgdaSymbol{→}\AgdaSpace{}%
 \AgdaRecord{Dec}\AgdaSpace{}%
-\AgdaSymbol{(}\AgdaFunction{◇.ν}\AgdaSpace{}%
+\AgdaSymbol{(}\AgdaFunction{ν}\AgdaSpace{}%
 \AgdaSymbol{(}\AgdaOperator{\AgdaFunction{⟦}}\AgdaSpace{}%
 \AgdaBound{D}\AgdaSpace{}%
 \AgdaOperator{\AgdaFunction{⟧ₒ}}\AgdaSpace{}%
@@ -1831,6 +1725,9 @@ The proof follows directly by induction and computation.
 \AgdaBound{c}\AgdaSpace{}%
 \AgdaBound{D}\AgdaSymbol{)}\<%
 \end{code}
+%
+At the top level, we simply delegate to the helper by passing $\ab{D₀} = \ab{D}$.
+%
 \begin{code}%
 %
 \>[4]\AgdaFunction{δD}\AgdaSpace{}%
@@ -1842,6 +1739,145 @@ The proof follows directly by induction and computation.
 \AgdaBound{c}\AgdaSpace{}%
 \AgdaBound{D}\<%
 \end{code}
+
+\begin{lemma}\label{lem:sub-sem}
+Substitution of a local fixed point into a description is the same as applying the corresponding functor to the semantic fixed point.
+\begin{code}%
+%
+\>[4]\AgdaFunction{σμ}\AgdaSpace{}%
+\AgdaSymbol{:}\AgdaSpace{}%
+\AgdaSymbol{∀}\AgdaSpace{}%
+\AgdaBound{D}\AgdaSpace{}%
+\AgdaSymbol{→}\AgdaSpace{}%
+\AgdaOperator{\AgdaFunction{⟦}}\AgdaSpace{}%
+\AgdaFunction{σ}\AgdaSpace{}%
+\AgdaBound{D}\AgdaSpace{}%
+\AgdaSymbol{(}\AgdaInductiveConstructor{μ}\AgdaSpace{}%
+\AgdaGeneralizable{D₀}\AgdaSymbol{)}\AgdaSpace{}%
+\AgdaOperator{\AgdaFunction{⟧ₒ}}\AgdaSpace{}%
+\AgdaGeneralizable{P}\AgdaSpace{}%
+\AgdaGeneralizable{w}\AgdaSpace{}%
+\AgdaOperator{\AgdaDatatype{≡}}\AgdaSpace{}%
+\AgdaOperator{\AgdaFunction{⟦}}\AgdaSpace{}%
+\AgdaBound{D}\AgdaSpace{}%
+\AgdaOperator{\AgdaFunction{⟧ₒ}}\AgdaSpace{}%
+\AgdaOperator{\AgdaDatatype{⟦}}\AgdaSpace{}%
+\AgdaGeneralizable{D₀}\AgdaSpace{}%
+\AgdaOperator{\AgdaDatatype{⟧}}\AgdaSpace{}%
+\AgdaGeneralizable{w}\<%
+\end{code}
+\end{lemma}
+The proof follows directly by induction and computation.
+\begin{code}[hide]%
+%
+\>[4]\AgdaFunction{σμ'}\AgdaSpace{}%
+\AgdaSymbol{:}\AgdaSpace{}%
+\AgdaSymbol{∀}\AgdaSpace{}%
+\AgdaBound{D}\AgdaSpace{}%
+\AgdaSymbol{→}\AgdaSpace{}%
+\AgdaOperator{\AgdaFunction{⟦}}\AgdaSpace{}%
+\AgdaFunction{σ}\AgdaSpace{}%
+\AgdaBound{D}\AgdaSpace{}%
+\AgdaSymbol{(}\AgdaInductiveConstructor{μ}\AgdaSpace{}%
+\AgdaGeneralizable{D₀}\AgdaSymbol{)}\AgdaSpace{}%
+\AgdaOperator{\AgdaFunction{⟧ₒ}}\AgdaSpace{}%
+\AgdaGeneralizable{P}\AgdaSpace{}%
+\AgdaOperator{\AgdaDatatype{≡}}\AgdaSpace{}%
+\AgdaOperator{\AgdaFunction{⟦}}\AgdaSpace{}%
+\AgdaBound{D}\AgdaSpace{}%
+\AgdaOperator{\AgdaFunction{⟧ₒ}}\AgdaSpace{}%
+\AgdaOperator{\AgdaDatatype{⟦}}\AgdaSpace{}%
+\AgdaGeneralizable{D₀}\AgdaSpace{}%
+\AgdaOperator{\AgdaDatatype{⟧}}\<%
+\\
+%
+\>[4]\AgdaFunction{σμ'}\AgdaSpace{}%
+\AgdaInductiveConstructor{∅}\AgdaSpace{}%
+\AgdaSymbol{=}\AgdaSpace{}%
+\AgdaInductiveConstructor{refl}\<%
+\\
+%
+\>[4]\AgdaFunction{σμ'}\AgdaSpace{}%
+\AgdaInductiveConstructor{ε}\AgdaSpace{}%
+\AgdaSymbol{=}\AgdaSpace{}%
+\AgdaInductiveConstructor{refl}\<%
+\\
+%
+\>[4]\AgdaFunction{σμ'}\AgdaSpace{}%
+\AgdaSymbol{(}\AgdaOperator{\AgdaInductiveConstructor{`}}\AgdaSpace{}%
+\AgdaBound{x}\AgdaSymbol{)}\AgdaSpace{}%
+\AgdaSymbol{=}\AgdaSpace{}%
+\AgdaInductiveConstructor{refl}\<%
+\\
+%
+\>[4]\AgdaFunction{σμ'}\AgdaSpace{}%
+\AgdaSymbol{(}\AgdaBound{D}\AgdaSpace{}%
+\AgdaOperator{\AgdaInductiveConstructor{∪}}\AgdaSpace{}%
+\AgdaBound{D₁}\AgdaSymbol{)}\AgdaSpace{}%
+\AgdaSymbol{=}\AgdaSpace{}%
+\AgdaFunction{cong₂}\AgdaSpace{}%
+\AgdaOperator{\AgdaFunction{\AgdaUnderscore{}◇∪\AgdaUnderscore{}}}\AgdaSpace{}%
+\AgdaSymbol{(}\AgdaFunction{σμ'}\AgdaSpace{}%
+\AgdaBound{D}\AgdaSymbol{)}\AgdaSpace{}%
+\AgdaSymbol{(}\AgdaFunction{σμ'}\AgdaSpace{}%
+\AgdaBound{D₁}\AgdaSymbol{)}\<%
+\\
+%
+\>[4]\AgdaFunction{σμ'}\AgdaSpace{}%
+\AgdaSymbol{(}\AgdaBound{D}\AgdaSpace{}%
+\AgdaOperator{\AgdaInductiveConstructor{∗}}\AgdaSpace{}%
+\AgdaBound{D₁}\AgdaSymbol{)}\AgdaSpace{}%
+\AgdaSymbol{=}\AgdaSpace{}%
+\AgdaFunction{cong₂}\AgdaSpace{}%
+\AgdaOperator{\AgdaFunction{\AgdaUnderscore{}◇∗\AgdaUnderscore{}}}\AgdaSpace{}%
+\AgdaSymbol{(}\AgdaFunction{σμ'}\AgdaSpace{}%
+\AgdaBound{D}\AgdaSymbol{)}\AgdaSpace{}%
+\AgdaSymbol{(}\AgdaFunction{σμ'}\AgdaSpace{}%
+\AgdaBound{D₁}\AgdaSymbol{)}\<%
+\\
+%
+\>[4]\AgdaFunction{σμ'}\AgdaSpace{}%
+\AgdaSymbol{(\AgdaUnderscore{}}\AgdaSpace{}%
+\AgdaOperator{\AgdaInductiveConstructor{·}}\AgdaSpace{}%
+\AgdaBound{D}\AgdaSymbol{)}\AgdaSpace{}%
+\AgdaSymbol{=}\AgdaSpace{}%
+\AgdaFunction{cong}\AgdaSpace{}%
+\AgdaSymbol{(\AgdaUnderscore{}}\AgdaSpace{}%
+\AgdaOperator{\AgdaFunction{◇·\AgdaUnderscore{}}}\AgdaSymbol{)}\AgdaSpace{}%
+\AgdaSymbol{(}\AgdaFunction{σμ'}\AgdaSpace{}%
+\AgdaBound{D}\AgdaSymbol{)}\<%
+\\
+%
+\>[4]\AgdaFunction{σμ'}\AgdaSpace{}%
+\AgdaInductiveConstructor{var}\AgdaSpace{}%
+\AgdaSymbol{=}\AgdaSpace{}%
+\AgdaInductiveConstructor{refl}\<%
+\\
+%
+\>[4]\AgdaFunction{σμ'}\AgdaSpace{}%
+\AgdaSymbol{(}\AgdaInductiveConstructor{μ}\AgdaSpace{}%
+\AgdaBound{D}\AgdaSymbol{)}\AgdaSpace{}%
+\AgdaSymbol{=}\AgdaSpace{}%
+\AgdaInductiveConstructor{refl}\<%
+\\
+\>[0]\<%
+\\
+%
+\>[4]\AgdaFunction{σμ}\AgdaSpace{}%
+\AgdaBound{D}\AgdaSpace{}%
+\AgdaSymbol{=}\AgdaSpace{}%
+\AgdaFunction{cong}\AgdaSpace{}%
+\AgdaSymbol{(λ}\AgdaSpace{}%
+\AgdaBound{f}\AgdaSpace{}%
+\AgdaSymbol{→}\AgdaSpace{}%
+\AgdaBound{f}\AgdaSpace{}%
+\AgdaSymbol{\AgdaUnderscore{})}\AgdaSpace{}%
+\AgdaSymbol{(}\AgdaFunction{σμ'}\AgdaSpace{}%
+\AgdaBound{D}\AgdaSymbol{)}\<%
+\end{code}
+
+To prove the correctness of the derivative, we consider both directions of the equivalence separately. Furthermore, it is important that we separate the top-level description, $\ab{D₀}$, from the current description, $\ab{D}$, as they need to change independently throughout the induction.
+%
 \begin{code}%
 %
 \>[4]\AgdaFunction{δD-to}\AgdaSpace{}%
@@ -1862,7 +1898,7 @@ The proof follows directly by induction and computation.
 \AgdaOperator{\AgdaDatatype{⟧}}\AgdaSpace{}%
 \AgdaGeneralizable{w}\AgdaSpace{}%
 \AgdaSymbol{→}\AgdaSpace{}%
-\AgdaFunction{◇.δ}\AgdaSpace{}%
+\AgdaFunction{δ}\AgdaSpace{}%
 \AgdaGeneralizable{c}\AgdaSpace{}%
 \AgdaSymbol{(}\AgdaOperator{\AgdaFunction{⟦}}\AgdaSpace{}%
 \AgdaBound{D}\AgdaSpace{}%
@@ -1871,14 +1907,17 @@ The proof follows directly by induction and computation.
 \AgdaGeneralizable{D₀}\AgdaSpace{}%
 \AgdaOperator{\AgdaDatatype{⟧}}\AgdaSymbol{)}\AgdaSpace{}%
 \AgdaGeneralizable{w}\<%
-\\
+\end{code}
+\begin{code}[hide]%
 %
 \>[4]\AgdaFunction{δD-to}\AgdaSpace{}%
 \AgdaSymbol{(}\AgdaOperator{\AgdaInductiveConstructor{`}}\AgdaSpace{}%
 \AgdaBound{c'}\AgdaSymbol{)}\AgdaSpace{}%
+\AgdaSymbol{(}\AgdaInductiveConstructor{refl}\AgdaSpace{}%
+\AgdaOperator{\AgdaInductiveConstructor{,}}\AgdaSpace{}%
+\AgdaInductiveConstructor{refl}\AgdaSymbol{)}\AgdaSpace{}%
 \AgdaSymbol{=}\AgdaSpace{}%
-\AgdaFunction{◇.δ`}\AgdaSpace{}%
-\AgdaSymbol{.}\AgdaField{to}\<%
+\AgdaInductiveConstructor{refl}\<%
 \\
 %
 \>[4]\AgdaFunction{δD-to}\AgdaSpace{}%
@@ -1934,9 +1973,9 @@ The proof follows directly by induction and computation.
 \AgdaOperator{\AgdaInductiveConstructor{∗}}\AgdaSpace{}%
 \AgdaBound{D₁}\AgdaSymbol{)}\AgdaSpace{}%
 \AgdaSymbol{(}\AgdaInductiveConstructor{inj₂}\AgdaSpace{}%
-\AgdaSymbol{(}\AgdaBound{u}\AgdaSpace{}%
+\AgdaSymbol{(\AgdaUnderscore{}}\AgdaSpace{}%
 \AgdaOperator{\AgdaInductiveConstructor{,}}\AgdaSpace{}%
-\AgdaBound{v}\AgdaSpace{}%
+\AgdaSymbol{\AgdaUnderscore{}}\AgdaSpace{}%
 \AgdaOperator{\AgdaInductiveConstructor{,}}\AgdaSpace{}%
 \AgdaInductiveConstructor{refl}\AgdaSpace{}%
 \AgdaOperator{\AgdaInductiveConstructor{,}}\AgdaSpace{}%
@@ -1944,9 +1983,9 @@ The proof follows directly by induction and computation.
 \AgdaOperator{\AgdaInductiveConstructor{,}}\AgdaSpace{}%
 \AgdaBound{y}\AgdaSymbol{))}\AgdaSpace{}%
 \AgdaSymbol{=}\AgdaSpace{}%
-\AgdaSymbol{(\AgdaUnderscore{}}\AgdaSpace{}%
+\AgdaSymbol{\AgdaUnderscore{}}\AgdaSpace{}%
 \AgdaOperator{\AgdaInductiveConstructor{∷}}\AgdaSpace{}%
-\AgdaSymbol{\AgdaUnderscore{})}\AgdaSpace{}%
+\AgdaSymbol{\AgdaUnderscore{}}\AgdaSpace{}%
 \AgdaOperator{\AgdaInductiveConstructor{,}}\AgdaSpace{}%
 \AgdaSymbol{\AgdaUnderscore{}}\AgdaSpace{}%
 \AgdaOperator{\AgdaInductiveConstructor{,}}\AgdaSpace{}%
@@ -2010,7 +2049,7 @@ The proof follows directly by induction and computation.
 \AgdaSymbol{∀}\AgdaSpace{}%
 \AgdaBound{D}\AgdaSpace{}%
 \AgdaSymbol{→}\AgdaSpace{}%
-\AgdaFunction{◇.δ}\AgdaSpace{}%
+\AgdaFunction{δ}\AgdaSpace{}%
 \AgdaGeneralizable{c}\AgdaSpace{}%
 \AgdaSymbol{(}\AgdaOperator{\AgdaFunction{⟦}}\AgdaSpace{}%
 \AgdaBound{D}\AgdaSpace{}%
@@ -2032,14 +2071,17 @@ The proof follows directly by induction and computation.
 \AgdaGeneralizable{D₀}\AgdaSpace{}%
 \AgdaOperator{\AgdaDatatype{⟧}}\AgdaSpace{}%
 \AgdaGeneralizable{w}\<%
-\\
+\end{code}
+\begin{code}[hide]%
 %
 \>[4]\AgdaFunction{δD-from}\AgdaSpace{}%
 \AgdaSymbol{(}\AgdaOperator{\AgdaInductiveConstructor{`}}\AgdaSpace{}%
 \AgdaBound{c'}\AgdaSymbol{)}\AgdaSpace{}%
+\AgdaInductiveConstructor{refl}\AgdaSpace{}%
 \AgdaSymbol{=}\AgdaSpace{}%
-\AgdaFunction{◇.δ`}\AgdaSpace{}%
-\AgdaSymbol{.}\AgdaField{from}\<%
+\AgdaInductiveConstructor{refl}\AgdaSpace{}%
+\AgdaOperator{\AgdaInductiveConstructor{,}}\AgdaSpace{}%
+\AgdaInductiveConstructor{refl}\<%
 \\
 %
 \>[4]\AgdaFunction{δD-from}\AgdaSpace{}%
@@ -2074,7 +2116,7 @@ The proof follows directly by induction and computation.
 \AgdaBound{D₁}\AgdaSymbol{)}\AgdaSpace{}%
 \AgdaSymbol{(}\AgdaInductiveConstructor{[]}\AgdaSpace{}%
 \AgdaOperator{\AgdaInductiveConstructor{,}}\AgdaSpace{}%
-\AgdaBound{w}\AgdaSpace{}%
+\AgdaSymbol{\AgdaUnderscore{}}\AgdaSpace{}%
 \AgdaOperator{\AgdaInductiveConstructor{,}}\AgdaSpace{}%
 \AgdaInductiveConstructor{refl}\AgdaSpace{}%
 \AgdaOperator{\AgdaInductiveConstructor{,}}\AgdaSpace{}%
@@ -2094,11 +2136,11 @@ The proof follows directly by induction and computation.
 \AgdaSymbol{(}\AgdaBound{D}\AgdaSpace{}%
 \AgdaOperator{\AgdaInductiveConstructor{∗}}\AgdaSpace{}%
 \AgdaBound{D₁}\AgdaSymbol{)}\AgdaSpace{}%
-\AgdaSymbol{(}\AgdaBound{c}\AgdaSpace{}%
+\AgdaSymbol{(\AgdaUnderscore{}}\AgdaSpace{}%
 \AgdaOperator{\AgdaInductiveConstructor{∷}}\AgdaSpace{}%
-\AgdaBound{u}\AgdaSpace{}%
+\AgdaSymbol{\AgdaUnderscore{}}\AgdaSpace{}%
 \AgdaOperator{\AgdaInductiveConstructor{,}}\AgdaSpace{}%
-\AgdaBound{v}\AgdaSpace{}%
+\AgdaSymbol{\AgdaUnderscore{}}\AgdaSpace{}%
 \AgdaOperator{\AgdaInductiveConstructor{,}}\AgdaSpace{}%
 \AgdaInductiveConstructor{refl}\AgdaSpace{}%
 \AgdaOperator{\AgdaInductiveConstructor{,}}\AgdaSpace{}%
@@ -2107,9 +2149,9 @@ The proof follows directly by induction and computation.
 \AgdaBound{y}\AgdaSymbol{)}\AgdaSpace{}%
 \AgdaSymbol{=}\AgdaSpace{}%
 \AgdaInductiveConstructor{inj₂}\AgdaSpace{}%
-\AgdaSymbol{(}\AgdaBound{u}\AgdaSpace{}%
+\AgdaSymbol{(\AgdaUnderscore{}}\AgdaSpace{}%
 \AgdaOperator{\AgdaInductiveConstructor{,}}\AgdaSpace{}%
-\AgdaBound{v}\AgdaSpace{}%
+\AgdaSymbol{\AgdaUnderscore{}}\AgdaSpace{}%
 \AgdaOperator{\AgdaInductiveConstructor{,}}\AgdaSpace{}%
 \AgdaInductiveConstructor{refl}\AgdaSpace{}%
 \AgdaOperator{\AgdaInductiveConstructor{,}}\AgdaSpace{}%
@@ -2165,6 +2207,11 @@ The proof follows directly by induction and computation.
 \AgdaBound{D}\AgdaSpace{}%
 \AgdaBound{x}\AgdaSymbol{)}\<%
 \end{code}
+%
+The proofs follow from induction, the equivalances in \cref{fig:null-delta}, and
+\cref{lem:sub-sem}.  Finally, we combine these two direction into our desired
+equivalance:
+%
 \begin{code}%
 %
 \>[4]\AgdaFunction{δD-correct}\AgdaSpace{}%
@@ -2186,7 +2233,357 @@ The proof follows directly by induction and computation.
 \AgdaOperator{\AgdaFunction{∘}}\AgdaSpace{}%
 \AgdaFunction{unroll}\AgdaSymbol{)}\<%
 \end{code}
+%
+This completes our proof.
 
+% We can write it in one go using only the null/delta laws, congruences,
+% induction, and the σμ lemma.  But Agda's termination checker is not good
+% enough to approve it.
+\begin{code}[hide]%
+%
+\>[4]\AgdaOperator{\AgdaFunction{\AgdaUnderscore{}×⇔\AgdaUnderscore{}}}\AgdaSpace{}%
+\AgdaSymbol{:}\AgdaSpace{}%
+\AgdaSymbol{∀\{}\AgdaBound{ℓ₁}\AgdaSpace{}%
+\AgdaBound{ℓ₂}\AgdaSpace{}%
+\AgdaBound{ℓ₃}\AgdaSpace{}%
+\AgdaBound{ℓ₄}\AgdaSymbol{\}}\AgdaSpace{}%
+\AgdaSymbol{\{}\AgdaBound{A}\AgdaSpace{}%
+\AgdaSymbol{:}\AgdaSpace{}%
+\AgdaPrimitive{Set}\AgdaSpace{}%
+\AgdaBound{ℓ₁}\AgdaSymbol{\}}\AgdaSpace{}%
+\AgdaSymbol{\{}\AgdaBound{B}\AgdaSpace{}%
+\AgdaSymbol{:}\AgdaSpace{}%
+\AgdaPrimitive{Set}\AgdaSpace{}%
+\AgdaBound{ℓ₂}\AgdaSymbol{\}}\AgdaSpace{}%
+\AgdaSymbol{\{}\AgdaBound{C}\AgdaSpace{}%
+\AgdaSymbol{:}\AgdaSpace{}%
+\AgdaPrimitive{Set}\AgdaSpace{}%
+\AgdaBound{ℓ₃}\AgdaSymbol{\}}\AgdaSpace{}%
+\AgdaSymbol{\{}\AgdaBound{D}\AgdaSpace{}%
+\AgdaSymbol{:}\AgdaSpace{}%
+\AgdaPrimitive{Set}\AgdaSpace{}%
+\AgdaBound{ℓ₄}\AgdaSymbol{\}}\AgdaSpace{}%
+\AgdaSymbol{→}\AgdaSpace{}%
+\AgdaSymbol{(}\AgdaBound{A}\AgdaSpace{}%
+\AgdaOperator{\AgdaFunction{⇔}}\AgdaSpace{}%
+\AgdaBound{B}\AgdaSymbol{)}\AgdaSpace{}%
+\AgdaSymbol{→}\AgdaSpace{}%
+\AgdaSymbol{(}\AgdaBound{C}\AgdaSpace{}%
+\AgdaOperator{\AgdaFunction{⇔}}\AgdaSpace{}%
+\AgdaBound{D}\AgdaSymbol{)}\AgdaSpace{}%
+\AgdaSymbol{→}\AgdaSpace{}%
+\AgdaSymbol{(}\AgdaBound{A}\AgdaSpace{}%
+\AgdaOperator{\AgdaFunction{×}}\AgdaSpace{}%
+\AgdaBound{C}\AgdaSymbol{)}\AgdaSpace{}%
+\AgdaOperator{\AgdaFunction{⇔}}\AgdaSpace{}%
+\AgdaSymbol{(}\AgdaBound{B}\AgdaSpace{}%
+\AgdaOperator{\AgdaFunction{×}}\AgdaSpace{}%
+\AgdaBound{D}\AgdaSymbol{)}\<%
+\\
+%
+\>[4]\AgdaBound{f}\AgdaSpace{}%
+\AgdaOperator{\AgdaFunction{×⇔}}\AgdaSpace{}%
+\AgdaBound{g}\AgdaSpace{}%
+\AgdaSymbol{=}\AgdaSpace{}%
+\AgdaFunction{mk⇔}\AgdaSpace{}%
+\AgdaSymbol{(}\AgdaFunction{Prod.map}\AgdaSpace{}%
+\AgdaSymbol{(}\AgdaBound{f}\AgdaSpace{}%
+\AgdaSymbol{.}\AgdaField{to}\AgdaSymbol{)}\AgdaSpace{}%
+\AgdaSymbol{(}\AgdaBound{g}\AgdaSpace{}%
+\AgdaSymbol{.}\AgdaField{to}\AgdaSymbol{))}\AgdaSpace{}%
+\AgdaSymbol{(}\AgdaFunction{Prod.map}\AgdaSpace{}%
+\AgdaSymbol{(}\AgdaBound{f}\AgdaSpace{}%
+\AgdaSymbol{.}\AgdaField{from}\AgdaSymbol{)}\AgdaSpace{}%
+\AgdaSymbol{(}\AgdaBound{g}\AgdaSpace{}%
+\AgdaSymbol{.}\AgdaField{from}\AgdaSymbol{))}\<%
+\\
+%
+\>[4]\AgdaOperator{\AgdaFunction{\AgdaUnderscore{}⊎⇔\AgdaUnderscore{}}}\AgdaSpace{}%
+\AgdaSymbol{:}\AgdaSpace{}%
+\AgdaSymbol{∀\{}\AgdaBound{ℓ₁}\AgdaSpace{}%
+\AgdaBound{ℓ₂}\AgdaSpace{}%
+\AgdaBound{ℓ₃}\AgdaSpace{}%
+\AgdaBound{ℓ₄}\AgdaSymbol{\}}\AgdaSpace{}%
+\AgdaSymbol{\{}\AgdaBound{A}\AgdaSpace{}%
+\AgdaSymbol{:}\AgdaSpace{}%
+\AgdaPrimitive{Set}\AgdaSpace{}%
+\AgdaBound{ℓ₁}\AgdaSymbol{\}}\AgdaSpace{}%
+\AgdaSymbol{\{}\AgdaBound{B}\AgdaSpace{}%
+\AgdaSymbol{:}\AgdaSpace{}%
+\AgdaPrimitive{Set}\AgdaSpace{}%
+\AgdaBound{ℓ₂}\AgdaSymbol{\}}\AgdaSpace{}%
+\AgdaSymbol{\{}\AgdaBound{C}\AgdaSpace{}%
+\AgdaSymbol{:}\AgdaSpace{}%
+\AgdaPrimitive{Set}\AgdaSpace{}%
+\AgdaBound{ℓ₃}\AgdaSymbol{\}}\AgdaSpace{}%
+\AgdaSymbol{\{}\AgdaBound{D}\AgdaSpace{}%
+\AgdaSymbol{:}\AgdaSpace{}%
+\AgdaPrimitive{Set}\AgdaSpace{}%
+\AgdaBound{ℓ₄}\AgdaSymbol{\}}\AgdaSpace{}%
+\AgdaSymbol{→}\AgdaSpace{}%
+\AgdaSymbol{(}\AgdaBound{A}\AgdaSpace{}%
+\AgdaOperator{\AgdaFunction{⇔}}\AgdaSpace{}%
+\AgdaBound{B}\AgdaSymbol{)}\AgdaSpace{}%
+\AgdaSymbol{→}\AgdaSpace{}%
+\AgdaSymbol{(}\AgdaBound{C}\AgdaSpace{}%
+\AgdaOperator{\AgdaFunction{⇔}}\AgdaSpace{}%
+\AgdaBound{D}\AgdaSymbol{)}\AgdaSpace{}%
+\AgdaSymbol{→}\AgdaSpace{}%
+\AgdaSymbol{(}\AgdaBound{A}\AgdaSpace{}%
+\AgdaOperator{\AgdaDatatype{⊎}}\AgdaSpace{}%
+\AgdaBound{C}\AgdaSymbol{)}\AgdaSpace{}%
+\AgdaOperator{\AgdaFunction{⇔}}\AgdaSpace{}%
+\AgdaSymbol{(}\AgdaBound{B}\AgdaSpace{}%
+\AgdaOperator{\AgdaDatatype{⊎}}\AgdaSpace{}%
+\AgdaBound{D}\AgdaSymbol{)}\<%
+\\
+%
+\>[4]\AgdaBound{f}\AgdaSpace{}%
+\AgdaOperator{\AgdaFunction{⊎⇔}}\AgdaSpace{}%
+\AgdaBound{g}\AgdaSpace{}%
+\AgdaSymbol{=}\AgdaSpace{}%
+\AgdaFunction{mk⇔}\AgdaSpace{}%
+\AgdaSymbol{(}\AgdaFunction{Sum.map}\AgdaSpace{}%
+\AgdaSymbol{(}\AgdaBound{f}\AgdaSpace{}%
+\AgdaSymbol{.}\AgdaField{to}\AgdaSymbol{)}\AgdaSpace{}%
+\AgdaSymbol{(}\AgdaBound{g}\AgdaSpace{}%
+\AgdaSymbol{.}\AgdaField{to}\AgdaSymbol{))}\AgdaSpace{}%
+\AgdaSymbol{(}\AgdaFunction{Sum.map}\AgdaSpace{}%
+\AgdaSymbol{(}\AgdaBound{f}\AgdaSpace{}%
+\AgdaSymbol{.}\AgdaField{from}\AgdaSymbol{)}\AgdaSpace{}%
+\AgdaSymbol{(}\AgdaBound{g}\AgdaSpace{}%
+\AgdaSymbol{.}\AgdaField{from}\AgdaSymbol{))}\<%
+\\
+%
+\>[4]\AgdaFunction{Σ⇔}\AgdaSpace{}%
+\AgdaSymbol{:}\AgdaSpace{}%
+\AgdaSymbol{∀\{}\AgdaBound{ℓ}\AgdaSymbol{\}}\AgdaSpace{}%
+\AgdaSymbol{\{}\AgdaBound{A}\AgdaSpace{}%
+\AgdaSymbol{:}\AgdaSpace{}%
+\AgdaPrimitive{Set}\AgdaSpace{}%
+\AgdaBound{ℓ}\AgdaSymbol{\}}\AgdaSpace{}%
+\AgdaSymbol{\{}\AgdaBound{B}\AgdaSpace{}%
+\AgdaBound{C}\AgdaSpace{}%
+\AgdaSymbol{:}\AgdaSpace{}%
+\AgdaBound{A}\AgdaSpace{}%
+\AgdaSymbol{→}\AgdaSpace{}%
+\AgdaPrimitive{Set}\AgdaSymbol{\}}\AgdaSpace{}%
+\AgdaSymbol{→}\AgdaSpace{}%
+\AgdaSymbol{(∀\{}\AgdaBound{x}\AgdaSymbol{\}}\AgdaSpace{}%
+\AgdaSymbol{→}\AgdaSpace{}%
+\AgdaBound{B}\AgdaSpace{}%
+\AgdaBound{x}\AgdaSpace{}%
+\AgdaOperator{\AgdaFunction{⇔}}\AgdaSpace{}%
+\AgdaBound{C}\AgdaSpace{}%
+\AgdaBound{x}\AgdaSymbol{)}\AgdaSpace{}%
+\AgdaSymbol{→}\AgdaSpace{}%
+\AgdaSymbol{(}\AgdaRecord{Σ}\AgdaSpace{}%
+\AgdaBound{A}\AgdaSpace{}%
+\AgdaBound{B}\AgdaSymbol{)}\AgdaSpace{}%
+\AgdaOperator{\AgdaFunction{⇔}}\AgdaSpace{}%
+\AgdaSymbol{(}\AgdaRecord{Σ}\AgdaSpace{}%
+\AgdaBound{A}\AgdaSpace{}%
+\AgdaBound{C}\AgdaSymbol{)}\<%
+\\
+%
+\>[4]\AgdaFunction{Σ⇔}\AgdaSpace{}%
+\AgdaBound{f}\AgdaSpace{}%
+\AgdaSymbol{=}\AgdaSpace{}%
+\AgdaFunction{mk⇔}\AgdaSpace{}%
+\AgdaSymbol{(}\AgdaFunction{Prod.map₂}\AgdaSpace{}%
+\AgdaSymbol{(}\AgdaBound{f}\AgdaSpace{}%
+\AgdaSymbol{.}\AgdaField{to}\AgdaSymbol{))}\AgdaSpace{}%
+\AgdaSymbol{(}\AgdaFunction{Prod.map₂}\AgdaSpace{}%
+\AgdaSymbol{(}\AgdaBound{f}\AgdaSpace{}%
+\AgdaSymbol{.}\AgdaField{from}\AgdaSymbol{))}\<%
+\\
+%
+\>[4]\AgdaFunction{≡⇔}\AgdaSpace{}%
+\AgdaSymbol{:}\AgdaSpace{}%
+\AgdaSymbol{∀\{}\AgdaBound{A}\AgdaSpace{}%
+\AgdaBound{B}\AgdaSpace{}%
+\AgdaSymbol{:}\AgdaSpace{}%
+\AgdaPrimitive{Set}\AgdaSymbol{\}}\AgdaSpace{}%
+\AgdaSymbol{→}\AgdaSpace{}%
+\AgdaBound{A}\AgdaSpace{}%
+\AgdaOperator{\AgdaDatatype{≡}}\AgdaSpace{}%
+\AgdaBound{B}\AgdaSpace{}%
+\AgdaSymbol{→}\AgdaSpace{}%
+\AgdaBound{A}\AgdaSpace{}%
+\AgdaOperator{\AgdaFunction{⇔}}\AgdaSpace{}%
+\AgdaBound{B}\<%
+\\
+%
+\>[4]\AgdaFunction{≡⇔}\AgdaSpace{}%
+\AgdaInductiveConstructor{refl}\AgdaSpace{}%
+\AgdaSymbol{=}\AgdaSpace{}%
+\AgdaFunction{⇔.refl}\<%
+\\
+%
+\>[4]\AgdaFunction{rolling}\AgdaSpace{}%
+\AgdaSymbol{:}\AgdaSpace{}%
+\AgdaOperator{\AgdaFunction{⟦}}\AgdaSpace{}%
+\AgdaGeneralizable{D}\AgdaSpace{}%
+\AgdaOperator{\AgdaFunction{⟧ₒ}}\AgdaSpace{}%
+\AgdaOperator{\AgdaDatatype{⟦}}\AgdaSpace{}%
+\AgdaGeneralizable{D}\AgdaSpace{}%
+\AgdaOperator{\AgdaDatatype{⟧}}\AgdaSpace{}%
+\AgdaOperator{\AgdaFunction{⟺}}\AgdaSpace{}%
+\AgdaOperator{\AgdaDatatype{⟦}}\AgdaSpace{}%
+\AgdaGeneralizable{D}\AgdaSpace{}%
+\AgdaOperator{\AgdaDatatype{⟧}}\<%
+\\
+%
+\>[4]\AgdaFunction{rolling}\AgdaSpace{}%
+\AgdaSymbol{=}\AgdaSpace{}%
+\AgdaFunction{mk⇔}\AgdaSpace{}%
+\AgdaInductiveConstructor{roll}\AgdaSpace{}%
+\AgdaFunction{unroll}\<%
+\\
+%
+\>[4]\AgdaSymbol{\{-\#}\AgdaSpace{}%
+\AgdaKeyword{TERMINATING}\AgdaSpace{}%
+\AgdaSymbol{\#-\}}\<%
+\\
+%
+\>[4]\AgdaFunction{δD-correct'}\AgdaSpace{}%
+\AgdaSymbol{:}\AgdaSpace{}%
+\AgdaSymbol{∀}\AgdaSpace{}%
+\AgdaBound{D}\AgdaSpace{}%
+\AgdaSymbol{→}\AgdaSpace{}%
+\AgdaOperator{\AgdaFunction{⟦}}\AgdaSpace{}%
+\AgdaFunction{δₒ}\AgdaSpace{}%
+\AgdaGeneralizable{D₀}\AgdaSpace{}%
+\AgdaGeneralizable{c}\AgdaSpace{}%
+\AgdaBound{D}\AgdaSpace{}%
+\AgdaOperator{\AgdaFunction{⟧ₒ}}\AgdaSpace{}%
+\AgdaOperator{\AgdaDatatype{⟦}}\AgdaSpace{}%
+\AgdaFunction{δD}\AgdaSpace{}%
+\AgdaGeneralizable{c}\AgdaSpace{}%
+\AgdaGeneralizable{D₀}\AgdaSpace{}%
+\AgdaOperator{\AgdaDatatype{⟧}}\AgdaSpace{}%
+\AgdaOperator{\AgdaFunction{⟺}}\AgdaSpace{}%
+\AgdaFunction{δ}\AgdaSpace{}%
+\AgdaGeneralizable{c}\AgdaSpace{}%
+\AgdaSymbol{(}\AgdaOperator{\AgdaFunction{⟦}}\AgdaSpace{}%
+\AgdaBound{D}\AgdaSpace{}%
+\AgdaOperator{\AgdaFunction{⟧ₒ}}\AgdaSpace{}%
+\AgdaOperator{\AgdaDatatype{⟦}}\AgdaSpace{}%
+\AgdaGeneralizable{D₀}\AgdaSpace{}%
+\AgdaOperator{\AgdaDatatype{⟧}}\AgdaSymbol{)}\<%
+\\
+%
+\>[4]\AgdaFunction{δD-correct'}\AgdaSpace{}%
+\AgdaInductiveConstructor{∅}\AgdaSpace{}%
+\AgdaSymbol{=}\AgdaSpace{}%
+\AgdaFunction{⇔.refl}\<%
+\\
+%
+\>[4]\AgdaFunction{δD-correct'}\AgdaSpace{}%
+\AgdaInductiveConstructor{ε}\AgdaSpace{}%
+\AgdaSymbol{=}\AgdaSpace{}%
+\AgdaFunction{δε}\<%
+\\
+%
+\>[4]\AgdaFunction{δD-correct'}\AgdaSpace{}%
+\AgdaSymbol{(}\AgdaOperator{\AgdaInductiveConstructor{`}}\AgdaSpace{}%
+\AgdaBound{c'}\AgdaSymbol{)}\AgdaSpace{}%
+\AgdaSymbol{=}\AgdaSpace{}%
+\AgdaFunction{δ`}\<%
+\\
+%
+\>[4]\AgdaFunction{δD-correct'}\AgdaSpace{}%
+\AgdaSymbol{(}\AgdaBound{D}\AgdaSpace{}%
+\AgdaOperator{\AgdaInductiveConstructor{∪}}\AgdaSpace{}%
+\AgdaBound{D₁}\AgdaSymbol{)}\AgdaSpace{}%
+\AgdaSymbol{=}\AgdaSpace{}%
+\AgdaFunction{⇔.trans}\AgdaSpace{}%
+\AgdaSymbol{(}\AgdaFunction{δD-correct'}\AgdaSpace{}%
+\AgdaBound{D}\AgdaSpace{}%
+\AgdaOperator{\AgdaFunction{⊎⇔}}\AgdaSpace{}%
+\AgdaFunction{δD-correct'}\AgdaSpace{}%
+\AgdaBound{D₁}\AgdaSymbol{)}\AgdaSpace{}%
+\AgdaSymbol{(}\AgdaFunction{◂δ∪}\AgdaSpace{}%
+\AgdaSymbol{\{}\AgdaOperator{\AgdaFunction{⟦}}\AgdaSpace{}%
+\AgdaBound{D}\AgdaSpace{}%
+\AgdaOperator{\AgdaFunction{⟧ₒ}}\AgdaSpace{}%
+\AgdaSymbol{\AgdaUnderscore{}\}}\AgdaSpace{}%
+\AgdaSymbol{\{}\AgdaOperator{\AgdaFunction{⟦}}\AgdaSpace{}%
+\AgdaBound{D₁}\AgdaSpace{}%
+\AgdaOperator{\AgdaFunction{⟧ₒ}}\AgdaSpace{}%
+\AgdaSymbol{\AgdaUnderscore{}\})}\<%
+\\
+%
+\>[4]\AgdaFunction{δD-correct'}\AgdaSpace{}%
+\AgdaSymbol{(}\AgdaBound{D}\AgdaSpace{}%
+\AgdaOperator{\AgdaInductiveConstructor{∗}}\AgdaSpace{}%
+\AgdaBound{D₁}\AgdaSymbol{)}\AgdaSpace{}%
+\AgdaSymbol{=}\AgdaSpace{}%
+\AgdaFunction{⇔.trans}\AgdaSpace{}%
+\AgdaSymbol{((}\AgdaFunction{⇔.refl}\AgdaSpace{}%
+\AgdaOperator{\AgdaFunction{×⇔}}\AgdaSpace{}%
+\AgdaFunction{δD-correct'}\AgdaSpace{}%
+\AgdaBound{D₁}\AgdaSymbol{)}\AgdaSpace{}%
+\AgdaOperator{\AgdaFunction{⊎⇔}}\AgdaSpace{}%
+\AgdaFunction{Σ⇔}\AgdaSpace{}%
+\AgdaSymbol{(}\AgdaFunction{Σ⇔}\AgdaSpace{}%
+\AgdaSymbol{(}\AgdaFunction{⇔.refl}\AgdaSpace{}%
+\AgdaOperator{\AgdaFunction{×⇔}}\AgdaSpace{}%
+\AgdaSymbol{(}\AgdaFunction{δD-correct'}\AgdaSpace{}%
+\AgdaBound{D}\AgdaSpace{}%
+\AgdaOperator{\AgdaFunction{×⇔}}\AgdaSpace{}%
+\AgdaFunction{≡⇔}\AgdaSpace{}%
+\AgdaSymbol{(}\AgdaFunction{σμ}\AgdaSpace{}%
+\AgdaBound{D₁}\AgdaSymbol{)))))}\AgdaSpace{}%
+\AgdaFunction{δ∗}\<%
+\\
+%
+\>[4]\AgdaFunction{δD-correct'}\AgdaSpace{}%
+\AgdaSymbol{(}\AgdaBound{A}\AgdaSpace{}%
+\AgdaOperator{\AgdaInductiveConstructor{·}}\AgdaSpace{}%
+\AgdaBound{D}\AgdaSymbol{)}\AgdaSpace{}%
+\AgdaSymbol{=}\AgdaSpace{}%
+\AgdaFunction{⇔.trans}\AgdaSpace{}%
+\AgdaSymbol{(}\AgdaFunction{⇔.refl}\AgdaSpace{}%
+\AgdaOperator{\AgdaFunction{×⇔}}\AgdaSpace{}%
+\AgdaFunction{δD-correct'}\AgdaSpace{}%
+\AgdaBound{D}\AgdaSymbol{)}\AgdaSpace{}%
+\AgdaSymbol{(}\AgdaFunction{δ·}\AgdaSpace{}%
+\AgdaSymbol{\{\AgdaUnderscore{}\}}\AgdaSpace{}%
+\AgdaSymbol{\{\AgdaUnderscore{}\}}\AgdaSpace{}%
+\AgdaSymbol{\{}\AgdaOperator{\AgdaFunction{⟦}}\AgdaSpace{}%
+\AgdaBound{D}\AgdaSpace{}%
+\AgdaOperator{\AgdaFunction{⟧ₒ}}\AgdaSpace{}%
+\AgdaSymbol{\AgdaUnderscore{}\})}\<%
+\\
+%
+\>[4]\AgdaFunction{δD-correct'}\AgdaSpace{}%
+\AgdaSymbol{\{}\AgdaArgument{D₀}\AgdaSpace{}%
+\AgdaSymbol{=}\AgdaSpace{}%
+\AgdaBound{D}\AgdaSymbol{\}}\AgdaSpace{}%
+\AgdaInductiveConstructor{var}\AgdaSpace{}%
+\AgdaSymbol{=}\AgdaSpace{}%
+\AgdaFunction{⇔.trans}\AgdaSpace{}%
+\AgdaSymbol{(}\AgdaFunction{⇔.trans}\AgdaSpace{}%
+\AgdaSymbol{(}\AgdaFunction{⇔.sym}\AgdaSpace{}%
+\AgdaFunction{rolling}\AgdaSymbol{)}\AgdaSpace{}%
+\AgdaSymbol{(}\AgdaFunction{δD-correct'}\AgdaSpace{}%
+\AgdaBound{D}\AgdaSymbol{))}\AgdaSpace{}%
+\AgdaFunction{rolling}\<%
+\\
+%
+\>[4]\AgdaFunction{δD-correct'}\AgdaSpace{}%
+\AgdaSymbol{(}\AgdaInductiveConstructor{μ}\AgdaSpace{}%
+\AgdaBound{D}\AgdaSymbol{)}\AgdaSpace{}%
+\AgdaSymbol{=}\AgdaSpace{}%
+\AgdaFunction{⇔.trans}\AgdaSpace{}%
+\AgdaSymbol{(}\AgdaFunction{⇔.trans}\AgdaSpace{}%
+\AgdaSymbol{(}\AgdaFunction{⇔.sym}\AgdaSpace{}%
+\AgdaFunction{rolling}\AgdaSymbol{)}\AgdaSpace{}%
+\AgdaSymbol{(}\AgdaFunction{δD-correct'}\AgdaSpace{}%
+\AgdaBound{D}\AgdaSymbol{))}\AgdaSpace{}%
+\AgdaFunction{rolling}\<%
+\end{code}
 % \begin{code}
 %     variable D D₀ : Desc
 %     variable P : ◇.Lang

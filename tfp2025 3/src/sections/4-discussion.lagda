@@ -14,8 +14,8 @@ points. Each fixed point roughly corresponds to a nonterminal in the
 context-free grammar, so we conjecture this limitation means we only support
 context-free grammars without mutual recursion. We hope to expand our work to cover mutually recursive context-free grammars in future work.
 
-Furthermore, an anonymous reviewer of a draft of this paper have pointed out
-that simply showing an equivalence of expressive power does not mean μ-regular
+Furthermore, an anonymous reviewer of a draft of this paper has pointed out that
+simply showing an equivalence of expressive power does not mean μ-regular
 expressions are as easy to use as context-free grammars in practice. In future
 work, we hope to explore this further by specifying and parsing more
 representative and practical languages.

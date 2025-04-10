@@ -80,15 +80,13 @@ or a program which turns a string into a parse tree in practice.
 >  explaining/motivating why the direct solution does not work - I could
 >  imagine it causes problems for the termination checker, for instance.
 
-TODO: I think this indeed would not work out nicely, but we could explain why it
-does not work in the paper. I don't think it is generally useful to explore
-every possible alternative in the paper, but perhaps this seems obvious enough
-to warrant some explanation.  Also, our data type is not closed under
-derivatives 
+TODO: I don't understand the suggestion, actually. We use the mu to preserve
+the original grammar, so passing the derivative of that to `δ₀` does not
+help us. We cannot reconstruct the original grammar from the derivative of it.
 
-TODO: If you take a more big-step/recursive descent approach with memoization,
-then it might be possible. We could explain this in the discussion of possible
-future work.
+TODO: The only way we might hope to avoid `mu` is if we take a more
+big-step/recursive descent approach with memoization, then it might be possible.
+We could explain this in the discussion of possible future work.
 
 TODO: At the end of Section 2 we should mention something about the switch from
 big step/recursive descent to small step/derivatives.
@@ -115,6 +113,7 @@ multiple parse trees.
 >  point halfway through page 6.
 
 Good point. Although, this is not obvious. I need some time to think about this.
+Also, this is strongly related to your second major suggestion. If 
 
 > * Another reason to avoid · would be that it makes the Desc type
 >  large... Removing it would allow Desc to live in Set - unless there
@@ -184,11 +183,7 @@ complicated.
 > 
 > * allowed to take the fixpoint of -> of which we are allowed to take the
 >  fixpoint (never end a sentence with a proposition).
-> 
 > * D But (missing punctuation mark)
-
-Bottom of page 11
-
 > * Hocroft -> Hopcroft
 > 
 > * Danielsson and Anders -> Danielsson
@@ -283,7 +278,7 @@ Bottom of page 11
 > (I don't know whether it is the first one).
 > 
 >    Denis Firsov, Tarmo Uustalu: Certified normalization of context-free
->    grammars, CPP 2015. https://eur03.safelinks.protection.outlook.com/?url=https%3A%2F%2Fdoi.org%2F10.1145%2F2676724.2693177&data=05%7C02%7Cj.s.reinders%40tudelft.nl%7C4020b24233f24d08a73f08dd6c64e624%7C096e524d692940308cd38ab42de0887b%7C0%7C0%7C638785902816936482%7CUnknown%7CTWFpbGZsb3d8eyJFbXB0eU1hcGkiOnRydWUsIlYiOiIwLjAuMDAwMCIsIlAiOiJXaW4zMiIsIkFOIjoiTWFpbCIsIldUIjoyfQ%3D%3D%7C0%7C%7C%7C&sdata=73dHpP77s629c%2FMi%2FEc3bcGrzwXlxt9Ehdq9oIWnTn4%3D&reserved=0
+>    grammars, CPP 2015. https://dl.acm.org/doi/10.1145/2676724.2693177
 > 
 > This means, the correctness of nullability check cannot be a
 > contribution by itself. So, I think the authors can state that the
@@ -295,6 +290,14 @@ Bottom of page 11
 > In conclusion, putting these points in consideration, my evaluation of
 > this paper is in-between 0 and 1. I am slightly positive but not that
 > positive to score 1. 
+
+We can add that paper to the related work section, it will be similar to the
+paper on the left-corner transformation.
+
+Additionally, we should clarify that none of the proofs or their formalization
+are novel. Instead, our approach is novel and useful because it is simpler and
+more direct than traditional approaches (our code is roughly one tenth of the
+size of Firsov and Uustalu's code: ~400 vs. 4159 lines).
 
 > To improve the paper's presentation, I suggest
 > the authors to consider showing the picture of the formalization:
@@ -324,21 +327,31 @@ TODO: Consider changing title, e.g. "Towards a Type Theoretic Treatment of Conte
 > p1. "new research continuously emerge". To support this, it would be
 > better to cite more recent papers in addition. The latest paper cited
 > in this paragraph is published in 2015.
-> 
+
+TODO
+
 > p2. "<pal> ::= 0 | 1 | 0 <pal> 0 | 1 <pal> 1". Reading the following
 > discussions, I suspect that the production of ϵ is missing and the
 > correct one should be:
 > 
 >    <pal> ::= ϵ | 0 | 1 | 0 <pal> 0 | 1 <pal> 1
-> 
+
+
+DONE
+
+
 > p2. "The idea of automatic differentiation." I would feel that the
 > idea here would be more similar to symbolic differentiation.
-> 
+
+DONE
+
 > p3. "... the recursive unfolding we performed ..." However, I don't
 > think there is an issue in symbolic treatment, which can derive the
 > grammar (d0 <rec>) ::= (d0 <rec>) from <rec> ::= <rec>. Both are valid
 > CFGs.
-> 
+
+I have clarified that we explain a naive derivation producedure based on recursive unfolding in this section. 
+
 > p3. "Another challenge ... is how to encode their recursive nature." I
 > suspect this is still a challenge, because we already have a number of
 > existing approaches of mechanized formalization of CFGs. Also, we can
@@ -351,28 +364,50 @@ TODO: Consider changing title, e.g. "Towards a Type Theoretic Treatment of Conte
 >    Arthur Baars, S. Doaitse Swierstra, Marcos Viera: Typed
 >    Transformations of Typed Grammars: The Left Corner Transform.
 >    ENTCS 253 (7), 2010.  https://eur03.safelinks.protection.outlook.com/?url=https%3A%2F%2Fdoi.org%2F10.1016%2Fj.entcs.2010.08.031&data=05%7C02%7Cj.s.reinders%40tudelft.nl%7C4020b24233f24d08a73f08dd6c64e624%7C096e524d692940308cd38ab42de0887b%7C0%7C0%7C638785902816949725%7CUnknown%7CTWFpbGZsb3d8eyJFbXB0eU1hcGkiOnRydWUsIlYiOiIwLjAuMDAwMCIsIlAiOiJXaW4zMiIsIkFOIjoiTWFpbCIsIldUIjoyfQ%3D%3D%7C0%7C%7C%7C&sdata=knSvdZ8cwmqrVnAbyGZJFQk4MThzcmaUZ6bV5Q3xWbw%3D&reserved=0
-> 
+
+I have simply removed this paragraph, because I don't think it is relevant.
+
 > p6. Explain "Dec.map" and "mk⇔".
-> 
+
+TODO
+
 > p10. "... we have learned the following three lessons." I suspect that
 > at least the first two of the three lessons can be obtained
 > straightforwardly from the existing results.
-> 
+
+Done: I've rewritten this to make it clearer that these are not necessarily contributions of this paper. 
+
 > p15 "His work does cover mutually recursive nonterminals ..." He is
 > discussing μ-regular expressions, which is not mutually recursive,
 > whereas their languages are the same as the ones of CFGs.
-> 
+
+TODO: μ-regular expressions can be mutually recursive. For example, the expr-stmt example in our introduction can be written like this:
+
+expr = μ (\expr -> expr '+' expr | 0 | 1 | μ (\stmt -> expr | stmt * ';' * stmt))
+
+We should perhaps make this clear in the discussion section
+
 > p15. "... parsing is only the boolean ..." I think that this applies
 > also to the proposed approach.
-> 
+
+TODO: Our approach constructs a full parse tree. We do indeed produce only (at
+most) a single parse tree and not all possible parse trees, but that does not
+mean we only produce a boolean.
+
+How can we explain this more clearly?
+
 > p15. What are "μ-regular languages"? Anyway, I suspect that at least
 > [13] discuss CFGs.
-> 
+
+TODO: Indeed, we should explain clearly somewhere what μ-regular expressions are
+and how they relate to context-free languages/grammars.
+
 > p16. "... we have formalized (acyclic) context-free grammars ...". In
 > my understanding, the proposed approach can handle cyclic ones like
 > <rec> ::= <rec>.
-> 
-> 
+
+Done: we have replace 'acyclic' with 'non mutually recursive'
+
 > ----------------
 >  REPORT
 > ----------------
@@ -388,7 +423,10 @@ TODO: Consider changing title, e.g. "Towards a Type Theoretic Treatment of Conte
 > Forgive me if this is silly, but we should explicitly include the empty string in the grammar; unless we do so, "0110" is not in the language of the given grammar; as written all productions are of odd-length strings.
 > 
 > The footnote from 2.1 appears on the next page, and that both got me confused looking for where it came from, and also confused as the return type of Parser, making me think "is this 'Set' deliberate here or not?" (and I think it's a mistake)
-> 
+
+There's little we can do about the footnote without messing up other aspects of the typesetting. 
+I have fixed the Set in the signature of Parser, that was indeed a mistake.
+
 > 
 > * small
 > 
@@ -403,18 +441,31 @@ TODO: Consider changing title, e.g. "Towards a Type Theoretic Treatment of Conte
 > Repeat it. "similarity between the type (w : String) → Dec (P w) and". Remove the room for ambiguity.
 > 
 > ** speficying [specifying] and parsing context-free languages.
-> 
+
+Fixed
+
 > ** to accept it any way [anyway]
-> 
+
+Fixed
+
 > ** if we restrict the [class of] functions
-> 
+
+Fixed
+
 > ** and the[n] we take the derivative of the second
-> 
+
+Fixed
+
 > ** from which our disired [desired]
-> 
+
+Fixed
+
 > ** an anonymous reviewer of a draft of this paper have [has]
-> 
+
+Fixed
+
 > ** the interested reader to Hocroft et al. [Hopcroft]
 > 
 > Use cleveref and you'll never again misspell an author in text.
-> 
+
+Fixed

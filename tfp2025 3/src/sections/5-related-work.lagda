@@ -1,6 +1,6 @@
 \section{Related Work}\label{sec:related-work}
 
-Formal languages have a long history. We refer the interested reader to Hocroft
+Formal languages have a long history. We refer the interested reader to Hopcroft
 et al.~\cite{hopcroft-book} which is an overview of traditional formal language
 theory.
 
@@ -12,13 +12,12 @@ differentiation, but we still benefit from Elliott's clear and concise
 presentation. Our work is an extension of Elliott's symbolic differentiation to
 a more expressive subset of context-free languages.
 
-Previous work has shown that context-free (or similar) languages can be
-implemented in Agda. For example, Danielsson and
-Anders~\cite{total-parser-combinators} and Allais~\cite{agdarsec} show how to
-implement a form of parser combinators in Agda. Both ensure termination by
-requiring that parsers consume at least some input each recursion. In our work,
-we lift this restriction, freeing programmers from having to ensure their
-parsers consume input.
+Previous work has implemented context-free (or similar) languages in Agda. For
+example, Danielsson~\cite{total-parser-combinators} and Allais~\cite{agdarsec}
+show how to implement a form of parser combinators in Agda. Both ensure
+termination by requiring that parsers consume at least some input each
+recursion. In our work, we lift this restriction, freeing programmers from
+having to ensure their parsers consume input.
 
 Another approach to writing context-free grammars in Agda is to first convert
 arbitrary context-free grammars to a form more amenable to parsing. For example,
@@ -48,3 +47,5 @@ derivatives. They use laziness and memoization to avoid nontermination.
 Krishnaswami and Yallop~\cite{yallop} propose an alternative approach to parsing
 μ-regular expressions. They introduce a type system which enforces their
 languages to be in LL(1), which they parse efficiently using staging. 
+
+% TODO: Cite Oleg Grenrus's blog post!

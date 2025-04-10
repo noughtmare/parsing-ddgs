@@ -60,7 +60,7 @@ In this section, we introduce background information, namely how we define langu
 
 \subsection{Languages}
 
-We define languages as being functions from strings to types.\footnote{We use \af{Type} as a synonym for Agda's \af{Set} to avoid confusion with set-theoretic sets.}
+We define languages as being functions from strings to types.\footnote{We use \af{Type} as a synonym for Agda's \af{Set} to avoid confusion with set-theoretic sets.}%
 \begin{code}[hide]
 -- module ◇ where
     Lang : Type₁
@@ -172,7 +172,12 @@ The right column of \cref{fig:combinators} lists combinators whose purpose will 
 
 \subsection{Parsers}
 
-We want to write a program which can prove for us that a given string is in a language. What should this program return for strings that are not in the language? We want to make sure our program does find a proof if it exists, so if it does not exist then we want a proof that the string is not in the language. We can capture this using a type called \af{Dec} from the Agda standard library. It can be defined as follows:
+We want to write a program which can automatically prove for us whether or not a
+given string is in a language. What should this program return for strings that
+are not in the language? We want to make sure our program does find a proof if
+it exists, so if it does not exist then we want a proof that the string is not
+in the language. We can capture this using a type called \af{Dec} from the Agda
+standard library. It can be defined as follows:
 
 \begin{code}
     data ◂Dec (A : Type) : Type where
@@ -183,25 +188,33 @@ We want to write a program which can prove for us that a given string is in a la
 A parser for a language, then, is a program which can tell us whether any given string is in the language or not.
 
 \begin{code}
-    Parser : Lang → Set
+    Parser : Lang → Type
     Parser P = (w : String) → Dec (P w)
 \end{code}
 
 \begin{remark}
-Readers familiar with Haskell might see similarity between this type and the type \verb|String -> Maybe a|, which is one way to implement parser combinators (although usually the return type is \verb|Maybe (a, String)| giving parsers the freedom to consume only a prefix of the input string and return the rest). The differences are that the result of our $\af{Parser}$ type depends on the language specification and input string, and that a failure carries with it a proof that the string cannot be part of the language. This allows us to separate the specification of our language from the implementation while ensuring correctness.
+Readers familiar with Haskell might notice the similarity between the type $\as{(}\ab{w}~\as{:}~\af{String}\as{)}~\as{→}~\af{Dec}~\as{(}\ab{P}~\ab{w}\as{)}$ and the type \verb|String -> Maybe a|, which is a common way to implement parser combinators (although usually the return type is \verb|Maybe (a, String)| giving parsers the freedom to consume only a prefix of the input string and return the rest).
+The differences are that the result of our $\af{Parser}$ type depends on the language specification and input string, and that a failure carries with it a proof that the string cannot be part of the language.
+This allows us to separate the specification of our language from the implementation while ensuring correctness.
 \end{remark}
 
 \begin{remark}
 Note that the \af{Dec} type only requires our parsers to produce a single
 result; it does not have to exhaustively list all possible ways to parse the
-input string. In Haskell, one might write \verb|String -> [(a, String)]|\cite{monadic-parsing}, which allows a parser to return
+input string. In Haskell, one might write \verb|String -> [(a, String)]| following Hutton and Meijer~\cite{monadic-parsing}, which allows a parser to return
 multiple results but does nothing to ensure that it correctly produces all
-possible results. We could imagine requiring that the result type is in
-bijection with a finite or countably infinite set. However, that would introduce
-too many complications in our proofs. In practice, furthermore, we want our
-parsers to only give us a single result. Hence, our effort would be better spent
-in proving that our languages are unambiguous, meaning there is at most one
-valid way to parse each input string. Thus, in this paper, we use $\af{Dec}$.
+possible results.
+% TODO: this part was apparently not clear to reviewer A:
+We could imagine replacing \verb|Dec| by a requirement that the result type is
+in bijection with a possibly infinite set.
+However, that would introduce too many complications in our proofs.
+% And some proofs don't work or need major changes to the statement even. I
+% should really look into this again.
+In practice, furthermore, we want our parsers
+to only give us a single result. Hence, our effort would be better spent in
+proving that our languages are unambiguous, meaning there is at most one valid
+way to parse each input string. Thus, in this paper, we use
+$\af{Dec}$.
 \end{remark}
 
 To construct a parser for our permissions language, we start by defining parsers for each of the language combinators. Let us start by considering the character combinator. If the given string is empty or has more than one character, it can never be in a language formed by one character. If the string does consist of only one character, then it is in the language if that character is the same as from the language specification. In Agda, we can write such a parser for characters as follows:
@@ -221,7 +234,14 @@ Crucially, nullability deals only with (decidable) types, and derivatives deal o
 
 Returning to our character parser, a single character language is not nullable. On the level of types we express this as $\af{⊥}$, the uninhabited type, which is trivially decidable as $\ac{no}~\as{λ}~\as{()}$.
 
-The derivative of a single character language depends on whether the character of the derivative is the same as the character of the language. We might be tempted to define this condition externally in Agda, but that would break the abstraction of derivatives only dealing with languages. Instead, we are pushed toward defining a combinator, \af{\un{}·\un{}}, which allows us to express this condintional on the level of languages. If the condition holds then there is still a second condition which is that the remainder of the string needs to be empty. We use the epsilon language, $\af{ε}$, for that purpose.
+The derivative of a single character language depends on whether the character
+of the derivative is the same as the character of the language. We might be
+tempted to define this condition externally in Agda, but that would break the
+abstraction of derivatives only dealing with languages. Instead, we are pushed
+toward defining a combinator, \af{\un{}·\un{}}, which allows us to express this
+conditional on the level of languages. If the condition holds then there is
+still a second condition which is that the remainder of the string needs to be
+empty. We use the epsilon language, $\af{ε}$, for that purpose.
 To conclude, the derivative of the character language $\af{`}~\ab{c'}$ with respect to the character $\ab{c}$ is $\as{(}\ab{c}~\af{≟}~\ab{c'}\as{)}~\af{·}~\af{ε}$ as shown in \cref{fig:null-delta}.
 
 \begin{code}[hide]
@@ -409,16 +429,22 @@ This allows us to generate a parser for any language that is defined using the b
 This permissions language is very simple. In particular, it is finite. In practice, many languages are inifinite, for which the basic combinators will not suffice. For example, file paths can be arbitrarily long on most systems.
 Elliott~\cite{conal-languages} defines a Kleene star combinator which enables him to specify regular languages such as file paths.
 
-However, we want to go one step further, speficying and parsing context-free languages. Most practical programming languages are at least context-free, if not more complicated. An essential feature of many languages is the ability to recognize balanced brackets. A minimal example language with balanced brackets is the following:
+However, we want to go one step further, specifying and parsing context-free
+languages. Most practical programming languages are at least context-free, if
+not even more complicated. An essential feature of many languages is the ability
+to recognize balanced brackets. A minimal example language with balanced
+brackets is the following:
 %
 \begin{grammar}
 <brackets> ::= ε | [ <brackets> ] | <brackets> <brackets>
 \end{grammar}
 %
 This is the language of all strings which consist of balanced square brackets. 
-Many practical programming languages include some form of balanced brackets. Furthermore, this language is well known to be context-free and not regular. Thus, we need more powerful combinators.
+It is common for programming languages to include some form of balanced
+brackets. Furthermore, this language is well known to be context-free and not
+regular. Thus, we need more powerful combinators.
 
-We could try to naively transcribe the brackets grammar using our basic combinators, but Agda will justifiably complain that it is not terminating. Here we have added a NON_TERMINATING pragma to make Agda to accept it any way, but this is obviously not the proper way to define our brackets language.
+We could try to naively transcribe the brackets grammar using our basic combinators, but Agda will justifiably complain that it is not terminating. Here we have added a NON_TERMINATING pragma to make Agda to accept it anyway, but this is obviously not the proper way to define our brackets language.
 %
 \begin{code}
     {-# NON_TERMINATING #-}
@@ -434,7 +460,7 @@ A fixed point combinator could resolve this issue as follows:
 
 Unfortunately, such a fixed point combinator does not exists for arbitrary
 functions on languages. Luckily, we will see in the next section that we can
-define such a fixed point combinator if we restrict the functions we are allowed to take the fixed point of.
+define such a fixed point combinator if we restrict the class of functions of which we take the fixed point.
 
 \endinput
 
