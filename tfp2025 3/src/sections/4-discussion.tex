@@ -10,11 +10,14 @@ Zooming back out, we want to discuss three aspects of our work: expressiveness, 
 
 \paragraph{Expressiveness} Our language descriptions are similar to μ-regular
 expressions, which have been shown to be equivalent to context-free
-grammars~\cite{Thiemann17}. The major difference is that we only allow variables
-to refer to the nearest enclosing fixed point and not back to earlier fixed
-points. Each fixed point roughly corresponds to a nonterminal in the
-context-free grammar, so we conjecture this limitation means we only support
-context-free grammars without mutual recursion. We hope to expand our work to cover mutually recursive context-free grammars in future work.
+grammars~\cite{Thiemann17}. The major difference is that we only have a single
+variable which always refers to the nearest enclosing fixed point and we cannot
+refer back to earlier fixed points. Each fixed point roughly corresponds to a
+nonterminal in the context-free grammar, so we conjecture this limitation means
+we only support context-free grammars without mutual recursion. We hope to
+expand our work to cover mutually recursive context-free grammars in future
+work, for example using indexed descriptions~\cite{10.1145/1932681.1863547}
+where the index can be a set of multiple variables.
 
 Furthermore, an anonymous reviewer of a draft of this paper has pointed out that
 simply showing an equivalence of expressive power does not mean μ-regular

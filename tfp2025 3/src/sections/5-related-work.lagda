@@ -12,6 +12,9 @@ differentiation, but we still benefit from Elliott's clear and concise
 presentation. Our work is an extension of Elliott's symbolic differentiation to
 a more expressive subset of context-free languages.
 
+For the idea behind our derivative rule for fixed points of languages, we were
+inspired by Grenrus's blog post~\cite{fix-ing-regular-expressions}.
+
 Previous work has implemented context-free (or similar) languages in Agda. For
 example, Danielsson~\cite{total-parser-combinators} and Allais~\cite{agdarsec}
 show how to implement a form of parser combinators in Agda. Both ensure
@@ -19,33 +22,35 @@ termination by requiring that parsers consume at least some input each
 recursion. In our work, we lift this restriction, freeing programmers from
 having to ensure their parsers consume input.
 
-Another approach to writing context-free grammars in Agda is to first convert
+Another approach to parsing context-free grammars in Agda is to first convert
 arbitrary context-free grammars to a form more amenable to parsing. For example,
 Brink et al.~\cite{dependently-typed-grammars} show how to formalize the
 left-corner transformation in Agda, which removes left-recursion from the
 grammar, thus allowing the use of a more naive parsing algorithm. Another
-example of this approach is by Bernardy and Jannson, who first transform the
-grammar into Chomsky Normal Form and subsequently formalize and the efficient
-Valiant's algorithm. For the sake of simplicity, we avoid such pre-processing
-transformations in our work.
+example of this approach is by Bernardy and Jannson~\cite{certified-valiant},
+who first transform the grammar into Chomsky Normal Form and subsequently
+formalize and the efficient Valiant's algorithm.
+For the sake of simplicity, we avoid such pre-processing transformations in our
+work.
 
 Perhaps the closest related work to ours can be found outside of Agda
 formalizations, namely Thiemann's~\cite{Thiemann17} work on partial derivatives
-for context-free languages. His work does cover mutually recursive nonterminals
-and furthermore relates derivative-based parsers to pushdown automata.  In
-contrast to our type-theoretic approach, Thiemann's approach is based on set
-theory which means languages are just sets of strings and the result of parsing
-is only the boolean which tells you whether the input string is in the language
-or not. In this way, the information about the tree structure that naturally
-results from parsing---and which is often desired in practice---remains
-implicit. Furthermore, our proofs are mechanized in Agda, which gives us confidence in the correctness, but also facilitates computer-aided experimentation.
+for context-free languages.
+His work supports μ-regular expressions without single-variable restriction of
+our approach, which allows him to encode context free grammars with mutually
+recursive nonterminals.
+In Thiemann's approach, however, languages are sets of strings and parsing only
+determines whether a string is in the set or not, whereas our parsers
+conststruct a parse tree.
+Furthermore, our proofs are mechanized in Agda, which gives us confidence in the
+correctness, but also facilitates computer-aided experimentation.
 
 Finally, there are some works which focus less on formalization and more on the
-practical implementation of parsing μ-regular languages. Might et
-al.~\cite{parsing-with-derivatives} show how to parse μ-regular languages using
-derivatives. They use laziness and memoization to avoid nontermination.
+practical implementation of parsing μ-regular expressions.
+Might et al.~\cite{parsing-with-derivatives} show how to parse μ-regular
+ expressions using derivatives.
+They use laziness and memoization to avoid nontermination.
 Krishnaswami and Yallop~\cite{yallop} propose an alternative approach to parsing
-μ-regular expressions. They introduce a type system which enforces their
-languages to be in LL(1), which they parse efficiently using staging. 
-
-% TODO: Cite Oleg Grenrus's blog post!
+μ-regular expressions.
+They introduce a type system which enforces their languages to be in LL(1),
+which they parse efficiently using staging. 

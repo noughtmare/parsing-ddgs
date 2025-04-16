@@ -68,11 +68,13 @@ We define languages as being functions from strings to types.\footnote{We use \a
 \begin{code}
     Lang = String → Type
 \end{code}
-The result type can be thought of as the type of proofs that the string is in the language.
+The result type can be thought of as the proposition that the input string is in the language.
+Equivalently, since our type theory is constructive, you can think of the result type as the type of concrete syntax trees which can result from parsing the input string.
 \begin{remark}
-Note that a language may admit multiple different proofs for the same string. That is an important difference between the type theoretic approach and the more common set theoretic approach, which models languages as sets of strings.
+Note that a language may admit multiple different proofs (or concrete syntax trees) for the same string. This is in constrast to the traditional set-theoretic definition which throws away the information about why the string
+is in the language and only leaves the single bit of information that the string is or is not in the language.
 \end{remark}
-This is a broad definition of what a language is; it includes languages that are outside the class of context-free languages. 
+The above definition of language is broad; it includes languages that are not context-free.
 \begin{example}\label{ex:non-context-free}
 The language $a^n b^n c^n$ can be specified as follows:
 \begin{code}[hide]
@@ -90,26 +92,22 @@ We can show that the string $aabbcc$ is in this language by choosing $n$ to be $
     aabbcc = 2 , refl
 \end{code}
 \end{example}
-\cref{ex:non-context-free} shows that it is possible to specify languages and prove that certain strings are in those languages, but for practical applications we do not want to be burdened with writing such proofs ourselves.
+\cref{ex:non-context-free} shows that it is possible to prove that certain strings are in a language manually, but for practical applications we do not want to be burdened with writing such proofs ourselves.
 In other words, we want a parser which can determine by itself whether a string is in the language or not.
 
 Unfortunately, we cannot hope to write a parser for arbitrary languages defined in this way. A language could be defined, for example, such that the inclusion of a particular string is predicated on whether or not the Collatz conjecture holds.
 Therefore, we need to restrict ourselves to a subset of languages.
-Next, we explore basic language combinators for this purpose.
+We explore basic language combinators for this purpose in the next section.
 
 \subsection{Basic Language Combinators}
 
 Let's start with a simple example: POSIX file system permissions. These are usually summarized using the characters `r', `w', and `x' if the permissions are granted, or `-' in place of the corresponding character if the permission is denied. For example the string ``r-x'' indicates that read and execute permissions are granted, but the write permission is denied. The full language can be expressed using the following grammar:
-
-\begin{grammar}
-<permissions>  ::= <read> <write> <execute>
-
-<read>         ::= - | r
-
-<write>        ::= - | w
-
-<execute>      ::= - | x
-\end{grammar}
+\begin{align*}
+\langle\textit{permissions}\rangle & ::= \langle\textit{read}\rangle~\langle\textit{write}\rangle~\langle\textit{execute}\rangle \\
+\langle\textit{read}\rangle & ::= - \mid \textrm{r} \\
+\langle\textit{write}\rangle & ::= - \mid \textrm{w} \\
+\langle\textit{execute}\rangle & ::= - \mid \textrm{x}
+\end{align*}
 
 \begin{code}[hide]
     variable ℒ ℒ₁ ℒ₂ : Lang
@@ -176,14 +174,21 @@ We want to write a program which can automatically prove for us whether or not a
 given string is in a language. What should this program return for strings that
 are not in the language? We want to make sure our program does find a proof if
 it exists, so if it does not exist then we want a proof that the string is not
-in the language. We can capture this using a type called \af{Dec} from the Agda
+in the language. We can capture this using decidable types (\af{Dec}) from the Agda
 standard library. It can be defined as follows:
 
+% This type already exists in the stdlib so we give it a different name (but the ◂ is hidden)
 \begin{code}
     data ◂Dec (A : Type) : Type where
-        ◂yes : A → ◂Dec A
-        ◂no : ¬ A → ◂Dec A
+        ◂yes  :    A → ◂Dec A
+        ◂no   : ¬  A → ◂Dec A
 \end{code}
+
+A value of type $\af{Dec}~\ab{A}$ either witnesses that $\ab{A}$ is inhabited by constructing an inhabitant, or it proves that $\ab{A}$ is empty by showing how a hypothetical inhabitant of $\ab{A}$ leads to a contradiction.
+
+We can prove the decidability of one type using the decidability of a related type if we have functions going both ways between the types.
+For this purpose, the Agda standard library provides the $\af{map}~\as{:}~\ab{A}~\af{⇔}~\ab{B}~\af{→}~\af{Dec}~\ab{A}~\af{→}~\af{Dec}~\ab{B}$ function.
+The $\af{⇔}$ type is an abstraction for having two functions going both way and can be constructed as such using the $\af{mk⇔}$ function.
 
 A parser for a language, then, is a program which can tell us whether any given string is in the language or not.
 
@@ -193,7 +198,7 @@ A parser for a language, then, is a program which can tell us whether any given 
 \end{code}
 
 \begin{remark}
-Readers familiar with Haskell might notice the similarity between the type $\as{(}\ab{w}~\as{:}~\af{String}\as{)}~\as{→}~\af{Dec}~\as{(}\ab{P}~\ab{w}\as{)}$ and the type \verb|String -> Maybe a|, which is a common way to implement parser combinators (although usually the return type is \verb|Maybe (a, String)| giving parsers the freedom to consume only a prefix of the input string and return the rest).
+Readers familiar with Haskell might notice the similarity between $\as{(}\ab{w}~\as{:}~\af{String}\as{)}~\as{→}~\af{Dec}~\as{(}\ab{P}~\ab{w}\as{)}$ and \verb|String -> Maybe a|, which is a common way to implement parser combinators (although usually the return type is \verb|Maybe (a, String)| giving parsers the freedom to consume only a prefix of the input string and return the rest).
 The differences are that the result of our $\af{Parser}$ type depends on the language specification and input string, and that a failure carries with it a proof that the string cannot be part of the language.
 This allows us to separate the specification of our language from the implementation while ensuring correctness.
 \end{remark}
@@ -204,17 +209,14 @@ result; it does not have to exhaustively list all possible ways to parse the
 input string. In Haskell, one might write \verb|String -> [(a, String)]| following Hutton and Meijer~\cite{monadic-parsing}, which allows a parser to return
 multiple results but does nothing to ensure that it correctly produces all
 possible results.
-% TODO: this part was apparently not clear to reviewer A:
-We could imagine replacing \verb|Dec| by a requirement that the result type is
-in bijection with a possibly infinite set.
-However, that would introduce too many complications in our proofs.
-% And some proofs don't work or need major changes to the statement even. I
-% should really look into this again.
-In practice, furthermore, we want our parsers
-to only give us a single result. Hence, our effort would be better spent in
-proving that our languages are unambiguous, meaning there is at most one valid
-way to parse each input string. Thus, in this paper, we use
-$\af{Dec}$.
+If we wanted to capture all possible results in our Agda formalisation then we
+could replace $\af{Dec}$ by a type which fixes the cardinality of the result
+type fully.
+However, we expect that would introduce many complications in our proofs.
+In practice, furthermore, we want our parsers to only give us a single result.
+Hence, our effort would be better spent in proving that our languages are
+unambiguous, meaning there is at most one valid way to parse each input string.
+Hence, we choose to use $\af{Dec}$ in this paper.
 \end{remark}
 
 To construct a parser for our permissions language, we start by defining parsers for each of the language combinators. Let us start by considering the character combinator. If the given string is empty or has more than one character, it can never be in a language formed by one character. If the string does consist of only one character, then it is in the language if that character is the same as from the language specification. In Agda, we can write such a parser for characters as follows:
@@ -228,7 +230,7 @@ To construct a parser for our permissions language, we start by defining parsers
 
 This is a correct implementation of a parser for languages that consist of a single character, but the implementation seems ad hoc and it is hard to read, especially considering this is one of the simpler combinators.
 
-Following the approach of parsing with derivatives, we can factor this parser into two cases: the empty string case and the case with at least one character.  We call the former nullability and denote it with the greek character $ν$, and we call the latter derivative and denote it with the greek character $δ$. 
+Following the approach of parsing with derivatives, we can factor this parser into two cases: the empty string case and the case with at least one character. Folowwing Elliott~\cite{conal-languages} and earlier work, we call the former nullability and denote it with the greek character $ν$ (not to be confused with greatest fixed points), and we call the latter derivative and denote it with the greek character $δ$. 
 
 Crucially, nullability deals only with (decidable) types, and derivatives deal only with languages. This clearly separates the level of abstraction between both cases. 
 
@@ -341,7 +343,7 @@ For example, we can rewrite our character parser as follows:
     (`-parse c') (c ∷ w)  = Dec.map δ` (((c ≟ c') ·-parse ε-parse) w)
 \end{code}
 
-Parsers for the other basic combinators are equally straightforward and can be found in our source code artifact.\jr{todo: reference this nicely}
+Parsers for the other basic combinators are similarly straightforward.
 
 \begin{code}[hide]
     ν∪ = ⇔.refl
@@ -435,9 +437,9 @@ not even more complicated. An essential feature of many languages is the ability
 to recognize balanced brackets. A minimal example language with balanced
 brackets is the following:
 %
-\begin{grammar}
-<brackets> ::= ε | [ <brackets> ] | <brackets> <brackets>
-\end{grammar}
+\begin{equation*}
+\langle\textit{brackets}\rangle ::= ε \mid \textrm{[}~\langle\textit{brackets}\rangle~\textrm{]} \mid \langle\textit{brackets}\rangle~\langle\textit{brackets}\rangle
+\end{equation*}
 %
 This is the language of all strings which consist of balanced square brackets. 
 It is common for programming languages to include some form of balanced

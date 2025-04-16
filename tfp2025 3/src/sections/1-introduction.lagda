@@ -9,12 +9,12 @@ open import Data.Unit
 
 Parsing---i.e., the process of recovering structure from strings---is an essential building block for many practical programming applications.
 While parsing has been extensively studied, it remains a relevant subject of research where new research questions continuously emerge.
-For example, how to compose grammars and parsers~(e.g.,~\cite{SchwerdfegerW09}), dealing with ambiguous parse trees~(e.g.,~\cite{BrabrandGM10,basten-thesis,one-parser-to-rule-them-all}), and parsing grammar formalisms beyond context-free grammars~(e.g.,~\cite{one-parser-to-rule-them-all}).
+For example, how to compose grammars and parsers~(e.g.,~\cite{SchwerdfegerW09}), dealing with ambiguous parse trees~(e.g.,~\cite{BrabrandGM10,basten-thesis,vinju-evcs}), and parsing grammar formalisms beyond context-free grammars~(e.g.,~\cite{one-parser-to-rule-them-all}).
 Research questions such as these serve a practical purpose, but answering them often requires a deep theoretical understanding of the semantics of parsing.
 
 This theoretical understanding can be approached in different ways.
 Parsing is often studied using automata theory~\cite{hopcroft-book}.
-However, there is value in studying more \emph{denotational} approaches to parsing.
+However, it is valuable to study more \emph{denotational} approaches to parsing too.
 A main purpose of denotational semantics is to abstract away operational concerns, as such concerns tends to be a hindrance for equational reasoning.
 Such equational reasoning could be used to study and answer some of the open research questions in the parsers of today and tomorrow.
 
@@ -26,7 +26,7 @@ In his recent work, Elliott demonstrated that regular grammars have a simple and
 And that we can obtain parsers for such languages that are correct by construction, using \emph{derivatives}.
 While it was well-known that we can parse regular grammars using Brzozowski derivatives~\cite{brzozowski}, Elliott's work provides a simple and direct mechanization in Agda's type theory of the denotational semantics of these derivatives.
 This mechanization provides an implementation of parsing that is correct by construction, and that we can reason about without relying on (bi-)simulation arguments.
-While the parsers obtained in this manner are not exactly performant, the denotational approach opens up the door to exploiting grammar structure to obtain optimized parsers.
+While the parsers obtained in this manner are not designed to be performant, the denotational approach opens up the door to exploiting grammar structure to obtain optimized parsers.
 
 Elliott leaves open the question of how the approach scales to more expressive grammar formalisms, such as context-free languages and beyond.
 However, the question of using derivatives to parse context-free grammars has been considered by others.
@@ -83,6 +83,8 @@ Parsing context-free grammars, thus, requires more sophisticated techniques.
 \subsection{Contributions}
 
 This paper tackles the challenges discussed in the previous section by providing a mechanization in Agda of parsing a subset of context-free grammars with derivatives.
+We represent grammars using a restricted form of μ-regular expressions, which extend regular expressions with fixed points and which can express all context-free languages.
+
 The subset of grammars that we consider corresponds to context-free grammars without mutually recursive nonterminals.
 In other words, the grammars can consist of multiple nonterminals which may refer to themselves and others, but there may not be a cycle which involves more than one nonterminal.
 For example, the following mutually recursive grammar does not fit into the subset of grammars we consider:
@@ -92,7 +94,7 @@ For example, the following mutually recursive grammar does not fit into the subs
 \langle\mathit{stmt}\rangle &::= \langle\mathit{expr}\rangle \mid \langle\mathit{stmt}\rangle ; \langle\mathit{stmt}\rangle
 \end{align*}
 The $\langle\mathit{pal}\rangle$, $\langle\mathit{rec}\rangle$, and $\langle\mathit{expr}\rangle$ grammars from the previous section are all examples of grammars that are in the subset.
-We conjecture that the approach we present later can be extended to deal with all context-free grammars, at the cost of some additional bookkeeping.
+We conjecture that our approach can be extended to deal with all context-free grammars, at the cost of some additional bookkeeping.
 We leave verifying this conjecture as a challenge for future work.
 
 We make the following technical contributions:

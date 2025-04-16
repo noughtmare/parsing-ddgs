@@ -33,8 +33,9 @@ To be able to specify the recursive structure of context-free languages, we need
 From type theory we know that a fixed point of a functor $\ab{F}~\as{:}~\af{Type}~\as{→}~\af{Type}$ is well-defined if it is strictly positive.
 So we could restrict the argument of our fixed point combinator to only accept strictly positive functors.
 We are dealing with languages and not types directly, but luckily our definition of language is based on types and our basic combinators are strictly positive.
-One catch is that Agda currently has no way of directly expressing that a functor is strictly positive.\footnote{There is work on implementing positivity annotations.\cite{positivity}}
-We can still make this evident to Agda by defining a data type of descriptions as shown by Chapman et al.~\cite{levitation}.
+One catch is that Agda currently has no way of directly expressing that a functor is strictly positive.\footnote{Poiret et al. have implemented positivity annotations in a development version of Agda~\cite{positivity}.}
+We can still make this evident to Agda by defining a data type of descriptions as shown by Chapman et al.~\cite{levitation}. 
+In our case, the descriptions describe grammars rather than data types, but the technique is the same.
 
 \begin{code}[hide]
 module F where
@@ -50,6 +51,15 @@ module F where
         _·_  : {A : Type} → Dec A → Desc → Desc
         var  : Desc
 \end{code}
+\begin{remark}
+We have introduced $\af{Desc}$ to be able to represent strictly positive
+functors, of which we know how to take a fixed point. 
+That is not the only reason for choosing this representation, however.
+Having a concrete description data type as a representation of our grammars
+gives us the ability to symbolically manipulate the grammar.
+We use this later in \cref{sec:parsing-in-general} to define what it means to
+take the derivative of a grammar description.
+\end{remark}
 
 \begin{code}[hide]
     infix 22 `_
@@ -85,7 +95,10 @@ Using these descriptions, we can define a fixed point as follows:
     unroll (roll x) = x
 \end{code}
 
-With this fixed point, we can finally define the brackets language.\footnote{We split this definition into two because we want to separately reuse the description later.}
+This fixed point is very similar to the usual fixed point on types, but this is
+a fixed point of languages so we need to propagate the input string parameter $\ab{w}$.
+
+Using this fixed point, we can finally define the brackets language.\footnote{We split this definition into two because we want to separately reuse the description later.}
 
 \begin{code}
     bracketsD = ε ∪ ` '[' ∗ var ∗ ` ']' ∪ var ∗ var
