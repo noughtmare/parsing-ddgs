@@ -356,8 +356,8 @@ module ◆ where
   νμ ∅ = ⇔.refl
   νμ ε = ⇔.refl
   νμ (‵ c) = ⇔.refl
-  νμ (x · e) = ? -- ⇔cong (_ ×_) (νμ e)
-  νμ (e ∪ e₁) = ? -- cong₂ _⊎_ (νμ e) (νμ e₁)
+  νμ (x · e) = {!!} -- ⇔cong (_ ×_) (νμ e)
+  νμ (e ∪ e₁) = {!!} -- cong₂ _⊎_ (νμ e) (νμ e₁)
   νμ (e * e₁) = {!◇.ν*!}
   νμ I = {!!}
   νμ (μ e) = ⇔.refl
@@ -382,7 +382,7 @@ module ◆ where
 --     _·_ : {A : Type} → Dec A → Exp → Exp
 --     _∪_ : Exp → Exp → Exp
 --     _*_ : Exp → Exp → Exp
--- 
+--
 --   ⟦_⟧ : Exp → Lang
 --   ⟦ ∅ ⟧ = ◇.∅
 --   ⟦ ε ⟧ = ◇.ε

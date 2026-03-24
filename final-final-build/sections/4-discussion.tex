@@ -1,0 +1,39 @@
+\begin{code}[hide]%
+\>[0]\AgdaKeyword{module}\AgdaSpace{}%
+\AgdaModule{4-discussion}\AgdaSpace{}%
+\AgdaKeyword{where}\<%
+\end{code}
+
+\section{Discussion}\label{sec:discussion}
+
+Zooming back out, we want to discuss three aspects of our work: expressiveness, performance, and simplicity.
+
+\paragraph{Expressiveness} Our language descriptions are similar to μ-regular
+expressions, which have been shown to be equivalent to context-free
+grammars~\cite{Thiemann17}. The major difference is that we only have a single
+variable which always refers to the nearest enclosing fixed point and we cannot
+refer back to earlier fixed points. Each fixed point roughly corresponds to a
+nonterminal in the context-free grammar, so we conjecture this limitation means
+we only support context-free grammars without mutual recursion. We hope to
+expand our work to cover mutually recursive context-free grammars in future
+work, for example using indexed descriptions~\cite{10.1145/1932681.1863547}
+where the index can be a set of multiple variables.
+
+Furthermore, an anonymous reviewer of a draft of this paper has pointed out that
+simply showing an equivalence of expressive power does not mean μ-regular
+expressions are as easy to use as context-free grammars in practice. In future
+work, we hope to explore this further by specifying and parsing more
+representative and practical languages.
+
+Going beyond context-free languages, many practical programming languages cannot
+be adequately described as context-free languages. For example, features such as
+associativity, precedence, and indentation sensitivity cannot be expressed
+directly using context-free grammars. Recent work by Afroozeh and
+Izmaylova~\cite{one-parser-to-rule-them-all} shows that all these advanced
+features can be supported if we extend our grammars with data-dependencies. In
+future work, we want to explore using our framework as a foundation for such
+extensions.
+
+\paragraph{Performance} For a parser to practically useful, it must at least have linear asymptotic complexity for practical grammars. Might et al.~\cite{parsing-with-derivatives} show that naively parsing using derivatives does not achieve that bound, but optimizations might make it possible. In particular, they argue that we could achieve $O(n|G|)$ time complexity (where $|G|$ is the grammar size) if the grammar size stays approximately constant after every derivative. By compacting the grammar, they conjecture it is possible to achieve this bound for all unambiguous grammars. In future work, we want to investigate if similar optimizations could be applied to our parser and if we can prove that we achieve this bound.
+
+\paragraph{Simplicity} One of the main contributions of Elliott's type theoretic formalization of languages~\cite{conal-languages} is its simplicity of implementation and proof. To be able to extend his approach to context-free languages we have had to introduce language descriptors, which are a slight complication. For example, descriptors made it harder to parameterize the symbolic representation of a language with its semantics as Elliott does in his paper, allowing him to write a correct by construction derivative function. Instead, we have split the derivative function into a syntactic transformation and an external correctness proof. Nevertheless, we think our approach retains much of the simplicity of Elliott's work.

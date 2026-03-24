@@ -52,7 +52,7 @@
 \usepackage{unicode-math} 
 %
 \newtoggle{draft}
-\toggletrue{draft} % enables notes
+% \toggletrue{draft} % enables notes
 
 \iftoggle{draft}{
 \linenumbers
@@ -115,14 +115,10 @@
 
 \begin{abstract}
 Parsing is the process of recovering structure from strings, an essential part of implementing programming languages.
-% Ambiguity, being able to parse a string in multiple different ways, has been a long-standing problem in parsing.
-% Recently, data-dependent grammars have emerged as a general, declarative, and efficient solution to this problem.
-% However, their current formalization in terms of automatons makes it difficult to reason about their behavior.
-% 
-% In this paper, we specify data-dependent grammars in type theory as predicates over strings.
-% Based on this specification, we derive a parser and formally prove properties about our specification which were previously only assumed.
-% In the future, our specification can guide the implementation of provably correct efficient parsers for data-dependent grammars.
-
+Previous work has shown that formalizing languages and parsers using an idiomatic type theoretic approach can be simple and enlightening.
+Unfortunately, this approach has only been applied to regular languages, which are not expressive enough for many practical applications.
+We are working on extending the type theoretic formalization to context-free languages which substantially more expressive.
+We hope our formalization can serve as a foundation for reasoning about new disambiguation techniques and even more expressive formalisms such as data-dependent grammars.
 \keywords{Language  \and Parsing \and Type Theory}
 \end{abstract}
 

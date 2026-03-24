@@ -30,7 +30,7 @@ open import 2-overview renaming (∅ to ◇∅ ; ε to ◇ε ; `_ to ◇`_ ; _·
 \subsection{Fixed Points}
 
 To be able to specify the recursive structure of context-free languages, we need a fixed point.
-From type theory we know that a fixed point of a functor $\ab{F}~\as{:}~\af{Type}~\as{→}~\af{Type}$ is well-defined if it is strictly positive.
+From type theory we know that a fixed point of an endofunctor on types is well-defined if it is strictly positive.
 So we could restrict the argument of our fixed point combinator to only accept strictly positive functors.
 We are dealing with languages and not types directly, but luckily our definition of language is based on types and our basic combinators are strictly positive.
 One catch is that Agda currently has no way of directly expressing that a functor is strictly positive.\footnote{Poiret et al. have implemented positivity annotations in a development version of Agda~\cite{positivity}.}
@@ -334,7 +334,8 @@ The backwards direction is more difficult. We prove a more general lemma from wh
 \end{code}
 If we choose $\ab{D₀}~\as{=}~\ab{D}$ then both cases of the resulting disjoint union have the same type, so we can just pick whichever of the two we get as a result using the $\af{reduce}~\as{:}~\ab{A}~\af{⊎}~\ab{A}~\as{→}~\ab{A}$ function. Modulo wrapping and unwrapping of the fixed point (using the $\ac{roll}$ constructor), we now have the two functions which prove the lemma:
 \begin{code}
-    νD∅⇔νD {D} = mk⇔ (roll ∘ νD∅→νD D) (reduce ∘ νD∅←νD {D₀ = D} D ∘ unroll)
+    νD∅⇔νD {D} = 
+        mk⇔ (roll ∘ νD∅→νD D) (reduce ∘ νD∅←νD {D₀ = D} D ∘ unroll)
 \end{code}
 \end{proof}
 
@@ -474,7 +475,8 @@ The proofs follow from induction, the equivalances in \cref{fig:null-delta}, and
 equivalance:
 %
 \begin{code}
-    δD-correct {D = D} = mk⇔ (roll ∘ δD-to D ∘ unroll) (roll ∘ δD-from D ∘ unroll)
+    δD-correct {D = D} =
+        mk⇔ (roll ∘ δD-to D ∘ unroll) (roll ∘ δD-from D ∘ unroll)
 \end{code}
 %
 This completes our proof.

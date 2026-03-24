@@ -21,7 +21,7 @@ We make the following concrete contributions:
 \item We extend Elliot's type theoretic formalization of regular languages to context-free languages.
 \end{itemize}
 
-For this paper we have chosen Agda as our type theory and interactive theorem prover. We believe our definitions should transfer easily to other theories and tools. This paper itself is a literate Agda file; all highlighted Agda code has been accepted by Agda's type checker, giving us a high confidence of correctness. Unfortunately, we are still working out the proof of three postulates in \cref{sec:cfg-parsing}. These are the only postulates that we have yet to prove.
+We have chosen Agda as our type theory and interactive theorem prover. We believe our definitions should transfer easily to other theories and tools. This paper itself is a literate Agda file; all highlighted Agda code has been accepted by Agda's type checker, giving us a high confidence of correctness. Unfortunately, we are still working out the proof of three postulates in \cref{sec:cfg-parsing}. These are the only postulates that we have yet to prove.
 
 \endinput
 

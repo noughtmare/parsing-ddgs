@@ -114,7 +114,7 @@ Let's start with a simple example: POSIX file system permissions. These are usua
 \end{code}
 
 \begin{figure}
-\begin{minipage}{.63\textwidth}
+\begin{minipage}[t]{.40\textwidth}
 \begin{code}
     `_ : Char → Lang
     (` c) w = w ≡ c ∷ []
@@ -128,7 +128,7 @@ Let's start with a simple example: POSIX file system permissions. These are usua
     (P ∗ Q) w = ∃[ u ] ∃[ v ] w ≡ u ++ v × P u × Q v
 \end{code}
 \end{minipage}
-\begin{minipage}{.36\textwidth}
+\begin{minipage}[t]{.16\textwidth}
 \begin{code}
     ∅ : Lang
     ∅ _ = ⊥
@@ -137,6 +137,8 @@ Let's start with a simple example: POSIX file system permissions. These are usua
     ε : Lang
     ε w = w ≡ []
 \end{code}
+\end{minipage}
+\begin{minipage}[t]{.20\textwidth}
 \begin{code}
     _·_ : Type → Lang → Lang
     (A · P) w = A × P w 
@@ -198,7 +200,7 @@ A parser for a language, then, is a program which can tell us whether any given 
 \end{code}
 
 \begin{remark}
-Readers familiar with Haskell might notice the similarity between $\as{(}\ab{w}~\as{:}~\af{String}\as{)}~\as{→}~\af{Dec}~\as{(}\ab{P}~\ab{w}\as{)}$ and \verb|String -> Maybe a|, which is a common way to implement parser combinators (although usually the return type is \verb|Maybe (a, String)| giving parsers the freedom to consume only a prefix of the input string and return the rest).
+Readers familiar with Haskell might notice the similarity between $\as{(}\ab{w}~\as{:}~\af{String}\as{)}~\as{→}~\af{Dec}~\as{(}\ab{P}~\ab{w}\as{)}$ and \verb|String -> Maybe a|, which is a common way to implement parser combinators (although usually \verb|Maybe (a, String)| is the return type, giving parsers the freedom to consume only a prefix of the input string and return the rest).
 The differences are that the result of our $\af{Parser}$ type depends on the language specification and input string, and that a failure carries with it a proof that the string cannot be part of the language.
 This allows us to separate the specification of our language from the implementation while ensuring correctness.
 \end{remark}
@@ -224,7 +226,8 @@ To construct a parser for our permissions language, we start by defining parsers
 \begin{code}
     ◂`-parse_ : (x : Char) → Parser (` x)
     (◂`-parse _) [] = no λ ()
-    (◂`-parse x) (c ∷ []) = Dec.map (mk⇔ (λ { refl → refl }) (λ { refl → refl })) (c ≟ x)
+    (◂`-parse x) (c ∷ []) = 
+        Dec.map (mk⇔ (λ { refl → refl }) (λ { refl → refl })) (c ≟ x)
     (◂`-parse _) (_ ∷ _ ∷ _) = no λ ()
 \end{code}
 
